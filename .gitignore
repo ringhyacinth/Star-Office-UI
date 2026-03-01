@@ -15,4 +15,6 @@ venv/
 state.json
 cloudflared.pid
 cloudflared.out
-frontend/office_bg.png
+
+# QA artifacts
+frontend-app/docs/office-v3/evidence/*.har

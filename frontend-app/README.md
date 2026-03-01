@@ -1,73 +1,35 @@
-# React + TypeScript + Vite
+# frontend-app
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Star Office UI 的唯一前端入口（React + Vite + TypeScript）。
 
-Currently, two official plugins are available:
+## Scripts
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev        # 本地开发 (http://127.0.0.1:4173)
+npm run lint       # ESLint
+npm run test       # Vitest (jsdom)
+npm run build      # tsc + vite build
+npm run preview    # 本地预览构建产物
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## API 对接约定
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- 默认 `VITE_API_BASE_URL` 为空，使用相对路径（`/live`、`/health` 等）
+- 开发态依赖 `vite.config.ts` 中的 proxy 转发到 `OFFICE_BACKEND_URL`（默认 `http://127.0.0.1:19800`）
+- 生产态由 Flask 托管 `dist`，前端同源访问 API
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 环境变量
+
+- `OFFICE_BACKEND_URL`：Vite dev proxy 的后端地址（仅开发态）
+- `VITE_API_BASE_URL`：显式指定 API 基础地址（通常不需要）
+- `VITE_API_DEV_PORT`：当检测到本地 dev 端口时，前端用于回退探测的后端端口（默认 `19800`）
+
+## 质量门槛
+
+提交前至少执行：
+
+```bash
+npm run lint
+npm run test
+npm run build
 ```

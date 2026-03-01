@@ -1,88 +1,108 @@
-# Star Office UI
+# Star Office UI（frontend-app 单入口版）
 
-A tiny “pixel office” status UI for your AI assistant.
+星办公室重构后的统一入口：
 
-- Pixel office background (top-down)
-- A little character that moves between areas based on `state`
-- Optional speech bubble / typing effect
-- Mobile-friendly access via Cloudflare Tunnel quick tunnel
+- **前端唯一入口：`frontend-app`（React + Vite + TypeScript）**
+- **后端：`backend/app.py`（Flask，提供 `/live` 等实时接口）**
+- **生产态由 Flask 直接托管 `frontend-app/dist`**
 
-> Language: the demo code/docs are currently mainly in Chinese (中文). PRs welcome.
+> 旧版 `frontend/` Phaser 页面已下线，不再作为入口。
 
-## What it looks like
+---
 
-- `idle / syncing / error` → breakroom area
-- `writing / researching / executing` → desk area
+## 目录结构
 
-The UI polls `/status` and renders the assistant avatar accordingly.
-
-## Folder structure
-
-```
+```text
 star-office-ui/
-  backend/        # Flask backend (serves index + status)
-  frontend/       # Phaser frontend + office_bg.png
-  state.json      # runtime status file
-  set_state.py    # helper to update state.json
+  backend/                # Flask API + 生产态静态托管
+  frontend-app/           # React 前端（唯一 UI 入口）
+  scripts/                # 运维脚本
+  state.sample.json
 ```
 
-## Requirements
+---
 
-- Python 3.9+
-- Flask
+## 开发模式（推荐）
 
-## Quick start (local)
-
-### 1) Install dependencies
+### 1) 启动后端（19800）
 
 ```bash
-pip install flask
+cd backend
+python3 app.py
 ```
 
-### 2) Put your background image
-
-Put a **800×600 PNG** at:
-
-```
-star-office-ui/frontend/office_bg.png
-```
-
-### 3) Start backend
+### 2) 启动前端开发服务（4173）
 
 ```bash
-cd star-office-ui/backend
-python app.py
+cd frontend-app
+npm ci
+npm run dev
 ```
 
-Then open:
+### 3) 打开页面
 
-- http://127.0.0.1:18791
+- 开发入口：`http://127.0.0.1:4173`
+- 前端默认通过 Vite Proxy 转发 `/health`、`/live`、`/tasks`、`/ollama` 等接口到 `http://127.0.0.1:19800`
 
-### 4) Update status
+---
 
-From the project root:
+## 生产/部署模式
+
+### 1) 构建前端
 
 ```bash
-python3 star-office-ui/set_state.py writing "Working on a task..."
-python3 star-office-ui/set_state.py idle "Standing by"
+cd frontend-app
+npm ci
+npm run build
 ```
 
-## Public access (Cloudflare quick tunnel)
-
-Install `cloudflared`, then:
+### 2) 启动后端
 
 ```bash
-cloudflared tunnel --url http://127.0.0.1:18791
+cd backend
+python3 app.py
 ```
 
-You’ll get a `https://xxx.trycloudflare.com` URL.
+### 3) 访问
 
-## Security notes
+- 统一入口：`http://127.0.0.1:19800`
+- Flask 将自动托管 `frontend-app/dist`
 
-- Anyone with the tunnel URL can read `/status`.
-- Don’t put sensitive info in `detail`.
-- If needed, add a token check for `/status` (or only return coarse states).
+> 若 `dist` 不存在，访问根路径会返回明确提示，指导先执行 `npm run build`。
 
-## License
+---
 
-MIT
+## 前端质量门槛
+
+在 `frontend-app` 目录执行：
+
+```bash
+npm run lint
+npm run test
+npm run build
+```
+
+---
+
+## CI
+
+已提供 GitHub Actions：`.github/workflows/frontend-app-ci.yml`
+
+- 触发：push / pull_request
+- 执行：`npm ci` + `npm run lint` + `npm run test` + `npm run build`
+
+---
+
+## 常见问题
+
+### 1) `/live` 返回 HTML 而不是 JSON？
+
+重构后默认不会把 API 未命中回退成 HTML：
+
+- API 路径未命中时返回 **JSON 404**
+- 前端请求层会对 HTML 响应做显式报错（提示检查 API base/proxy）
+
+### 2) 本地只想看前端，不想构建 dist？
+
+直接使用开发入口：`http://127.0.0.1:4173`。
+
