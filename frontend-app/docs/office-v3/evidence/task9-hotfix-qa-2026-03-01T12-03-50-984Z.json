@@ -1,0 +1,37 @@
+{
+  "checkedAt": "2026-03-01T12:03:59.461Z",
+  "page": "http://127.0.0.1:4173",
+  "screenshot": "/Users/alshyib/WorkSpace/Next/conpay/star-office-ui/frontend-app/docs/office-v3/evidence/task9-hotfix-qa-2026-03-01T12-03-50-984Z.png",
+  "metrics": {
+    "canvasVisible": true,
+    "canvasSize": {
+      "width": 1612,
+      "height": 560
+    },
+    "botCount": 0,
+    "logCount": 0,
+    "logTexts": [],
+    "apiStripText": [
+      "/health unknown",
+      "/live 0 agents · provider 0/0",
+      "/tasks 0（进行中 0 / 已完成 0）",
+      "/ollama offline · models 0 · active 0"
+    ],
+    "emptyBanner": "/live 暂无 agent 数据页面保持空态展示，不注入任何 mock 数据。",
+    "errorBanner": "实时接口异常（已展示错误态/空态，未回退假数据）/health：请求超时或已取消/tasks：请求超时或已取消/ollama：请求超时或已取消"
+  },
+  "network": [
+    {
+      "url": "http://127.0.0.1:4173/live",
+      "status": 200,
+      "contentType": "text/html",
+      "preview": "<!doctype html> <html lang=\"en\">   <head>     <script type=\"module\">import { injectIntoGlobalHook } from \"/@react-refresh\"; injectIntoGlobalHook(window); window.$RefreshReg$ = () ="
+    },
+    {
+      "url": "http://127.0.0.1:4173/live",
+      "status": 200,
+      "contentType": "text/html",
+      "preview": "<!doctype html> <html lang=\"en\">   <head>     <script type=\"module\">import { injectIntoGlobalHook } from \"/@react-refresh\"; injectIntoGlobalHook(window); window.$RefreshReg$ = () ="
+    }
+  ]
+}

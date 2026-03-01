@@ -11,48 +11,21 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            /* ===== 非 AI 味主题 Token（V1）- 暮色指挥站（默认） ===== */
-            --cyber-bg-0: #141821;
-            --cyber-bg-1: #1a2230;
-            --cyber-bg-2: #232d3f;
-            --cyber-surface-1: #252f42;
-            --cyber-surface-2: #2e3a52;
-            --cyber-border: #4f5f79;
-            --cyber-neon-cyan: #7f9fc3;
-            --cyber-neon-pink: #c38a55;
-            --cyber-neon-purple: #6e90b8;
-            --cyber-neon-green: #78a886;
-            --cyber-warning: #c8ac67;
-            --cyber-danger: #b9756f;
-            --cyber-text-main: #e6ebf4;
-            --cyber-text-dim: #a8b4c9;
-
-            --tone-bg-top-left: rgba(135, 162, 201, 0.14);
-            --tone-bg-bottom-right: rgba(169, 133, 97, 0.12);
-            --tone-topbar-a: rgba(31, 43, 60, 0.96);
-            --tone-topbar-b: rgba(25, 34, 49, 0.96);
-            --tone-topbar-shadow: rgba(80, 106, 142, 0.15);
-            --tone-topbar-inset: rgba(195, 138, 85, 0.18);
-            --tone-right-info-bg-a: rgba(28, 39, 56, 0.82);
-            --tone-right-info-bg-b: rgba(24, 34, 49, 0.62);
-            --tone-right-info-border: rgba(130, 157, 191, 0.26);
-
-            --log-bg: #131b28;
-            --log-section-bg: rgba(255,255,255,0.02);
-            --log-section-hover: rgba(255,255,255,0.05);
-            --log-divider: rgba(102,118,144,0.42);
-            --log-time: #8698b6;
-            --log-user: #9dbce4;
-            --log-assistant: #b8cfb4;
-            --log-tool: #d6bb92;
-            --log-error: #df8c85;
-            --log-system: #bac4d6;
-            --log-empty: #8f9db3;
-            --scroll-thumb: #617493;
-
-            --panel-bg: #1b2535;
-            --panel-header-bg-a: rgba(195,138,85,0.14);
-            --panel-header-bg-b: rgba(110,144,184,0.14);
+            /* ===== 赛博像素主题 Token（V1） ===== */
+            --cyber-bg-0: #060912;
+            --cyber-bg-1: #0a1020;
+            --cyber-bg-2: #101931;
+            --cyber-surface-1: #121a2f;
+            --cyber-surface-2: #17213d;
+            --cyber-border: #2a3555;
+            --cyber-neon-cyan: #39d5ff;
+            --cyber-neon-pink: #ff4fb9;
+            --cyber-neon-purple: #8f7bff;
+            --cyber-neon-green: #68ff9f;
+            --cyber-warning: #ffd45a;
+            --cyber-danger: #ff5f70;
+            --cyber-text-main: #d4def5;
+            --cyber-text-dim: #7f8aac;
 
             /* 兼容旧变量，避免破坏现有功能 */
             --bg-primary: var(--cyber-bg-0);
@@ -68,13 +41,12 @@
             --blue: var(--cyber-neon-cyan);
             --text: var(--cyber-text-main);
             --text-dim: var(--cyber-text-dim);
-            --text-bright: #f7f9fc;
+            --text-bright: #ffffff;
         }
-
         body {
             background:
-                radial-gradient(120% 140% at 0% 0%, var(--tone-bg-top-left), transparent 50%),
-                radial-gradient(100% 120% at 100% 100%, var(--tone-bg-bottom-right), transparent 56%),
+                radial-gradient(120% 140% at 0% 0%, rgba(57,213,255,0.12), transparent 48%),
+                radial-gradient(100% 120% at 100% 100%, rgba(255,79,185,0.1), transparent 52%),
                 linear-gradient(180deg, var(--cyber-bg-2), var(--cyber-bg-0));
             font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
             color: var(--text);
@@ -84,9 +56,9 @@
         /* ===== 顶部导航 ===== */
         #top-bar {
             height: 42px;
-            background: linear-gradient(90deg, var(--tone-topbar-a), var(--tone-topbar-b));
+            background: linear-gradient(90deg, rgba(14,26,48,0.96), rgba(12,20,40,0.96));
             border-bottom: 1px solid var(--border);
-            box-shadow: 0 2px 16px var(--tone-topbar-shadow), inset 0 -1px 0 var(--tone-topbar-inset);
+            box-shadow: 0 2px 16px rgba(57,213,255,0.08), inset 0 -1px 0 rgba(255,79,185,0.12);
             display: flex;
             align-items: center;
             padding: 0 16px;
@@ -107,64 +79,38 @@
             cursor: pointer; border-bottom: 2px solid transparent;
             transition: all 0.2s; line-height: 24px; border-radius: 4px 4px 0 0;
         }
-        .nav-tab:hover { color: var(--text); background: rgba(255,255,255,0.04); }
-        .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(195,138,85,0.12); }
+        .nav-tab:hover { color: #aaa; background: rgba(255,255,255,0.03); }
+        .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(233,69,96,0.06); }
         .nav-tab .icon { margin-right: 4px; }
         .nav-link {
             padding: 8px 16px; font-size: 12px; color: var(--text-dim);
             cursor: pointer; text-decoration: none; line-height: 24px;
             border-radius: 4px 4px 0 0; transition: all 0.2s;
         }
-        .nav-link:hover { color: var(--accent2); background: rgba(110,144,184,0.12); }
+        .nav-link:hover { color: var(--accent2); background: rgba(108,92,231,0.08); }
         .nav-link .icon { margin-right: 4px; }
         #top-bar .right-info {
-            margin-left: auto; display: flex; align-items: center; gap: 8px;
+            margin-left: auto; display: flex; align-items: center; gap: 10px;
             flex: 0 0 auto;
             padding: 3px 8px;
             border-radius: 10px;
-            background: linear-gradient(90deg, var(--tone-right-info-bg-a), var(--tone-right-info-bg-b));
-            border: 1px solid var(--tone-right-info-border);
+            background: linear-gradient(90deg, rgba(12,20,38,0.62), rgba(12,20,38,0.35));
+            border: 1px solid rgba(57,213,255,0.12);
             min-width: 0;
         }
         .live-dot {
             width: 7px; height: 7px; border-radius: 50%;
             background: var(--green); animation: pulse 1.5s infinite;
-            box-shadow: 0 0 6px rgba(120,168,134,0.55);
+            box-shadow: 0 0 6px var(--green);
         }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
         .stat-badge {
             font-size: 10px; padding: 2px 8px; border-radius: 10px;
-            background: rgba(255,255,255,0.06); border: 1px solid rgba(111,131,160,0.6);
+            background: rgba(255,255,255,0.05); border: 1px solid var(--border);
         }
         .stat-badge .num { color: var(--accent); font-weight: 700; }
         .clock-display { font-size: 11px; color: var(--text-dim); font-family: 'Courier New', monospace; min-width: 160px; }
-        .fx-toggle,
-        .theme-toggle {
-            border: 1px solid rgba(110,144,184,0.62);
-            background: rgba(110,144,184,0.16);
-            color: var(--text-bright);
-            border-radius: 12px;
-            padding: 2px 10px;
-            font-size: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .fx-toggle:hover,
-        .theme-toggle:hover {
-            border-color: rgba(195,138,85,0.76);
-            color: var(--text-bright);
-            background: rgba(195,138,85,0.2);
-        }
-        .fx-toggle.low {
-            border-color: rgba(200,172,103,0.72);
-            background: rgba(200,172,103,0.2);
-            color: #f7e3bb;
-        }
-        #fps-indicator.low {
-            border-color: rgba(200,172,103,0.6);
-            color: var(--yellow);
-        }
-    </style>
+</style>
     <style>
         /* ===== 主内容区 ===== */
         #main-content { height: calc(100vh - 42px); position: relative; }
@@ -184,13 +130,8 @@
             position: relative;
             border-bottom: 1px solid var(--border); image-rendering: pixelated;
             width: 100%; overflow: hidden; max-height: 45vh;
-            background:
-                radial-gradient(120% 100% at 50% 0%, rgba(78,132,255,0.16), transparent 52%),
-                linear-gradient(180deg, rgba(18,28,52,0.96) 0%, rgba(8,12,24,0.95) 38%, rgba(6,9,18,0.96) 100%);
-            box-shadow:
-                inset 0 -12px 30px rgba(0,0,0,0.35),
-                inset 0 1px 0 rgba(255,255,255,0.06),
-                0 10px 24px rgba(0,0,0,0.25);
+            background: linear-gradient(180deg, rgba(10,16,32,0.92), rgba(6,9,18,0.92));
+            box-shadow: inset 0 -12px 30px rgba(0,0,0,0.35);
         }
         #game-container::before,
         #game-container::after {
@@ -201,84 +142,13 @@
         }
         #game-container::before {
             background:
-                linear-gradient(rgba(0,0,0,0) 50%, rgba(6,12,26,0.16) 50%),
-                linear-gradient(90deg, transparent 96%, rgba(57,213,255,0.05) 100%);
-            background-size: 100% 4px, 14px 100%;
-            opacity: 0.42;
-            mix-blend-mode: screen;
-            animation: scanlineDrift 10s linear infinite;
-        }
-        #game-container::after {
-            background:
-                radial-gradient(120% 100% at 50% 120%, rgba(255,79,185,0.18), transparent 45%),
-                linear-gradient(180deg, transparent 72%, rgba(57,213,255,0.08) 100%);
-        }
-        #game-container canvas { pointer-events: none; }
-        @keyframes scanlineDrift {
-            0% { background-position: 0 0, 0 0; }
-            100% { background-position: 0 160px, 14px 0; }
-        }
-        #v2-fx-overlays {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            z-index: 40;
-            overflow: hidden;
-        }
-        .v2-overlay-rain,
-        .v2-overlay-fog,
-        .v2-overlay-scan,
-        .v2-overlay-haze {
-            position: absolute;
-            inset: 0;
-        }
-        .v2-overlay-rain {
-            background-image: linear-gradient(180deg, rgba(180,220,255,0.00) 0%, rgba(180,220,255,0.06) 65%, rgba(180,220,255,0.18) 100%);
-            opacity: 0.18;
-        }
-        .v2-overlay-fog {
-            background:
-                radial-gradient(60% 40% at 20% 90%, rgba(158,196,255,0.12), transparent 70%),
-                radial-gradient(58% 35% at 80% 92%, rgba(190,220,255,0.11), transparent 72%);
-            animation: fogDrift 18s ease-in-out infinite alternate;
-            opacity: 0.55;
-        }
-        .v2-overlay-haze {
-            background: linear-gradient(180deg, rgba(128,188,255,0.03), transparent 32%, rgba(100,160,255,0.08) 100%);
-            animation: neonBreath 4.2s ease-in-out infinite;
-        }
-        .v2-overlay-scan {
-            background: linear-gradient(180deg, transparent 0%, rgba(57,213,255,0.08) 48%, transparent 100%);
-            height: 32%;
-            transform: translateY(-120%);
-            animation: scanSweep 4.5s linear infinite;
+                linear-gradient(transparent 96%, rgba(57,213,255,0.08) 100%),
+                linear-gradient(90deg, transparent 96%, rgba(57,213,255,0.04) 100%);
+            background-size: 100% 8px, 12px 100%;
             opacity: 0.35;
         }
-        @keyframes fogDrift {
-            0% { transform: translateX(-2%) translateY(0); }
-            100% { transform: translateX(2%) translateY(-1.5%); }
-        }
-        @keyframes scanSweep {
-            0% { transform: translateY(-120%); }
-            100% { transform: translateY(420%); }
-        }
-        @keyframes neonBreath {
-            0%,100% { opacity: 0.45; filter: saturate(1); }
-            50% { opacity: 0.85; filter: saturate(1.2); }
-        }
-        body.fx-low #game-container::before,
-        body.fx-low #game-container::after,
-        body.fx-low .v2-overlay-rain,
-        body.fx-low .v2-overlay-fog,
-        body.fx-low .v2-overlay-scan,
-        body.fx-low .v2-overlay-haze {
-            animation: none !important;
-            opacity: 0.12 !important;
-        }
-        body.fx-low .v2-overlay-rain,
-        body.fx-low .v2-overlay-fog,
-        body.fx-low .v2-overlay-scan {
-            display: none;
+        #game-container::after {
+            background: radial-gradient(120% 100% at 50% 120%, rgba(255,79,185,0.12), transparent 45%);
         }
         /* Agent 状态条 */
         #agent-bar {
@@ -296,22 +166,72 @@
         .dot-working { background: var(--green); animation: pulse 1.2s infinite; }
         .dot-error { background: var(--red); animation: pulse 0.6s infinite; }
         .dot-dead { background: #333; animation: pulse 2s infinite; }
-        /* 日志面板（简洁可读） */
+        /* 日志面板（电子看板样式） */
+        #log-led-banner {
+            height: 24px;
+            border-bottom: 1px solid rgba(57,213,255,0.25);
+            background: linear-gradient(90deg, rgba(10,18,34,0.96), rgba(11,25,46,0.96));
+            overflow: hidden;
+            position: relative;
+        }
+        #log-led-banner::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                180deg,
+                rgba(255,255,255,0.02) 0px,
+                rgba(255,255,255,0.02) 1px,
+                transparent 1px,
+                transparent 3px
+            );
+            pointer-events: none;
+        }
+        .log-led-track {
+            display: inline-block;
+            white-space: nowrap;
+            padding-left: 100%;
+            font-size: 10px;
+            line-height: 24px;
+            letter-spacing: 0.4px;
+            font-family: 'Courier New', monospace;
+            color: var(--cyber-neon-cyan);
+            text-shadow: 0 0 8px rgba(57,213,255,0.55);
+            animation: logTicker 20s linear infinite;
+        }
+        @keyframes logTicker {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
         #log-panel {
             position: relative;
             flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 0;
-            background: #0b1220;
+            background: linear-gradient(180deg, rgba(8,12,25,0.72), rgba(6,9,18,0.9));
         }
+        #log-panel::before {
+            content: '';
+            position: sticky;
+            top: 0;
+            display: block;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(57,213,255,0.55), transparent);
+            opacity: 0.85;
+            z-index: 2;
+            animation: ledScan 1.8s ease-in-out infinite;
+            pointer-events: none;
+        }
+        @keyframes ledScan { 0%,100%{opacity:.35;} 50%{opacity:.95;} }
         #log-panel::-webkit-scrollbar { width: 4px; }
         #log-panel::-webkit-scrollbar-track { background: var(--bg-primary); }
         #log-panel::-webkit-scrollbar-thumb { background: #33415f; border-radius: 2px; }
         .log-section {
-            border-bottom: 1px solid rgba(42,53,85,0.55); padding: 6px 10px;
+            border-bottom: 1px solid rgba(42,53,85,0.72); padding: 6px 10px;
             transition: background 0.2s, border-color 0.2s; overflow: hidden;
-            background: rgba(255,255,255,0.01);
+            background: linear-gradient(90deg, rgba(255,255,255,0.01), transparent 55%);
         }
-        .log-section:hover { background: rgba(255,255,255,0.03); border-bottom-color: rgba(127,138,172,0.35); }
-        .log-section.has-error { border-left: 2px solid var(--red); background: rgba(244,67,54,0.06); }
+        .log-section:hover { background: rgba(57,213,255,0.055); border-bottom-color: rgba(57,213,255,0.22); }
+        .log-section.has-error { border-left: 2px solid var(--red); background: rgba(244,67,54,0.08); }
         .log-section.is-active { border-left: 2px solid var(--green); }
         .log-header {
             font-size: 11px; font-weight: 600; margin-bottom: 3px;
@@ -325,6 +245,9 @@
             color: #444; font-weight: 400; font-size: 9px; min-width: 0; max-width: 160px;
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
+        .log-header .a-state {
+            font-size: 9px; padding: 1px 6px; border-radius: 8px; margin-left: auto; flex: 0 0 auto;
+        }
         .log-line {
             font-size: 9px; line-height: 1.5; color: #8da0ca;
             display: grid; grid-template-columns: 112px 14px minmax(0, 1fr); column-gap: 4px;
@@ -335,6 +258,7 @@
         .log-line .lx {
             min-width: 0; white-space: pre-wrap;
             overflow-wrap: anywhere; word-break: break-word;
+            text-shadow: 0 0 6px rgba(57,213,255,0.12);
         }
         .log-line.r-user .lx { color: #7cb3f5; }
         .log-line.r-assistant .lx { color: #a8d8a8; }
@@ -389,7 +313,7 @@
         /* ===== 日志增强 V1 ===== */
         #log-enhance-v1 {
             border-bottom: 1px solid var(--border);
-            background: rgba(12, 18, 32, 0.96);
+            background: linear-gradient(180deg, rgba(19,19,32,0.98), rgba(14,14,24,0.98));
             padding: 8px 10px 7px;
             display: flex;
             flex-direction: column;
@@ -401,21 +325,39 @@
             gap: 8px;
             flex-wrap: wrap;
         }
-        .log-v1-dedup-inline {
-            font-size: 10px;
-            color: #93a4cb;
-            line-height: 1.4;
-            padding: 0 2px;
-            user-select: none;
+        .log-v1-overview {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+            width: 100%;
         }
-        .log-v1-dedup-inline .value {
+        .log-v1-overview.compact {
+            grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+        }
+        .log-v1-stat {
+            min-width: 0;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            padding: 6px 8px;
+            font-size: 10px;
+            color: var(--text-dim);
+        }
+        .log-v1-stat .label {
+            display: block;
+            font-size: 9px;
+            color: #7f7f95;
+            margin-bottom: 2px;
+        }
+        .log-v1-stat .value {
+            font-size: 14px;
             font-weight: 700;
             color: var(--text-bright);
             letter-spacing: 0.2px;
         }
-        .log-v1-dedup-inline .value.warn { color: var(--yellow); }
-        .log-v1-dedup-inline .value.err { color: var(--red); }
-        .log-v1-dedup-inline .value.ok { color: var(--green); }
+        .log-v1-stat .value.warn { color: var(--yellow); }
+        .log-v1-stat .value.err { color: var(--red); }
+        .log-v1-stat .value.ok { color: var(--green); }
 
         #log-filter-chips {
             display: flex;
@@ -485,200 +427,69 @@
     <style>
         /* ===== 右侧仪表盘（办公室视图） ===== */
         #office-right {
-            flex: 0 0 clamp(312px, 23vw, 372px);
-            min-width: 280px;
-            display: flex;
-            flex-direction: column;
-            background: linear-gradient(180deg, rgba(16,21,37,0.96) 0%, rgba(11,14,24,0.98) 100%);
-            border-left: 1px solid rgba(57,213,255,0.1);
-            overflow-y: auto;
+            flex: 0 0 380px; display: flex; flex-direction: column;
+            background: var(--bg-secondary); overflow-y: auto;
         }
         #office-right::-webkit-scrollbar { width: 4px; }
-        #office-right::-webkit-scrollbar-thumb { background: #2f3344; border-radius: 2px; }
+        #office-right::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
         .dash-header {
-            position: sticky;
-            top: 0;
-            z-index: 4;
-            padding: 12px 14px;
-            font-size: 15px;
-            font-weight: 700;
-            color: var(--text-bright);
-            border-bottom: 1px solid rgba(57,213,255,0.18);
-            display: flex;
-            align-items: baseline;
-            gap: 8px;
-            background: linear-gradient(135deg, rgba(233,69,96,0.12), rgba(108,92,231,0.12));
-            backdrop-filter: blur(2px);
+            padding: 12px 16px; font-size: 16px; font-weight: 700;
+            color: var(--text-bright); border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 8px;
+            background: linear-gradient(135deg, rgba(233,69,96,0.08), rgba(108,92,231,0.08));
         }
-        .dash-header .sub { font-size: 10px; color: #96a2c2; font-weight: 500; }
-
-        .right-stack {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            padding: 10px 12px 12px;
-        }
-        .right-card {
-            background: rgba(17,24,40,0.84);
-            border: 1px solid rgba(118,132,170,0.24);
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.22);
-        }
-        .right-card-head {
-            padding: 9px 11px;
-            border-bottom: 1px solid rgba(118,132,170,0.2);
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            gap: 8px;
-        }
-        .right-card-title {
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.35px;
-            color: #dbe6ff;
-        }
-        .right-card-sub {
-            font-size: 9px;
-            color: #7e8db0;
-            white-space: nowrap;
-        }
-        .right-card-body { padding: 10px 11px 11px; }
-
+        .dash-header .sub { font-size: 11px; color: var(--text-dim); font-weight: 400; }
+        /* 统计卡片行 */
         .stat-row {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 8px;
-            padding: 0;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+            padding: 10px 12px;
         }
         .stat-card {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(136,151,191,0.28);
-            border-radius: 10px;
-            padding: 9px 8px;
-            text-align: center;
-            transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 10px; padding: 10px 8px; text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-        .stat-card:hover {
-            transform: translateY(-1px);
-            border-color: rgba(136,151,191,0.45);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.24);
-        }
-        .stat-card .sc-num { font-size: 18px; font-weight: 800; line-height: 1.2; }
-        .stat-card .sc-label { font-size: 10px; color: #9da9c6; margin-top: 4px; }
-        .stat-card .sc-bar { height: 3px; border-radius: 2px; margin-top: 7px; background: #21263a; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .stat-card .sc-num { font-size: 20px; font-weight: 800; line-height: 1.2; }
+        .stat-card .sc-label { font-size: 10px; color: var(--text-dim); margin-top: 4px; }
+        .stat-card .sc-bar { height: 3px; border-radius: 2px; margin-top: 8px; background: #222; }
         .stat-card .sc-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
 
-        .right-split {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 8px;
-            margin-top: 8px;
+        /* Agent 工作负载 */
+        .section-title {
+            font-size: 12px; font-weight: 700; color: var(--text-dim);
+            padding: 10px 16px 6px; text-transform: uppercase; letter-spacing: 1px;
         }
-        .mini-kpi {
-            border: 1px solid rgba(136,151,191,0.25);
-            border-radius: 8px;
-            padding: 7px 8px;
-            background: rgba(255,255,255,0.02);
-        }
-        .mini-kpi .kpi-label { font-size: 9px; color: #8390ae; }
-        .mini-kpi .kpi-value {
-            margin-top: 2px;
-            font-size: 13px;
-            color: #f0f6ff;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .mini-kpi .kpi-dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background: var(--accent2);
-            box-shadow: 0 0 8px rgba(108,92,231,0.6);
-        }
-
         .agent-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(74px, 1fr));
-            gap: 8px;
-            padding: 0;
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;
+            padding: 0 12px 10px;
         }
         .agent-card {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(136,151,191,0.24);
-            border-radius: 8px;
-            padding: 9px 6px;
-            text-align: center;
-            transition: all 0.2s;
-            cursor: default;
-            position: relative;
-            overflow: hidden;
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 8px; padding: 10px 8px; text-align: center;
+            transition: all 0.2s; cursor: default; position: relative; overflow: hidden;
         }
-        .agent-card:hover { border-color: rgba(136,151,191,0.45); background: rgba(255,255,255,0.04); }
-        .agent-card .ac-emoji { font-size: 18px; }
+        .agent-card:hover { border-color: #444; background: var(--bg-hover); }
+        .agent-card .ac-emoji { font-size: 20px; }
         .agent-card .ac-name { font-size: 10px; color: var(--text); margin-top: 4px; font-weight: 600; }
         .agent-card .ac-state {
-            margin-top: 4px;
+            font-size: 8px; padding: 1px 6px; border-radius: 6px; margin-top: 4px;
             display: inline-block;
-            padding: 1px 6px;
-            border-radius: 999px;
-            font-size: 8px;
-            font-weight: 700;
-            line-height: 1.4;
         }
-        .agent-card .ac-tasks { font-size: 9px; color: #8e99b5; margin-top: 3px; }
+        .agent-card .ac-tasks { font-size: 9px; color: var(--text-dim); margin-top: 4px; }
         .agent-card .ac-glow {
-            position: absolute; top: -18px; right: -18px; width: 38px; height: 38px;
-            border-radius: 50%; opacity: 0.16; filter: blur(10px);
+            position: absolute; top: -20px; right: -20px; width: 40px; height: 40px;
+            border-radius: 50%; opacity: 0.15; filter: blur(10px);
         }
 
-        #ollama-status { padding: 0; font-size: 10px; color: #96a1bc; }
-        .ollama-grid { display: flex; flex-wrap: wrap; gap: 6px; }
-        .ollama-pill {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(136,151,191,0.24);
-            border-radius: 7px;
-            padding: 4px 7px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            min-width: 0;
-        }
-        .ollama-pill.active {
-            border-color: rgba(104,255,159,0.55);
-            background: rgba(104,255,159,0.08);
-        }
-        .ollama-pill .om-name { color: #edf4ff; font-weight: 600; font-size: 10px; }
-        .ollama-pill .om-info {
-            color: #8d98b4;
-            font-size: 8px;
-            max-width: 120px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .ollama-footnote { margin-top: 5px; font-size: 9px; color: #7e89a8; }
-
-        .task-list {
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 7px;
-        }
+        /* 任务列表 */
+        .task-list { padding: 0 16px 16px; }
         .task-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-            padding: 8px 9px;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(136,151,191,0.22);
-            border-radius: 8px;
-            transition: all 0.18s;
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 12px; background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 8px; margin-bottom: 6px; transition: all 0.2s;
         }
-        .task-item:hover { border-color: rgba(136,151,191,0.44); background: rgba(255,255,255,0.04); }
+        .task-item:hover { border-color: #444; background: var(--bg-hover); }
         .task-item .ti-priority {
             font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
             flex: 0 0 auto;
@@ -688,56 +499,20 @@
         .ti-p2 { background: rgba(33,150,243,0.2); color: #2196f3; }
         .ti-p3 { background: rgba(158,158,158,0.2); color: #9e9e9e; }
         .task-item .ti-info { flex: 1; min-width: 0; }
-        .task-item .ti-name {
-            font-size: 11px;
-            color: var(--text-bright);
-            font-weight: 600;
-            line-height: 1.4;
-        }
-        .task-item .ti-desc {
-            font-size: 9px;
-            color: #8f9bb8;
-            margin-top: 2px;
-            line-height: 1.4;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-        .task-item .ti-meta {
-            margin-top: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-        }
-        .task-item .ti-agent { font-size: 9px; color: #8f9bb8; flex: 0 0 auto; }
+        .task-item .ti-name { font-size: 11px; color: var(--text-bright); font-weight: 600; }
+        .task-item .ti-desc { font-size: 9px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .task-item .ti-agent { font-size: 10px; flex: 0 0 auto; }
         .task-item .ti-status {
-            font-size: 9px;
-            padding: 2px 6px;
-            border-radius: 6px;
-            flex: 0 0 auto;
+            font-size: 9px; padding: 2px 8px; border-radius: 6px; flex: 0 0 auto;
         }
         .ts-todo { background: rgba(158,158,158,0.15); color: #9e9e9e; }
         .ts-doing { background: rgba(33,150,243,0.15); color: #42a5f5; }
         .ts-done { background: rgba(76,175,80,0.15); color: #4caf50; }
         .ts-cancel { background: rgba(244,67,54,0.1); color: #888; }
         .task-item .ti-progress {
-            flex: 0 0 56px;
-            height: 3px;
-            background: #21263a;
-            border-radius: 2px;
-            overflow: hidden;
+            flex: 0 0 60px; height: 4px; background: #222; border-radius: 2px; overflow: hidden;
         }
         .task-item .ti-progress-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
-        .task-list-empty {
-            border: 1px dashed rgba(136,151,191,0.25);
-            border-radius: 8px;
-            font-size: 10px;
-            color: #8491af;
-            text-align: center;
-            padding: 12px 8px;
-        }
     </style>
     <style>
         /* ===== 任务中心子 tabs ===== */
@@ -1198,9 +973,16 @@
             border-bottom-color: rgba(57,213,255,0.2);
             box-shadow: inset 0 -1px 0 rgba(255,79,185,0.08);
         }
+        #log-led-banner {
+            position: relative;
+            z-index: 3;
+        }
         #log-panel {
             z-index: 1;
             min-height: 200px;
+        }
+        .log-header .a-state {
+            margin-left: auto;
         }
 
         @media (max-width: 1560px) {
@@ -1225,6 +1007,8 @@
             .log-v1-row { gap: 6px; }
             .log-v1-overview.compact { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
             .log-v1-stat { padding: 5px 7px; }
+            #log-led-banner { height: 22px; }
+            .log-led-track { line-height: 22px; font-size: 9px; }
             .log-line { grid-template-columns: 96px 12px minmax(0, 1fr); column-gap: 3px; }
         }
 
@@ -1235,21 +1019,14 @@
             #office-left {
                 border-right: none;
                 border-bottom: 1px solid rgba(57,213,255,0.14);
-                min-height: 64vh;
+                min-height: 60vh;
             }
             #office-right {
                 flex: 0 0 auto;
                 width: 100%;
-                max-height: 34vh;
+                max-height: 40vh;
                 border-left: none;
-                border-top: 1px solid rgba(57,213,255,0.14);
             }
-            .right-stack {
-                display: grid;
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 8px;
-            }
-            .right-card:last-child { grid-column: span 2; }
             #game-container { max-height: 34vh; }
             .agent-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); }
             .log-v1-overview.compact { grid-template-columns: 1fr; }
@@ -1261,195 +1038,11 @@
             #top-bar { padding: 0 8px; gap: 2px; }
             .nav-tab { font-size: 11px; padding: 8px 8px; }
             .clock-display { display: none; }
-            #top-bar .right-info { margin-left: 6px; gap: 6px; }
-            #fps-indicator { display: none; }
-            .fx-toggle, .theme-toggle { padding: 2px 8px; font-size: 9px; }
+            #top-bar .right-info { margin-left: 6px; }
             .live-dot { width: 6px; height: 6px; }
             #agent-bar { max-height: 72px; overflow-y: auto; }
-            #office-left { min-height: 66vh; }
-            #office-right { max-height: 34vh; }
-            .right-stack { grid-template-columns: 1fr; }
-            .right-card:last-child { grid-column: auto; }
-            .agent-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+            .agent-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
             .log-header .a-model { max-width: 120px; }
-        }
-    </style>
-
-    <style id="non-ai-retheme-v1-overrides">
-        /* ===== 配色重做 V1：重点提升日志区 + 右侧面板可读性 ===== */
-        #game-container {
-            background:
-                radial-gradient(120% 100% at 50% 0%, rgba(127,159,195,0.12), transparent 52%),
-                linear-gradient(180deg, rgba(31,43,60,0.95) 0%, rgba(21,30,44,0.95) 40%, rgba(20,24,33,0.96) 100%);
-            box-shadow:
-                inset 0 -12px 30px rgba(0,0,0,0.35),
-                inset 0 1px 0 rgba(255,255,255,0.06),
-                0 10px 24px rgba(0,0,0,0.22);
-        }
-        #game-container::before {
-            background:
-                linear-gradient(rgba(0,0,0,0) 50%, rgba(8,12,20,0.14) 50%),
-                linear-gradient(90deg, transparent 96%, rgba(127,159,195,0.04) 100%);
-            opacity: 0.28;
-        }
-        #game-container::after {
-            background:
-                radial-gradient(120% 100% at 50% 120%, rgba(195,138,85,0.12), transparent 45%),
-                linear-gradient(180deg, transparent 72%, rgba(127,159,195,0.06) 100%);
-        }
-
-        #agent-bar {
-            background: rgba(24,33,47,0.94);
-            border-bottom: 1px solid rgba(79,95,121,0.85);
-        }
-        .agent-chip {
-            color: var(--text-main, var(--text));
-        }
-
-        #log-enhance-v1 {
-            border-bottom-color: var(--log-divider);
-            background: linear-gradient(180deg, rgba(22,30,43,0.98), rgba(18,25,37,0.95));
-            box-shadow: inset 0 -1px 0 rgba(195,138,85,0.15);
-        }
-        .log-v1-stat {
-            background: rgba(255,255,255,0.03);
-            border-color: rgba(111,131,160,0.42);
-            color: var(--text-dim);
-        }
-        .log-v1-stat .label { color: var(--text-dim); opacity: 0.84; }
-        .log-chip {
-            border-color: rgba(79,95,121,0.9);
-            background: rgba(255,255,255,0.02);
-            color: var(--text-dim);
-        }
-        .log-chip:hover {
-            color: var(--text-bright);
-            border-color: rgba(127,159,195,0.62);
-            background: rgba(127,159,195,0.14);
-        }
-        .log-chip.active {
-            color: var(--text-bright);
-            border-color: var(--accent2);
-            background: rgba(110,144,184,0.24);
-            box-shadow: inset 0 0 0 1px rgba(110,144,184,0.18);
-        }
-        .log-chip.danger.active {
-            border-color: var(--red);
-            background: rgba(185,117,111,0.25);
-            box-shadow: inset 0 0 0 1px rgba(185,117,111,0.18);
-        }
-        .log-action-btn {
-            border-color: rgba(79,95,121,0.8);
-            background: rgba(255,255,255,0.03);
-            color: var(--text-dim);
-        }
-        .log-action-btn:hover {
-            color: var(--text-bright);
-            border-color: rgba(127,159,195,0.68);
-            background: rgba(127,159,195,0.14);
-        }
-        .log-action-btn.active {
-            border-color: var(--accent);
-            background: rgba(195,138,85,0.25);
-        }
-
-        #log-panel {
-            background: var(--log-bg);
-        }
-        #log-panel::-webkit-scrollbar-track { background: transparent; }
-        #log-panel::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 2px; }
-        .log-section {
-            border-bottom-color: var(--log-divider);
-            background: var(--log-section-bg);
-        }
-        .log-section:hover { background: var(--log-section-hover); }
-        .log-section.has-error {
-            border-left: 2px solid var(--red);
-            background: rgba(185,117,111,0.11);
-        }
-        .log-section.is-active { border-left: 2px solid var(--green); }
-        .log-header .a-name { color: var(--text-bright); }
-        .log-header .a-model { color: var(--text-dim); }
-        .log-line {
-            font-size: 10px;
-            line-height: 1.55;
-            color: var(--log-system);
-            grid-template-columns: 118px 14px minmax(0, 1fr);
-            column-gap: 6px;
-        }
-        .log-line .lt { color: var(--log-time); }
-        .log-line.r-user .lx { color: var(--log-user); }
-        .log-line.r-assistant .lx { color: var(--log-assistant); }
-        .log-line.r-tool .lx { color: var(--log-tool); }
-        .log-line.r-error .lx { color: var(--log-error); font-weight: 600; }
-        .log-line.r-system .lx { color: var(--log-system); }
-
-        #office-right {
-            background: linear-gradient(180deg, rgba(24,34,48,0.94) 0%, var(--panel-bg) 100%);
-            border-left-color: rgba(127,159,195,0.26);
-        }
-        #office-right::-webkit-scrollbar-thumb { background: rgba(127,159,195,0.55); }
-        .dash-header {
-            color: var(--text-bright);
-            border-bottom-color: rgba(127,159,195,0.28);
-            background: linear-gradient(135deg, var(--panel-header-bg-a), var(--panel-header-bg-b));
-        }
-        .dash-header .sub { color: var(--text-dim); }
-        .right-card {
-            background: rgba(255,255,255,0.02);
-            border-color: rgba(127,159,195,0.3);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-        }
-        .right-card-head { border-bottom-color: rgba(127,159,195,0.2); }
-        .right-card-title { color: var(--text-bright); }
-        .right-card-sub { color: var(--text-dim); }
-        .stat-card,
-        .mini-kpi,
-        .agent-card,
-        .task-item,
-        .ollama-pill {
-            background: rgba(255,255,255,0.02);
-            border-color: rgba(127,159,195,0.26);
-        }
-        .stat-card:hover,
-        .agent-card:hover,
-        .task-item:hover {
-            border-color: rgba(127,159,195,0.48);
-        }
-        .stat-card .sc-label,
-        .mini-kpi .kpi-label,
-        .task-item .ti-desc,
-        .task-item .ti-agent,
-        .agent-card .ac-tasks,
-        #ollama-status,
-        .ollama-pill .om-info {
-            color: var(--text-dim);
-        }
-        .mini-kpi .kpi-value,
-        .ollama-pill .om-name,
-        .task-item .ti-name {
-            color: var(--text-bright);
-        }
-        .mini-kpi .kpi-dot {
-            background: var(--accent2);
-            box-shadow: 0 0 8px rgba(110,144,184,0.45);
-        }
-
-        .street-fx.complete {
-            color: #eef8ee;
-            background: rgba(18,40,28,0.72);
-            border-color: rgba(120,168,134,0.52);
-            text-shadow: 0 0 8px rgba(120,168,134,0.4);
-        }
-        .street-fx.failed {
-            color: #f9ecea;
-            background: rgba(48,23,24,0.72);
-            border-color: rgba(185,117,111,0.55);
-            text-shadow: 0 0 8px rgba(185,117,111,0.42);
-        }
-
-        @media (max-width: 1360px) {
-            .log-line { grid-template-columns: 104px 12px minmax(0, 1fr); column-gap: 4px; }
         }
     </style>
 </head>
@@ -1469,9 +1062,6 @@
             <span class="live-dot"></span>
             <span class="stat-badge">在线 <span class="num" id="online-count">0</span>/<span id="total-count">0</span></span>
             <span class="stat-badge">进行中 <span class="num" id="active-count">0</span></span>
-            <span class="stat-badge" id="fps-indicator">FPS --</span>
-            <button id="fx-toggle" class="fx-toggle" title="切换渲染质量（高质/低配）">🚀 高质</button>
-            <button id="theme-toggle" class="theme-toggle" title="切换色盘（暮色/营地）">🌆 暮色</button>
             <span class="clock-display" id="clock"></span>
         </div>
     </div>
@@ -1480,14 +1070,7 @@
         <!-- ===== 指挥中心（办公室+仪表盘） ===== -->
         <div id="view-office" class="view-panel active">
             <div id="office-left">
-                <div id="game-container">
-                    <div id="v2-fx-overlays" aria-hidden="true">
-                        <div class="v2-overlay-rain"></div>
-                        <div class="v2-overlay-fog"></div>
-                        <div class="v2-overlay-haze"></div>
-                        <div class="v2-overlay-scan"></div>
-                    </div>
-                </div>
+                <div id="game-container"></div>
                 <div id="agent-bar"></div>
                 <!-- 卷轴任务面板浮动层 -->
                 <div id="scroll-wrapper">
@@ -1527,7 +1110,16 @@
                     </div>
                 </div>
                 <div id="log-enhance-v1">
-                    <div class="log-v1-dedup-inline">去重统计：<span class="value ok" id="logv1-dedup">0 / 0</span></div>
+                    <div class="log-v1-row log-v1-overview compact">
+                        <div class="log-v1-stat">
+                            <span class="label">风险概览（顶部已显示在线/进行中）</span>
+                            <span class="value warn" id="logv1-block-err">阻塞 0 / 错误 0</span>
+                        </div>
+                        <div class="log-v1-stat">
+                            <span class="label">日志去重（保留时序）</span>
+                            <span class="value ok" id="logv1-dedup">0 / 0</span>
+                        </div>
+                    </div>
                     <div class="log-v1-row" id="log-filter-chips"></div>
                     <div class="log-v1-row" id="log-actions">
                         <button class="log-action-btn" id="log-btn-clear">清屏仅视图</button>
@@ -1536,6 +1128,7 @@
                         <button class="log-action-btn" id="log-btn-export">导出最近200条</button>
                     </div>
                 </div>
+                <div id="log-led-banner"><div id="log-led-track" class="log-led-track">[LED] 初始化中…</div></div>
                 <div id="log-panel"></div>
                 <div id="street-fx-layer"></div>
             </div>
@@ -1543,65 +1136,11 @@
                 <div class="dash-header">
                     📊 任务仪表盘 <span class="sub">实时数据 · 自动刷新</span>
                 </div>
-                <div class="right-stack">
-                    <section class="right-card">
-                        <div class="right-card-head">
-                            <span class="right-card-title">🎯 任务总览</span>
-                            <span class="right-card-sub">自动刷新</span>
-                        </div>
-                        <div class="right-card-body">
-                            <div class="stat-row" id="stat-cards"></div>
-                            <div class="right-split">
-                                <div class="mini-kpi">
-                                    <div class="kpi-label">在线 Agent</div>
-                                    <div class="kpi-value"><span class="kpi-dot"></span><span id="right-kpi-online">0/0</span></div>
-                                </div>
-                                <div class="mini-kpi">
-                                    <div class="kpi-label">活跃 Agent</div>
-                                    <div class="kpi-value"><span id="right-kpi-active">0</span></div>
-                                </div>
-                                <div class="mini-kpi">
-                                    <div class="kpi-label">待办任务</div>
-                                    <div class="kpi-value"><span id="right-kpi-todo">0</span></div>
-                                </div>
-                                <div class="mini-kpi">
-                                    <div class="kpi-label">已完成率</div>
-                                    <div class="kpi-value"><span id="right-kpi-done-rate">0%</span></div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section class="right-card">
-                        <div class="right-card-head">
-                            <span class="right-card-title">🦙 本地模型 (Ollama)</span>
-                            <span class="right-card-sub">运行态</span>
-                        </div>
-                        <div class="right-card-body">
-                            <div id="ollama-status">检测中...</div>
-                        </div>
-                    </section>
-
-                    <section class="right-card">
-                        <div class="right-card-head">
-                            <span class="right-card-title">🤖 Agent 工作负载</span>
-                            <span class="right-card-sub">实时状态</span>
-                        </div>
-                        <div class="right-card-body">
-                            <div class="agent-grid" id="agent-grid"></div>
-                        </div>
-                    </section>
-
-                    <section class="right-card">
-                        <div class="right-card-head">
-                            <span class="right-card-title">🧾 最新任务</span>
-                            <span class="right-card-sub">按优先级 / 状态</span>
-                        </div>
-                        <div class="right-card-body">
-                            <div class="task-list" id="right-task-list"></div>
-                        </div>
-                    </section>
-                </div>
+                <div class="stat-row" id="stat-cards"></div>
+                <div class="section-title">🦙 本地模型 (Ollama)</div>
+                <div id="ollama-status" style="padding:0 12px 8px;font-size:10px;color:var(--text-dim)">检测中...</div>
+                <div class="section-title">🤖 Agent 工作负载</div>
+                <div class="agent-grid" id="agent-grid"></div>
             </div>
         </div>
 
@@ -1617,14 +1156,7 @@
     <script>
     // ============ 全局数据 ============
     let agentsData = {}, tasksData = [], agentSprites = {}, game = null;
-    let cyberLayers = null, deptSigns = {}, prevTaskStatusMap = {}, sceneFx = null;
-    const PERF_STATE = {
-        mode: 'high',
-        lowFpsTicks: 0,
-        fpsBuffer: [],
-        lastCheck: 0,
-        autoSwitched: false,
-    };
+    let cyberLayers = null, deptSigns = {}, prevTaskStatusMap = {};
     const FETCH_INTERVAL = 3000, TASK_FETCH_INTERVAL = 15000;
     let lastFetch = 0, lastTaskFetch = 0;
 
@@ -1652,12 +1184,12 @@
         cmd:  { work:{x:1151,y:508,spread:110}, rest:{x:1391,y:508,spread:70} },
     };
     const DEPT_META = {
-        info: { name: '情报室', icon: '📰', color: 0x7f9fc3 },
-        dev:  { name: '开发区', icon: '💻', color: 0x78a886 },
-        test: { name: '测试区', icon: '🧪', color: 0x8f86b8 },
-        fin:  { name: '金融区', icon: '💰', color: 0xc8ac67 },
-        plan: { name: '策划产品', icon: '📋', color: 0xc38a55 },
-        cmd:  { name: '指挥中心', icon: '🗡️', color: 0x6e90b8 },
+        info: { name: '情报室', icon: '📰', color: 0x39d5ff },
+        dev:  { name: '开发区', icon: '💻', color: 0x68ff9f },
+        test: { name: '测试区', icon: '🧪', color: 0x8f7bff },
+        fin:  { name: '金融区', icon: '💰', color: 0xffd45a },
+        plan: { name: '策划产品', icon: '📋', color: 0xff4fb9 },
+        cmd:  { name: '指挥中心', icon: '🗡️', color: 0x6ec8ff },
     };
     // 每个 agent 的归属部门
     const AGENT_HOME = {
@@ -1723,8 +1255,13 @@
         task12:'量化交易', task13:'战略顾问', task14:'趋势追踪', task15:'应急向导', task16:'防御稳定'
     };
 
+
+    const LOG_V1_TASK_IDS = Array.from({ length: 16 }, (_, i) => `task${i + 1}`);
     const LOG_V1_BASE_FILTERS = [
-        { id: 'all', label: '全部弟子' },
+        { id: 'all', label: '全部' },
+        { id: 'error', label: '错误', danger: true },
+        { id: 'warning', label: '警告' },
+        { id: 'done', label: '完成' },
     ];
     const logV1State = {
         selectedFilter: 'all',
@@ -1735,28 +1272,6 @@
         dedupStats: { sourceTotal: 0, uniqueTotal: 0, droppedTotal: 0 },
         pendingRefresh: false,
     };
-    let highlightedAgentId = null;
-
-    function setCanvasAgentHighlight(agentId) {
-        const nextId = agentId && agentId !== 'all' ? agentId : null;
-        highlightedAgentId = nextId;
-
-        for (const [id, a] of Object.entries(agentSprites || {})) {
-            if (!a) continue;
-            const active = !!nextId && id === nextId;
-            if (a.highlightRing) {
-                a.highlightRing.setVisible(active);
-                a.highlightRing.setAlpha(active ? 1 : 0);
-            }
-            if (a.highlightGlow) {
-                a.highlightGlow.setVisible(active);
-                a.highlightGlow.setAlpha(active ? 0.5 : 0);
-            }
-            if (a.highlightTween) {
-                a.highlightTween.paused = !active;
-            }
-        }
-    }
 
     function logV1IsError(log) {
         const txt = safeText(log && log.text).toLowerCase();
@@ -1864,71 +1379,41 @@
         }
         logV1UpdateDedupBadge(logV1State.dedupStats);
     }
+
     function logV1BuildChips(logsMap, agents) {
         const wrap = document.getElementById('log-filter-chips');
         if (!wrap) return;
 
-        const agentMap = agents && typeof agents === 'object' ? agents : {};
-        const allIds = Array.from(new Set([
-            ...Object.keys(agentMap),
-            ...Object.keys(logsMap || {}),
-        ]));
-
-        const sortedIds = allIds.sort((a, b) => {
-            const la = Array.isArray(logsMap && logsMap[a]) ? logsMap[a] : [];
-            const lb = Array.isArray(logsMap && logsMap[b]) ? logsMap[b] : [];
-            const ta = la.length ? safeText(la[la.length - 1].ts) : '';
-            const tb = lb.length ? safeText(lb[lb.length - 1].ts) : '';
-            if (ta !== tb) return tb.localeCompare(ta);
-            const na = safeText((agentMap[a] || {}).name || a);
-            const nb = safeText((agentMap[b] || {}).name || b);
-            return na.localeCompare(nb, 'zh-Hans-CN');
-        });
-
         const filters = [
             ...LOG_V1_BASE_FILTERS,
-            ...sortedIds.map(id => {
-                const a = agentMap[id] || {};
-                return {
-                    id,
-                    label: `${safeText(a.emoji || '🤖')} ${safeText(a.name || id)}`,
-                };
-            }),
+            ...LOG_V1_TASK_IDS.map(id => ({ id, label: id }))
         ];
+        const counts = {};
+        for (const f of filters) counts[f.id] = 0;
 
-        const counts = { all: 0 };
-        for (const id of sortedIds) {
-            const rows = Array.isArray(logsMap && logsMap[id]) ? logsMap[id] : [];
-            counts[id] = rows.length;
-            counts.all += rows.length;
-        }
-
-        const allowed = new Set(['all', ...sortedIds]);
-        if (!allowed.has(logV1State.selectedFilter)) {
-            logV1State.selectedFilter = 'all';
+        for (const [aid, rows] of Object.entries(logsMap || {})) {
+            const arr = Array.isArray(rows) ? rows : [];
+            counts.all += arr.length;
+            if (LOG_V1_TASK_IDS.includes(aid)) counts[aid] = arr.length;
+            counts.error += arr.filter(logV1IsError).length;
+            counts.warning += arr.filter(logV1IsWarning).length;
+            counts.done += arr.filter(logV1IsDone).length;
         }
 
         wrap.innerHTML = filters.map(f => {
             const active = logV1State.selectedFilter === f.id ? ' active' : '';
+            const danger = f.danger ? ' danger' : '';
             const count = counts[f.id] || 0;
-            return `<button class="log-chip${active}" data-log-filter="${f.id}">${escapeHtml(f.label)} <span style="opacity:.7">${count}</span></button>`;
+            return `<button class="log-chip${active}${danger}" data-log-filter="${f.id}">${escapeHtml(f.label)} <span style="opacity:.7">${count}</span></button>`;
         }).join('');
 
         wrap.querySelectorAll('[data-log-filter]').forEach(btn => {
             btn.addEventListener('click', () => {
-                const picked = btn.getAttribute('data-log-filter') || 'all';
-                if (picked !== 'all' && logV1State.selectedFilter === picked) {
-                    logV1State.selectedFilter = 'all';
-                } else {
-                    logV1State.selectedFilter = picked;
-                }
-                setCanvasAgentHighlight(logV1State.selectedFilter === 'all' ? null : logV1State.selectedFilter);
+                logV1State.selectedFilter = btn.getAttribute('data-log-filter') || 'all';
                 logV1State.pendingRefresh = true;
                 renderLogs(logV1State.rawLogs, logV1State.rawAgents, { force: true });
             });
         });
-
-        setCanvasAgentHighlight(logV1State.selectedFilter === 'all' ? null : logV1State.selectedFilter);
     }
 
     function logV1RefreshActionBtnState() {
@@ -2018,398 +1503,102 @@
     } else {
         initLogEnhanceV1();
     }
-    const THEME_STATE = {
-        mode: 'command',
-        key: 'star-office-theme'
-    };
-
-    function updateThemeBadge() {
-        const btn = document.getElementById('theme-toggle');
-        if (!btn) return;
-        const mode = THEME_STATE.mode === 'adventure' ? 'adventure' : 'command';
-        btn.textContent = mode === 'adventure' ? '🏕️ 营地' : '🌆 暮色';
-        btn.title = mode === 'adventure' ? '切换到暮色指挥站主题' : '切换到旅团营地主题';
-    }
-
-    function applyThemeMode(mode, opts = {}) {
-        const next = mode === 'adventure' ? 'adventure' : 'command';
-        THEME_STATE.mode = next;
-        document.body.setAttribute('data-theme', next);
-        if (opts.persist !== false) {
-            try { localStorage.setItem(THEME_STATE.key, next); } catch (e) {}
-        }
-        updateThemeBadge();
-    }
-
-    function initThemeMode() {
-        const btn = document.getElementById('theme-toggle');
-        if (btn) {
-            btn.addEventListener('click', () => {
-                applyThemeMode(THEME_STATE.mode === 'adventure' ? 'command' : 'adventure');
-            });
-        }
-        let saved = '';
-        try { saved = localStorage.getItem(THEME_STATE.key) || ''; } catch (e) {}
-        applyThemeMode(saved || 'command', { persist: false });
-    }
-
-    function isLowFxMode() {
-        return PERF_STATE.mode === 'low';
-    }
-
-    function updatePerfBadge(avgFps) {
-        const fpsEl = document.getElementById('fps-indicator');
-        if (fpsEl) {
-            const fpsText = Number.isFinite(avgFps) ? Math.round(avgFps) : '--';
-            fpsEl.textContent = `FPS ${fpsText}`;
-            fpsEl.classList.toggle('low', isLowFxMode());
-        }
-        const btn = document.getElementById('fx-toggle');
-        if (btn) {
-            const low = isLowFxMode();
-            btn.classList.toggle('low', low);
-            btn.textContent = low ? '⚡ 低配' : '🚀 高质';
-        }
-    }
-
-    function applySceneFxQuality() {
-        if (!cyberLayers) return;
-        const low = isLowFxMode();
-        if (Array.isArray(cyberLayers.rainDrops)) {
-            cyberLayers.rainDrops.forEach(d => d.obj.setVisible(!low));
-        }
-        if (Array.isArray(cyberLayers.fogBands)) {
-            cyberLayers.fogBands.forEach((fog, idx) => {
-                fog.setVisible(!low || idx === 0);
-                fog.setAlpha(low ? 0.06 : (0.08 + idx * 0.03));
-            });
-        }
-        if (cyberLayers.scanPulse) {
-            cyberLayers.scanPulse.setVisible(!low);
-            cyberLayers.scanPulse.setAlpha(low ? 0.06 : 0.16);
-        }
-        if (Array.isArray(cyberLayers.neonLines)) {
-            cyberLayers.neonLines.forEach(l => l.setAlpha(low ? 0.28 : 0.56));
-        }
-    }
-
-    function applyPerformanceMode(mode, opts = {}) {
-        const next = mode === 'low' ? 'low' : 'high';
-        PERF_STATE.mode = next;
-        document.body.classList.toggle('fx-low', next === 'low');
-        if (opts.persist !== false) {
-            try { localStorage.setItem('star-office-fx-mode', next); } catch(e) {}
-        }
-        updatePerfBadge(PERF_STATE.fpsBuffer.length ? (PERF_STATE.fpsBuffer.reduce((a,b)=>a+b,0)/PERF_STATE.fpsBuffer.length) : NaN);
-        applySceneFxQuality();
-    }
-
-    function initPerformanceMode() {
-        const btn = document.getElementById('fx-toggle');
-        if (btn) {
-            btn.addEventListener('click', () => {
-                const next = isLowFxMode() ? 'high' : 'low';
-                PERF_STATE.autoSwitched = false;
-                PERF_STATE.lowFpsTicks = 0;
-                applyPerformanceMode(next);
-            });
-        }
-        let saved = '';
-        try { saved = localStorage.getItem('star-office-fx-mode') || ''; } catch(e) {}
-        const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        applyPerformanceMode(saved || (reduce ? 'low' : 'high'), { persist: false });
-    }
-
-    function perfMonitorTick(time) {
-        if (!game || !game.loop) return;
-        const fps = game.loop.actualFps || 60;
-        PERF_STATE.fpsBuffer.push(fps);
-        if (PERF_STATE.fpsBuffer.length > 20) PERF_STATE.fpsBuffer.shift();
-        if (!PERF_STATE.lastCheck) PERF_STATE.lastCheck = time;
-        if (time - PERF_STATE.lastCheck < 1200) return;
-
-        const avg = PERF_STATE.fpsBuffer.reduce((a, b) => a + b, 0) / Math.max(PERF_STATE.fpsBuffer.length, 1);
-        updatePerfBadge(avg);
-
-        if (!isLowFxMode()) {
-            if (avg < 40) PERF_STATE.lowFpsTicks += 1;
-            else PERF_STATE.lowFpsTicks = Math.max(0, PERF_STATE.lowFpsTicks - 1);
-            if (PERF_STATE.lowFpsTicks >= 4 && !PERF_STATE.autoSwitched) {
-                PERF_STATE.autoSwitched = true;
-                applyPerformanceMode('low');
-            }
-        }
-        PERF_STATE.lastCheck = time;
-    }
 
     // ============ 赛博像素街区层 + 部门招牌 ============
-    function createIsoBuilding(scene, opts) {
-        const {
-            x, groundY, width, height, depth,
-            front, side, top, neon,
-            alpha = 1, z = 2,
-            rows = 4, cols = 3,
-        } = opts;
-        const wrap = scene.add.container(x, groundY);
-        const shadow = scene.add.ellipse(depth * 0.32, 5, width + depth * 1.7, 13, 0x000000, 0.2 * alpha);
-
-        const topFace = scene.add.polygon(0, 0, [
-            -width / 2, -height,
-            width / 2, -height,
-            width / 2 + depth, -height - depth * 0.55,
-            -width / 2 + depth, -height - depth * 0.55,
-        ], top, 0.96 * alpha);
-        const frontFace = scene.add.rectangle(0, -height / 2, width, height, front, 0.96 * alpha);
-        const sideFace = scene.add.polygon(0, 0, [
-            width / 2, -height,
-            width / 2 + depth, -height - depth * 0.55,
-            width / 2 + depth, -depth * 0.55,
-            width / 2, 0,
-        ], side, 0.92 * alpha);
-
-        const edge = scene.add.graphics();
-        edge.lineStyle(1, 0xa7bbd3, 0.3 * alpha);
-        edge.strokeLineShape(new Phaser.Geom.Line(-width / 2, -height, width / 2, -height));
-        edge.strokeLineShape(new Phaser.Geom.Line(width / 2, -height, width / 2 + depth, -height - depth * 0.55));
-        edge.strokeLineShape(new Phaser.Geom.Line(width / 2 + depth, -height - depth * 0.55, width / 2 + depth, -depth * 0.55));
-
-        const neonLine = scene.add.rectangle(0, -height + 9, width * 0.72, 2, neon, 0.56 * alpha)
-            .setBlendMode(Phaser.BlendModes.ADD);
-
-        const windows = [];
-        const rowH = Math.max(10, (height - 20) / rows);
-        const colW = Math.max(10, (width - 14) / cols);
-        for (let r = 0; r < rows; r++) {
-            for (let c = 0; c < cols; c++) {
-                const wx = -width / 2 + 8 + c * colW + (c % 2 ? 1 : 0);
-                const wy = -height + 12 + r * rowH;
-                const tint = (r + c) % 3 === 0 ? neon : (r % 2 ? 0xb4946d : 0x7f9fc3);
-                const w = scene.add.rectangle(wx, wy, 4, 6, tint, 0.2 + Math.random() * 0.4)
-                    .setOrigin(0, 0);
-                windows.push(w);
-            }
-        }
-
-        wrap.add([shadow, topFace, frontFace, sideFace, edge, neonLine, ...windows]);
-        wrap.setDepth(z);
-        return { wrap, windows, neonLine, baseX: x };
-    }
-
     function createCyberStreetLayers(scene) {
-        const low = isLowFxMode();
-        const farBand = scene.add.rectangle(800, 188, 1600, 238, 0x1a2436, 0.96).setDepth(1);
-        const hazeBack = scene.add.rectangle(800, 220, 1600, 180, 0x2a3b55, 0.1)
-            .setDepth(2)
-            .setBlendMode(Phaser.BlendModes.ADD);
+        const far = scene.add.graphics();
+        far.fillStyle(0x0c1428, 0.95);
+        far.fillRect(0, 112, 1600, 180);
+        for (let i = 0; i < 46; i++) {
+            const x = 20 + i * 34;
+            const w = 18 + (i % 4) * 8;
+            const h = 35 + ((i * 13) % 88);
+            far.fillStyle(0x172540 + (i % 3) * 0x060606, 0.92);
+            far.fillRect(x, 292 - h, w, h);
+        }
 
         const windows = [];
-        const neonLines = [];
-        const parallaxNodes = [];
-
-        const farCount = low ? 14 : 22;
-        for (let i = 0; i < farCount; i++) {
-            const x = 40 + i * (1600 / farCount) + (i % 2 ? 10 : -8);
-            const h = 58 + (i % 5) * 18;
-            const b = createIsoBuilding(scene, {
-                x,
-                groundY: 302,
-                width: 38 + (i % 3) * 7,
-                height: h,
-                depth: 12,
-                front: 0x2a3449,
-                side: 0x212a3c,
-                top: 0x3f4d66,
-                neon: i % 2 ? 0x7f9fc3 : 0xc8ac67,
-                alpha: 0.9,
-                z: 2 + (i % 2),
-                rows: 3,
-                cols: 2,
-            });
-            windows.push(...b.windows);
-            neonLines.push(b.neonLine);
-            if (i % 2 === 0) parallaxNodes.push({ node: b.wrap, baseX: b.baseX, amp: 4 + (i % 3), speed: 2200 + i * 20 });
+        for (let i = 0; i < 72; i++) {
+            const wx = 20 + (i * 43) % 1560;
+            const wy = 138 + ((i * 37) % 138);
+            const ww = (i % 2 === 0) ? 3 : 4;
+            const wh = (i % 3 === 0) ? 5 : 4;
+            const c = (i % 3 === 0) ? 0x39d5ff : (i % 3 === 1 ? 0xff4fb9 : 0x8f7bff);
+            const light = scene.add.rectangle(wx, wy, ww, wh, c, 0.28 + (i % 5) * 0.1).setOrigin(0.5);
+            windows.push(light);
         }
 
-        const midCount = low ? 12 : 18;
-        for (let i = 0; i < midCount; i++) {
-            const x = 30 + i * (1600 / midCount) + (i % 2 ? 14 : -10);
-            const b = createIsoBuilding(scene, {
-                x,
-                groundY: 378,
-                width: 58 + (i % 4) * 7,
-                height: 88 + (i % 5) * 15,
-                depth: 18,
-                front: 0x33435c,
-                side: 0x28364c,
-                top: 0x536788,
-                neon: i % 3 === 0 ? 0xc38a55 : 0x7f9fc3,
-                alpha: 0.98,
-                z: 6 + (i % 3),
-                rows: 5,
-                cols: 3,
-            });
-            windows.push(...b.windows);
-            neonLines.push(b.neonLine);
-            parallaxNodes.push({ node: b.wrap, baseX: b.baseX, amp: 7 + (i % 4), speed: 1450 + i * 24 });
+        const mid = scene.add.graphics();
+        for (let i = 0; i < 14; i++) {
+            const y = 326 + i * 12;
+            const alpha = i % 2 === 0 ? 0.16 : 0.08;
+            mid.lineStyle(1, 0x39d5ff, alpha);
+            mid.lineBetween(0, y, 1600, y);
+        }
+        for (let i = 0; i < 18; i++) {
+            const x = 25 + i * 90;
+            mid.lineStyle(1, 0x39d5ff, 0.09);
+            mid.lineBetween(x, 316, x + 28, 468);
         }
 
-        const ground = scene.add.graphics();
-        ground.fillStyle(0x1a2333, 0.95);
-        ground.fillRect(0, 432, 1600, 220);
-        ground.fillStyle(0x2c3a50, 0.95);
-        ground.fillRect(0, 428, 1600, 12);
-        ground.lineStyle(2, 0x7f9fc3, 0.13);
-        ground.lineBetween(0, 440, 1600, 440);
-        for (let i = 0; i < 22; i++) {
-            const x = i * 80;
-            ground.lineStyle(1, 0x7f9fc3, 0.06);
-            ground.lineBetween(x, 650, 800, 430);
-        }
-        for (let y = 0; y < 8; y++) {
-            const yy = 452 + y * 24;
-            ground.lineStyle(1, y % 2 ? 0x344663 : 0x465c7f, 0.18 - y * 0.014);
-            ground.lineBetween(0, yy, 1600, yy);
-        }
+        const near = scene.add.graphics();
+        near.fillStyle(0x080d18, 0.92);
+        near.fillRect(0, 470, 1600, 180);
+        near.fillStyle(0x0f1b31, 0.95);
+        near.fillRect(0, 468, 1600, 14);
+        near.lineStyle(2, 0xff4fb9, 0.28);
+        near.lineBetween(0, 484, 1600, 484);
+        near.lineStyle(1, 0x39d5ff, 0.2);
+        near.lineBetween(0, 494, 1600, 494);
 
-        const roadNeon = scene.add.graphics().setDepth(9);
-        roadNeon.lineStyle(2, 0xc38a55, 0.22);
-        roadNeon.lineBetween(0, 484, 1600, 484);
-        roadNeon.lineStyle(1, 0x7f9fc3, 0.22);
-        roadNeon.lineBetween(0, 498, 1600, 498);
-        roadNeon.lineStyle(1, 0x6e90b8, 0.18);
-        roadNeon.lineBetween(0, 512, 1600, 512);
+        const sweep = scene.add.rectangle(800, 438, 1800, 8, 0x39d5ff, 0.08);
 
-        const sweep = scene.add.rectangle(800, 452, 1800, 10, 0x7f9fc3, 0.08).setDepth(10);
-        const scanPulse = scene.add.rectangle(800, 470, 1600, 36, 0x6e90b8, 0.07)
-            .setDepth(11)
-            .setBlendMode(Phaser.BlendModes.ADD);
-
-        const rainDrops = [];
-        const rainCount = low ? 0 : 120;
-        for (let i = 0; i < rainCount; i++) {
-            const d = scene.add.rectangle(Math.random() * 1600, Math.random() * 650, 1, 8 + Math.random() * 10, 0x8ca4c2, 0.14)
-                .setAngle(14)
-                .setDepth(24 + (i % 2));
-            rainDrops.push({ obj: d, speed: 2.6 + Math.random() * 2.8, drift: 0.25 + Math.random() * 0.45 });
-        }
-
-        const fogBands = [
-            scene.add.ellipse(400, 542, 520, 92, 0x7489a8, 0.07).setDepth(23),
-            scene.add.ellipse(1120, 556, 620, 106, 0x8f7a62, 0.1).setDepth(23),
-            scene.add.ellipse(830, 575, 760, 118, 0x6b84a8, 0.07).setDepth(23),
-        ];
-
-        farBand.setDepth(1);
-        hazeBack.setDepth(2);
-        ground.setDepth(8);
-
-        cyberLayers = { windows, sweep, scanPulse, parallaxNodes, neonLines, rainDrops, fogBands };
-        sceneFx = cyberLayers;
-        applySceneFxQuality();
+        far.setDepth(1);
+        windows.forEach(w => w.setDepth(2));
+        mid.setDepth(3);
+        near.setDepth(4);
+        sweep.setDepth(5);
+        cyberLayers = { windows, sweep };
     }
 
     function animateCyberStreetLayers(time) {
         if (!cyberLayers) return;
-        const low = isLowFxMode();
         const t = time || 0;
-
         if (Array.isArray(cyberLayers.windows)) {
-            const step = low ? 3 : 1;
-            for (let i = 0; i < cyberLayers.windows.length; i += step) {
-                const w = cyberLayers.windows[i];
-                if (!w) continue;
-                w.alpha = (low ? 0.18 : 0.24) + Math.abs(Math.sin((t / 900) + i * 0.63)) * (low ? 0.22 : 0.5);
-            }
-        }
-        if (Array.isArray(cyberLayers.parallaxNodes)) {
-            const mul = low ? 0.35 : 1;
-            cyberLayers.parallaxNodes.forEach((n, i) => {
-                if (!n || !n.node) return;
-                n.node.x = n.baseX + Math.sin((t / n.speed) + i * 0.37) * n.amp * mul;
-            });
-        }
-        if (Array.isArray(cyberLayers.neonLines)) {
-            cyberLayers.neonLines.forEach((line, i) => {
-                if (!line) return;
-                line.alpha = (low ? 0.18 : 0.34) + Math.abs(Math.sin(t / 680 + i * 0.41)) * (low ? 0.14 : 0.4);
+            cyberLayers.windows.forEach((w, i) => {
+                if (!w) return;
+                w.alpha = 0.18 + Math.abs(Math.sin((t / 900) + i * 0.63)) * 0.55;
             });
         }
         if (cyberLayers.sweep) {
-            cyberLayers.sweep.x = 800 + Math.sin(t / 1300) * 220;
-            cyberLayers.sweep.alpha = (low ? 0.03 : 0.06) + Math.abs(Math.sin(t / 700)) * (low ? 0.06 : 0.12);
-        }
-        if (cyberLayers.scanPulse) {
-            cyberLayers.scanPulse.alpha = (low ? 0.04 : 0.08) + Math.abs(Math.sin(t / 780)) * (low ? 0.05 : 0.12);
-        }
-        if (!low && Array.isArray(cyberLayers.rainDrops)) {
-            cyberLayers.rainDrops.forEach((drop, i) => {
-                if (!drop || !drop.obj || !drop.obj.visible) return;
-                drop.obj.y += drop.speed;
-                drop.obj.x -= drop.drift;
-                if (drop.obj.y > 662 || drop.obj.x < -8) {
-                    drop.obj.y = -8 - Math.random() * 24;
-                    drop.obj.x = 1600 + Math.random() * 100;
-                }
-                if (i % 5 === 0) {
-                    drop.obj.alpha = 0.1 + Math.abs(Math.sin((t / 340) + i)) * 0.22;
-                }
-            });
-        }
-        if (Array.isArray(cyberLayers.fogBands)) {
-            cyberLayers.fogBands.forEach((fog, i) => {
-                if (!fog || !fog.visible) return;
-                fog.x += Math.sin((t / (2400 + i * 640)) + i) * (low ? 0.015 : 0.05);
-                fog.y += Math.cos((t / (2800 + i * 720)) + i) * (low ? 0.006 : 0.02);
-            });
+            cyberLayers.sweep.x = 800 + Math.sin(t / 1500) * 180;
+            cyberLayers.sweep.alpha = 0.05 + Math.abs(Math.sin(t / 700)) * 0.12;
         }
     }
 
     function createDeptShopSigns(scene) {
         deptSigns = {};
         Object.entries(DEPT_ZONES).forEach(([dept, zone]) => {
-            const meta = DEPT_META[dept] || { name: dept, icon: '🏪', color: 0x7f9fc3 };
+            const meta = DEPT_META[dept] || { name: dept, icon: '🏪', color: 0x39d5ff };
             const x = zone.work.x;
-            const y = zone.work.y - 104;
+            const y = zone.work.y - 96;
 
             const wrap = scene.add.container(x, y);
-            const shadow = scene.add.ellipse(3, 21, 176, 14, 0x000000, 0.22);
-            const boardBack = scene.add.rectangle(4, 0, 170, 34, 0x0a1223, 0.9)
-                .setStrokeStyle(1.5, shadeColorInt(meta.color, 0.65), 0.9);
-            const boardSide = scene.add.polygon(90, 0, [
-                0, -17,
-                10, -23,
-                10, 11,
-                0, 17,
-            ], 0x0b1730, 0.9);
-            const boardTop = scene.add.polygon(4, -17, [
-                -85, 0,
-                85, 0,
-                95, -6,
-                -75, -6,
-            ], shadeColorInt(meta.color, 0.48), 0.45);
-
-            const glow = scene.add.rectangle(0, 0, 174, 38, meta.color, 0.12)
-                .setBlendMode(Phaser.BlendModes.ADD);
+            const board = scene.add.rectangle(0, 0, 170, 34, 0x0b1020, 0.88);
+            board.setStrokeStyle(1.5, meta.color, 0.8);
+            const glow = scene.add.rectangle(0, 0, 174, 38, meta.color, 0.1);
             const title = scene.add.text(-74, -1, `${meta.icon} ${meta.name}`, {
                 font: '13px monospace', fill: '#d9e5ff', stroke: '#000', strokeThickness: 2
             }).setOrigin(0, 0.5);
 
             const lampBase = scene.add.rectangle(64, 0, 52, 16, 0x111111, 0.75).setStrokeStyle(1, 0x5b6788, 0.5);
-            const lampG = scene.add.circle(50, 0, 4, 0x78a886, 0.3);
-            const lampY = scene.add.circle(64, 0, 4, 0xc8ac67, 0.3);
-            const lampR = scene.add.circle(78, 0, 4, 0xb9756f, 0.3);
+            const lampG = scene.add.circle(50, 0, 4, 0x68ff9f, 0.26);
+            const lampY = scene.add.circle(64, 0, 4, 0xffd45a, 0.26);
+            const lampR = scene.add.circle(78, 0, 4, 0xff5f70, 0.26);
+            wrap.add([glow, board, title, lampBase, lampG, lampY, lampR]);
+            wrap.setDepth(18);
 
-            wrap.add([shadow, boardBack, boardSide, boardTop, glow, title, lampBase, lampG, lampY, lampR]);
-            wrap.setDepth(30);
-
-            deptSigns[dept] = {
-                wrap,
-                glow,
-                shadow,
-                baseY: y,
-                phase: Math.random() * Math.PI * 2,
-                lamps: { green: lampG, yellow: lampY, red: lampR }
-            };
+            deptSigns[dept] = { wrap, glow, lamps: { green: lampG, yellow: lampY, red: lampR } };
         });
         updateDeptShopSigns();
     }
@@ -2437,20 +1626,26 @@
             sign.lamps.green.setAlpha(isG ? 0.95 : 0.22).setScale(isG ? 1.18 : 1);
             sign.lamps.yellow.setAlpha(isY ? 0.95 : 0.22).setScale(isY ? 1.18 : 1);
             sign.lamps.red.setAlpha(isR ? 0.95 : 0.22).setScale(isR ? 1.18 : 1);
-            sign.glow.setAlpha(isR ? 0.24 : (isY ? 0.18 : 0.12));
+            sign.glow.setAlpha(isR ? 0.2 : (isY ? 0.14 : 0.1));
         });
     }
 
-    function animateDeptShopSigns(time) {
-        const t = time || 0;
-        const low = isLowFxMode();
-        Object.values(deptSigns || {}).forEach(sign => {
-            if (!sign || !sign.wrap) return;
-            const bob = Math.sin((t / 900) + sign.phase) * (low ? 0.6 : 1.8);
-            sign.wrap.y = sign.baseY + bob;
-            sign.shadow.setAlpha((low ? 0.14 : 0.22) - Math.abs(bob) * 0.03);
-            sign.glow.setScale(1 + (low ? 0.01 : 0.04) * Math.sin((t / 700) + sign.phase));
-        });
+    function renderLogTicker(logs, agents) {
+        const track = document.getElementById('log-led-track');
+        if (!track) return;
+        const logsMap = logs && typeof logs === 'object' ? logs : {};
+        const agentMap = agents && typeof agents === 'object' ? agents : {};
+        const rows = [];
+        for (const [aid, rawAgent] of Object.entries(agentMap)) {
+            const a = rawAgent && typeof rawAgent === 'object' ? rawAgent : {};
+            const arr = Array.isArray(logsMap[aid]) ? logsMap[aid] : [];
+            if (!arr.length) continue;
+            const latest = arr[arr.length - 1] || {};
+            const txt = safeText(latest.text).replace(/\s+/g, ' ').slice(0, 42) || '...';
+            rows.push(`${a.emoji || '🤖'}${a.name || aid}: ${txt}`);
+        }
+        const text = rows.length ? rows.slice(0, 10).join('  ✦  ') : '🛰️ 电子看板等待新日志…';
+        track.textContent = `【赛博日志看板】 ${text}  ✦  ${text}`;
     }
 
     function triggerStreetFx(kind) {
@@ -2515,12 +1710,6 @@
 
     // ============ 工具函数 ============
     function hexToInt(hex) { return parseInt(hex.replace('#',''), 16); }
-    function shadeColorInt(colorInt, factor) {
-        const r = Math.max(0, Math.min(255, Math.round(((colorInt >> 16) & 0xff) * factor)));
-        const g = Math.max(0, Math.min(255, Math.round(((colorInt >> 8) & 0xff) * factor)));
-        const b = Math.max(0, Math.min(255, Math.round((colorInt & 0xff) * factor)));
-        return (r << 16) | (g << 8) | b;
-    }
     function normalizeState(s) {
         if (!s) return 'idle';
         const map = {working:'writing',run:'executing',running:'executing',sync:'syncing',research:'researching',died:'dead'};
@@ -2589,16 +1778,6 @@
         document.getElementById('total-count').textContent = totalAgents;
         document.getElementById('active-count').textContent = activeAgents;
 
-        const doneRate = total ? Math.round(done / total * 100) : 0;
-        const kpiOnline = document.getElementById('right-kpi-online');
-        const kpiActive = document.getElementById('right-kpi-active');
-        const kpiTodo = document.getElementById('right-kpi-todo');
-        const kpiDoneRate = document.getElementById('right-kpi-done-rate');
-        if (kpiOnline) kpiOnline.textContent = `${onlineAgents}/${totalAgents}`;
-        if (kpiActive) kpiActive.textContent = String(activeAgents);
-        if (kpiTodo) kpiTodo.textContent = String(todo);
-        if (kpiDoneRate) kpiDoneRate.textContent = `${doneRate}%`;
-
         document.getElementById('stat-cards').innerHTML = `
             <div class="stat-card">
                 <div class="sc-num" style="color:var(--accent)">${total}</div>
@@ -2656,70 +1835,7 @@
     }
 
     function renderRecentTasks(tasks) {
-        const listEl = document.getElementById('right-task-list');
-        if (!listEl) return;
-
-        const safeTasks = Array.isArray(tasks) ? tasks : [];
-        if (!safeTasks.length) {
-            listEl.innerHTML = '<div class="task-list-empty">暂无任务数据</div>';
-            return;
-        }
-
-        const statusWeight = { '进行中': 0, '待办': 1, '已完成': 2, '已取消': 3 };
-        const priorityWeight = { 'P0': 0, 'P1': 1, 'P2': 2, 'P3': 3 };
-
-        const sorted = [...safeTasks].sort((a, b) => {
-            const sa = statusWeight[safeText(a && a.status)] ?? 9;
-            const sb = statusWeight[safeText(b && b.status)] ?? 9;
-            if (sa !== sb) return sa - sb;
-            const pa = priorityWeight[safeText(a && a.priority)] ?? 9;
-            const pb = priorityWeight[safeText(b && b.priority)] ?? 9;
-            if (pa !== pb) return pa - pb;
-            const pga = parseFloat(a && a.progress) || 0;
-            const pgb = parseFloat(b && b.progress) || 0;
-            return pgb - pga;
-        }).slice(0, 6);
-
-        if (!sorted.length) {
-            listEl.innerHTML = '<div class="task-list-empty">暂无可展示任务</div>';
-            return;
-        }
-
-        let html = '';
-        for (const task of sorted) {
-            const t = task && typeof task === 'object' ? task : {};
-            const priority = safeText(t.priority || 'P3').toUpperCase();
-            const status = safeText(t.status || '待办');
-            const name = safeText(t.task_name || t.name || '未命名任务');
-            const desc = safeText(t.desc || t.description || '').trim();
-            const agent = safeText(t.agent || '未分配');
-            const progressRaw = parseFloat(t.progress || 0);
-            const progress = Number.isFinite(progressRaw) ? Math.max(0, Math.min(100, Math.round(progressRaw))) : 0;
-
-            const priClass = ['P0','P1','P2','P3'].includes(priority) ? `ti-${priority.toLowerCase()}` : 'ti-p3';
-            const statusClass = status === '进行中'
-                ? 'ts-doing'
-                : status === '已完成'
-                ? 'ts-done'
-                : status === '已取消'
-                ? 'ts-cancel'
-                : 'ts-todo';
-
-            html += `<div class="task-item">`;
-            html += `<span class="ti-priority ${priClass}">${escapeHtml(priority)}</span>`;
-            html += `<div class="ti-info">`;
-            html += `<div class="ti-name" title="${escapeAttr(name)}">${escapeHtml(name)}</div>`;
-            html += `<div class="ti-desc" title="${escapeAttr(desc || '无描述')}">${escapeHtml(desc || '无描述')}</div>`;
-            html += `<div class="ti-meta">`;
-            html += `<span class="ti-agent">${escapeHtml(agent)}</span>`;
-            html += `<span class="ti-status ${statusClass}">${escapeHtml(status)}</span>`;
-            html += `</div>`;
-            html += `</div>`;
-            html += `<div class="ti-progress"><div class="ti-progress-fill" style="width:${progress}%;background:${safeColor(t.color, progressColor(progress))}"></div></div>`;
-            html += `</div>`;
-        }
-
-        listEl.innerHTML = html;
+        // 已迁移到卷轴面板，保留空函数避免报错
     }
 
     // ============ 看板渲染 ============
@@ -2743,6 +1859,7 @@
         logV1BuildChips(logsMap, agentMap);
         logV1UpdateOverview(agentMap, tasksData, logsMap);
         logV1RefreshActionBtnState();
+        renderLogTicker(logsMap, agentMap);
 
         if (logV1State.pauseScroll && !force) {
             return;
@@ -2761,11 +1878,10 @@
 
         const selected = logV1State.selectedFilter || 'all';
         const onlyException = !!logV1State.onlyException;
-        setCanvasAgentHighlight(selected === 'all' ? null : selected);
 
         let html = '';
         for (const aid of sortedAids) {
-            if (selected !== 'all' && aid !== selected) continue;
+            if (selected.startsWith('task') && aid !== selected) continue;
 
             const rawAgent = agentMap[aid];
             const a = rawAgent && typeof rawAgent === 'object' ? rawAgent : {};
@@ -2778,10 +1894,15 @@
             const shortModel = cfgModel ? cfgModel.split('/').pop() : '';
             const textColor = safeColor(a.color, '#ccc');
 
-            const filteredLogs = onlyException
-                ? agentLogs.filter(log => logV1IsError(log) || logV1IsWarning(log))
-                : agentLogs;
+            const filteredLogs = agentLogs.filter(log => {
+                const basic = logV1FilterLine(log, selected);
+                const ex = !onlyException || logV1IsError(log) || logV1IsWarning(log);
+                return basic && ex;
+            });
 
+            if (selected === 'error' && !(s === 'error' || s === 'dead') && !filteredLogs.length) continue;
+            if (selected === 'warning' && !filteredLogs.length) continue;
+            if (selected === 'done' && !filteredLogs.length) continue;
             if (selected === 'all' && onlyException && !filteredLogs.length && !(s === 'error' || s === 'dead')) continue;
 
             let sectionClass = 'log-section';
@@ -2791,7 +1912,7 @@
             html += `<div class="${sectionClass}"><div class="log-header">`;
             html += `<span>${escapeHtml(a.emoji || '🤖')}</span><span class="a-name" style="color:${textColor}">${escapeHtml(a.name || aid)}</span>`;
             if (shortModel) html += `<span class="a-model">${escapeHtml(shortModel)}</span>`;
-            html += `</div>`;
+            html += `<span class="a-state" style="background:${si.color}22;color:${si.color}">${escapeHtml(si.name)}</span></div>`;
 
             if (!filteredLogs.length) {
                 html += `<div class="log-line"><span class="lt"></span><span class="lr">-</span><span class="lx" style="color:#4a4a61">当前筛选下无日志</span></div>`;
@@ -2852,8 +1973,8 @@
     // ============ Phaser 像素办公室 ============
     const phaserConfig = {
         type: Phaser.AUTO, width: 1600, height: 650,
-        parent: 'game-container', pixelArt: true, backgroundColor: '#1a2230',
-        input: { keyboard: false, gamepad: false }, // 强制关闭人物操控输入
+        parent: 'game-container', pixelArt: true, backgroundColor: '#0f0f1a',
+        physics: { default:'arcade', arcade:{ gravity:{y:0}, debug:false } },
         scene: { preload: pPreload, create: pCreate, update: pUpdate },
         scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_HORIZONTALLY }
     };
@@ -2863,219 +1984,115 @@
     function pCreate() {
         game = this;
         const bg = this.add.image(800, 325, 'office_bg');
-        bg.setDisplaySize(1600, 650).setAlpha(0.24).setDepth(0);
-
-        const vignette = this.add.rectangle(800, 325, 1600, 650, 0x000000, 0.08).setDepth(0.5);
-        vignette.setBlendMode(Phaser.BlendModes.MULTIPLY);
-
-        createCyberStreetLayers(this); // V2：分层等距+投影+雨雾扫描
-        createDeptShopSigns(this);     // V2：立体招牌 + 呼吸状态灯
-        applySceneFxQuality();
-
-        const ls = { font:'18px monospace', fill:'#c9d7eb', stroke:'#000', strokeThickness: 2 };
-        this.add.text(254, 430, '💻 工位街区', ls).setOrigin(0.5).setAlpha(0.58).setDepth(34);
-        this.add.text(630, 280, '☕ 能量补给站', ls).setOrigin(0.5).setAlpha(0.52).setDepth(34);
-        this.add.text(642, 560, '📋 指挥会议舱', ls).setOrigin(0.5).setAlpha(0.52).setDepth(34);
-
+        bg.setDisplaySize(1600, 650).setAlpha(0.38).setDepth(0);
+        createCyberStreetLayers(this); // 主街区背景分层（V1）
+        createDeptShopSigns(this);     // 部门店铺招牌 + 状态灯
+        const ls = { font:'18px monospace', fill:'#6f85ad' };
+        this.add.text(260, 430, '💻 工位区', ls).setOrigin(0.5).setAlpha(0.5);
+        this.add.text(625, 280, '☕ 休息区', ls).setOrigin(0.5).setAlpha(0.5);
+        this.add.text(625, 560, '📋 会议室', ls).setOrigin(0.5).setAlpha(0.5);
+        const pBg = this.add.rectangle(400, 635, 340, 28, 0x5d4037);
+        pBg.setStrokeStyle(1, 0x3e2723).setDepth(50);
+        this.add.text(400, 635, '⚔️ AI 特工队总部 ⚔️', {
+            font:'18px monospace', fill:'#ffd700', stroke:'#000', strokeThickness:3
+        }).setOrigin(0.5).setDepth(51);
         fetchLive();
     }
 
     function createAgentTextures(scene, id, color) {
-        const size = 52;
-        const ci = hexToInt(color);
+        const size = 48, ci = hexToInt(color);
         const acc = AGENT_ACCESSORIES[id] || { hat:'none', hatColor:0x888888, accent:0xAAAAAA };
-
         for (const variant of ['open', 'closed', 'dead']) {
             const key = id + '_' + variant;
             const g = scene.make.graphics();
             const isDead = variant === 'dead';
-            const bodyMain = isDead ? 0x3f4554 : ci;
-            const bodyShade = shadeColorInt(bodyMain, isDead ? 0.62 : 0.72);
-            const bodyDark = shadeColorInt(bodyMain, isDead ? 0.45 : 0.52);
-            const bodyHi = isDead ? 0x7f8797 : shadeColorInt(ci, 1.24);
-
-            // 地面软阴影
-            g.fillStyle(0x000000, isDead ? 0.14 : 0.24);
-            g.fillEllipse(size / 2, size - 1, size * 0.56, 5);
-
-            // 外描边 + 主体块
-            g.fillStyle(0x0a1022, 0.92);
-            g.fillRoundedRect(7, 11, size - 14, size - 16, 8);
-            g.fillStyle(bodyMain, isDead ? 0.74 : 0.98);
-            g.fillRoundedRect(9, 13, size - 18, size - 20, 7);
-
-            // 左右明暗分离，模拟法线光
-            g.fillStyle(bodyHi, isDead ? 0.12 : 0.24);
-            g.fillRoundedRect(11, 15, (size - 22) * 0.45, size - 30, 6);
-            g.fillStyle(bodyShade, isDead ? 0.18 : 0.26);
-            g.fillRoundedRect(size / 2 + 1, 15, (size - 22) * 0.5, size - 30, 6);
-            g.fillStyle(bodyDark, isDead ? 0.32 : 0.18);
-            g.fillRoundedRect(9, size - 18, size - 18, 7, 4);
-
-            // 像素边缘高光
-            g.fillStyle(0xffffff, isDead ? 0.06 : 0.26);
-            g.fillRect(12, 17, 12, 2);
-            g.fillRect(12, 20, 7, 2);
-
-            // 面罩框
-            g.fillStyle(0x090f1f, 0.65);
-            g.fillRoundedRect(12, 19, 28, 14, 5);
-            g.lineStyle(1, 0xbbe8ff, isDead ? 0.2 : 0.34);
-            g.strokeRoundedRect(12, 19, 28, 14, 5);
-
+            const bodyColor = isDead ? 0x444444 : ci;
+            const bodyAlpha = isDead ? 0.6 : 1;
+            // 阴影
+            g.fillStyle(0x000000, isDead ? 0.08 : 0.18); g.fillEllipse(size/2, size-2, size*0.45, 4);
+            // 身体(圆角方块+渐变感)
+            g.fillStyle(bodyColor, bodyAlpha); g.fillRoundedRect(8, 14, size-16, size-18, 7);
+            // 身体高光
+            g.fillStyle(0xffffff, isDead ? 0.05 : 0.15); g.fillRoundedRect(11, 16, 12, 8, 3);
+            // 身体暗部
+            g.fillStyle(0x000000, isDead ? 0.2 : 0.1); g.fillRoundedRect(8, size-12, size-16, 8, 5);
             // 眼睛
             if (isDead) {
-                g.lineStyle(2.3, 0xb9756f, 0.95);
-                g.lineBetween(15, 23, 21, 29); g.lineBetween(21, 23, 15, 29);
-                g.lineBetween(30, 23, 36, 29); g.lineBetween(36, 23, 30, 29);
+                // X X 死亡眼
+                g.lineStyle(2.5, 0xff0000, 0.9);
+                // 左眼 X
+                g.lineBetween(13, 20, 21, 28); g.lineBetween(21, 20, 13, 28);
+                // 右眼 X
+                g.lineBetween(27, 20, 35, 28); g.lineBetween(35, 20, 27, 28);
             } else if (variant === 'closed') {
-                g.fillStyle(0x2f4567, 0.9);
-                g.fillRect(15, 26, 9, 2);
-                g.fillRect(28, 26, 9, 2);
+                g.fillStyle(0x222222, 1);
+                g.fillRect(13, 25, 9, 2); g.fillRect(26, 25, 9, 2);
             } else {
-                g.fillStyle(0xdcf4ff, 1);
-                g.fillRoundedRect(15, 22, 9, 8, 3);
-                g.fillRoundedRect(28, 22, 9, 8, 3);
-                g.fillStyle(0x111827, 1);
-                g.fillCircle(19, 26, 2.2);
-                g.fillCircle(32, 26, 2.2);
-                g.fillStyle(0xffffff, 0.94);
-                g.fillCircle(18, 25, 0.9);
-                g.fillCircle(31, 25, 0.9);
-                g.fillStyle(0x78a886, 0.5);
-                g.fillRect(15, 21, 22, 1);
+                g.fillStyle(0xffffff, 1);
+                g.fillRoundedRect(13, 20, 9, 9, 4); g.fillRoundedRect(26, 20, 9, 9, 4);
+                g.fillStyle(0x111111, 1);
+                g.fillCircle(18, 25, 2.5); g.fillCircle(31, 25, 2.5);
+                // 瞳孔高光
+                g.fillStyle(0xffffff, 0.9);
+                g.fillCircle(17, 24, 1); g.fillCircle(30, 24, 1);
             }
-
-            // 嘴部/状态线
+            // 嘴巴
             if (isDead) {
-                g.lineStyle(1.2, 0x7a869b, 0.7);
-                g.lineBetween(18, 35, 21, 33); g.lineBetween(21, 33, 24, 37);
-                g.lineBetween(24, 37, 27, 33); g.lineBetween(27, 33, 30, 35);
+                // 波浪嘴 ~~~
+                g.lineStyle(1.5, 0x666666, 0.7);
+                g.lineBetween(17, 33, 20, 31); g.lineBetween(20, 31, 23, 35);
+                g.lineBetween(23, 35, 26, 31); g.lineBetween(26, 31, 29, 33);
             } else {
-                g.fillStyle(0x000000, 0.24);
-                g.fillRoundedRect(20, 34, 12, 2, 1);
+                g.fillStyle(0x000000, 0.2); g.fillRoundedRect(19, 32, 10, 2, 1);
             }
-
             // 脚
-            g.fillStyle(bodyMain, isDead ? 0.46 : 0.86);
-            g.fillRoundedRect(13, size - 5, 10, 5, 2);
-            g.fillRoundedRect(29, size - 5, 10, 5, 2);
-
-            // 帽子与配件
+            g.fillStyle(bodyColor, isDead ? 0.4 : 0.85);
+            g.fillRoundedRect(12, size-5, 9, 5, 3); g.fillRoundedRect(27, size-5, 9, 5, 3);
+            // 帽子 — 死亡时灰暗化
             if (!isDead) {
                 const hc = acc.hatColor, ac = acc.accent;
                 switch(acc.hat) {
-                    case 'crown':
-                        g.fillStyle(hc,1); g.fillRect(10,7,30,7); g.fillRect(11,1,5,7); g.fillRect(21,0,8,8); g.fillRect(34,1,5,7);
-                        g.fillStyle(0xE53E3E,1); g.fillCircle(25,9,2); break;
-                    case 'straw':
-                        g.fillStyle(hc,1); g.fillRect(3,10,44,5); g.fillRoundedRect(10,3,30,9,5);
-                        g.fillStyle(0xC53030,0.86); g.fillRect(10,8,30,3); break;
-                    case 'knight':
-                        g.fillStyle(hc,1); g.fillRoundedRect(8,3,34,13,5); g.fillStyle(0x2D3748,1); g.fillRect(23,5,4,10);
-                        g.fillStyle(ac,1); g.fillRect(21,0,8,5); break;
-                    case 'cap':
-                        g.fillStyle(hc,1); g.fillRoundedRect(10,6,30,10,5); g.fillRect(4,13,24,4);
-                        g.fillStyle(0xECC94B,1); g.fillCircle(25,10,2.5); break;
-                    case 'wool':
-                        g.fillStyle(hc,1); g.fillRoundedRect(10,3,30,13,7); g.fillStyle(ac,1); g.fillCircle(25,1,4);
-                        g.fillStyle(0x48BB78,0.5); g.fillRect(12,8,26,3); break;
-                    case 'feather':
-                        g.fillStyle(hc,1); g.fillRect(23,0,5,13); g.fillRect(21,3,9,4); g.fillStyle(ac,1); g.fillRect(23,0,5,3);
-                        g.fillStyle(0xED8936,0.8); g.fillRect(11,11,30,4); break;
-                    case 'tophat':
-                        g.fillStyle(hc,1); g.fillRect(15,0,20,13); g.fillRect(8,10,34,5); g.fillStyle(ac,1); g.fillRect(15,8,20,3);
-                        g.fillStyle(0xECC94B,1); g.fillCircle(25,10,2); break;
-                    case 'bandana':
-                        g.fillStyle(hc,1); g.fillRoundedRect(8,8,34,8,3); g.fillStyle(ac,1); g.fillRect(37,10,7,5);
-                        g.fillStyle(0x000000,0.3); g.fillRect(16,10,3,5); g.fillRect(25,10,3,5); break;
-                    case 'wizard':
-                        g.fillStyle(hc,1); g.fillRect(10,10,30,6); g.fillRect(13,5,24,7); g.fillRect(18,0,14,7); g.fillRect(21,-2,8,4);
-                        g.fillStyle(ac,1); g.fillCircle(25,5,2.5); g.fillStyle(0xFAF089,1); g.fillCircle(25,5,1.2); break;
-                    case 'lightning':
-                        g.fillStyle(hc,1); g.fillRoundedRect(10,8,30,7,3); g.fillStyle(ac,1); g.fillRect(21,0,8,5);
-                        g.fillRect(18,3,7,4); g.fillRect(23,5,7,5); g.fillStyle(0xFAF089,0.9); g.fillRect(23,1,4,3); break;
+                    case 'crown': g.fillStyle(hc,1); g.fillRect(10,7,28,7); g.fillRect(11,1,5,7); g.fillRect(20,0,8,8); g.fillRect(32,1,5,7); g.fillStyle(0xE53E3E,1); g.fillCircle(24,9,2); break;
+                    case 'straw': g.fillStyle(hc,1); g.fillRect(3,10,42,5); g.fillRoundedRect(10,3,28,9,5); g.fillStyle(0xC53030,0.8); g.fillRect(10,8,28,3); break;
+                    case 'knight': g.fillStyle(hc,1); g.fillRoundedRect(8,3,32,13,5); g.fillStyle(0x2D3748,1); g.fillRect(22,5,4,10); g.fillStyle(ac,1); g.fillRect(20,0,8,5); break;
+                    case 'cap': g.fillStyle(hc,1); g.fillRoundedRect(10,6,28,10,5); g.fillRect(4,13,24,4); g.fillStyle(0xECC94B,1); g.fillCircle(24,10,2.5); break;
+                    case 'wool': g.fillStyle(hc,1); g.fillRoundedRect(10,3,28,13,7); g.fillStyle(ac,1); g.fillCircle(24,1,4); g.fillStyle(0x48BB78,0.5); g.fillRect(12,8,24,3); break;
+                    case 'feather': g.fillStyle(hc,1); g.fillRect(22,0,5,13); g.fillRect(20,3,9,4); g.fillStyle(ac,1); g.fillRect(22,0,5,3); g.fillStyle(0xED8936,0.8); g.fillRect(10,11,28,4); break;
+                    case 'tophat': g.fillStyle(hc,1); g.fillRect(14,0,20,13); g.fillRect(7,10,34,5); g.fillStyle(ac,1); g.fillRect(14,8,20,3); g.fillStyle(0xECC94B,1); g.fillCircle(24,10,2); break;
+                    case 'bandana': g.fillStyle(hc,1); g.fillRoundedRect(8,8,32,8,3); g.fillStyle(ac,1); g.fillRect(36,10,7,5); g.fillStyle(0x000000,0.3); g.fillRect(15,10,3,5); g.fillRect(24,10,3,5); break;
+                    case 'wizard': g.fillStyle(hc,1); g.fillRect(10,10,28,6); g.fillRect(13,5,22,7); g.fillRect(17,0,14,7); g.fillRect(20,-2,8,4); g.fillStyle(ac,1); g.fillCircle(24,5,2.5); g.fillStyle(0xFAF089,1); g.fillCircle(24,5,1.2); break;
+                    case 'lightning': g.fillStyle(hc,1); g.fillRoundedRect(10,8,28,7,3); g.fillStyle(ac,1); g.fillRect(20,0,8,5); g.fillRect(17,3,7,4); g.fillRect(22,5,7,5); g.fillStyle(0xFAF089,0.9); g.fillRect(22,1,4,3); break;
                 }
             } else {
-                g.fillStyle(0x2f3440, 0.45);
-                g.fillRoundedRect(11, 6, 30, 9, 4);
-                g.lineStyle(2, 0xFFD700, 0.4);
-                g.strokeEllipse(size / 2, 2, 18, 6);
+                // 死亡时帽子变灰 + 光环
+                g.fillStyle(0x333333, 0.4);
+                g.fillRoundedRect(10, 6, 28, 10, 5);
+                // 头顶光环 (天使圈)
+                g.lineStyle(2, 0xFFD700, 0.5);
+                g.strokeEllipse(size/2, 2, 18, 6);
             }
-
-            g.generateTexture(key, size, size);
-            g.destroy();
+            g.generateTexture(key, size, size); g.destroy();
         }
     }
 
     function createAgent(scene, id, data, index) {
         const color = data.color || '#78909C';
-        const colorInt = hexToInt(color);
         createAgentTextures(scene, id, color);
         const stateInfo = STATES[data.state] || STATES.idle;
         const area = resolveArea(id, stateInfo);
         const totalAgentCount = Object.keys(agentsData).length || 15;
-        const angle = (index / totalAgentCount) * Math.PI * 2 + index * 0.5;
-        const sx = area.x + Math.cos(angle) * area.spread * 0.6;
-        const sy = area.y + Math.sin(angle) * area.spread * 0.4;
-
-        const shadow = scene.add.ellipse(sx + 2, sy + 18, 30, 10, 0x000000, 0.28).setDepth(8 + index);
-        const aura = scene.add.circle(sx, sy - 3, 18, colorInt, 0.15)
-            .setDepth(9 + index)
-            .setBlendMode(Phaser.BlendModes.ADD);
-
-        const sprite = scene.add.sprite(sx, sy, id + '_open').setOrigin(0.5).setScale(1).setDepth(11 + index);
-
-        const spark = scene.add.rectangle(sx + 8, sy - 11, 9, 2, 0x78a886, 0.86)
-            .setDepth(12 + index)
-            .setBlendMode(Phaser.BlendModes.ADD)
-            .setAlpha(0.22);
-
-        const highlightGlow = scene.add.ellipse(sx, sy + 1, 82, 50, 0xffde7a, 0.26)
-            .setDepth(12.6 + index)
-            .setBlendMode(Phaser.BlendModes.ADD)
-            .setVisible(false)
-            .setAlpha(0);
-        const highlightRing = scene.add.ellipse(sx, sy + 1, 70, 40)
-            .setStrokeStyle(4, 0xffef9f, 1)
-            .setDepth(12.8 + index)
-            .setVisible(false)
-            .setAlpha(0);
-        const highlightTween = scene.tweens.add({
-            targets: [highlightRing, highlightGlow],
-            alpha: { from: 0.38, to: 1 },
-            duration: 520,
-            yoyo: true,
-            repeat: -1,
-            paused: true,
-        });
-
-        const emojiText = scene.add.text(sx, sy - 31, data.emoji || '🤖', {font:'24px sans-serif'}).setOrigin(0.5).setDepth(31 + index);
-        const nameTag = scene.add.text(sx, sy + 32, data.name || id, {
-            font:'bold 16px monospace',
-            fill:color,
-            stroke:'#000',
-            strokeThickness:3
-        }).setOrigin(0.5).setDepth(21 + index);
-
-        agentSprites[id] = {
-            sprite, nameTag, emojiText, shadow, aura, spark,
-            highlightRing, highlightGlow, highlightTween,
-            color, colorInt,
-            openKey:id + '_open', closedKey:id + '_closed', deadKey:id + '_dead',
-            target:{x:sx,y:sy},
-            lastBlink:Math.random()*3000,
-            lastBubble:Math.random()*16000,
-            bubble:null,
-            index,
-            isDead:false,
-            deathBubble:null,
-            phase: Math.random() * Math.PI * 2,
-        };
-
-        if (highlightedAgentId === id) {
-            setCanvasAgentHighlight(id);
-        }
+        const angle = (index/totalAgentCount)*Math.PI*2 + index*0.5;
+        const sx = area.x + Math.cos(angle)*area.spread*0.6;
+        const sy = area.y + Math.sin(angle)*area.spread*0.4;
+        const sprite = scene.physics.add.sprite(sx, sy, id+'_open').setOrigin(0.5).setScale(1).setDepth(10+index);
+        // 设置碰撞体积（圆形，半径20）
+        sprite.body.setCircle(20, 4, 4);
+        sprite.body.setImmovable(false);
+        sprite.body.setBounce(0.3);
+        const emojiText = scene.add.text(sx, sy-30, data.emoji||'🤖', {font:'24px sans-serif'}).setOrigin(0.5).setDepth(30+index);
+        const nameTag = scene.add.text(sx, sy+30, data.name||id, {font:'bold 16px monospace',fill:color,stroke:'#000',strokeThickness:3}).setOrigin(0.5).setDepth(20+index);
+        agentSprites[id] = { sprite, nameTag, emojiText, color, openKey:id+'_open', closedKey:id+'_closed', deadKey:id+'_dead',
+            target:{x:sx,y:sy}, lastBlink:Math.random()*3000, lastBubble:Math.random()*16000, bubble:null, index, isDead:false, deathBubble:null };
     }
 
     // 分离力：防止小人重叠
@@ -3109,18 +2126,16 @@
     function pUpdate(time) {
         if (time - lastFetch > FETCH_INTERVAL) { fetchLive(); lastFetch = time; }
         animateCyberStreetLayers(time);
-        animateDeptShopSigns(time);
-        perfMonitorTick(time);
-
         for (const [id, a] of Object.entries(agentSprites)) {
-            const data = agentsData[id] || { state:'idle' };
+            const data = agentsData[id] || {state:'idle'};
             const isDead = data.state === 'dead';
-            const isWorking = WORKING_STATES.has(data.state);
 
+            // 死亡状态切换
             if (isDead && !a.isDead) {
                 a.isDead = true;
                 a.sprite.setTexture(a.deadKey);
-                a.sprite.setAlpha(0.68);
+                a.sprite.setAlpha(0.6);
+                // 显示死亡原因气泡
                 showDeathBubble(id, data.death_reason || data.detail || '未知原因');
             } else if (!isDead && a.isDead) {
                 a.isDead = false;
@@ -3129,76 +2144,45 @@
                 removeDeathBubble(id);
             }
 
-            if (!isDead && time - a.lastBlink > 2800 + Math.random() * 1400) {
-                a.sprite.setTexture(a.closedKey);
-                a.lastBlink = time;
-                const sp = a.sprite, ok = a.openKey;
-                setTimeout(() => { if (sp && sp.texture && !a.isDead) sp.setTexture(ok); }, 110 + Math.random() * 90);
-            }
-            if (time - a.lastBubble > 7600 + Math.random() * 5200) {
-                showBubble(id, data.state);
-                a.lastBubble = time;
-            }
-
-            const dx = a.target.x - a.sprite.x;
-            const dy = a.target.y - a.sprite.y;
-            const moving = Math.abs(dx) > 2 || Math.abs(dy) > 2;
-
-            if (isDead) {
-                a.sprite.y += Math.sin(time / 1900 + a.index) * 0.08;
-                a.sprite.setAngle(Math.sin(time / 2800 + a.index) * 1.3);
-            } else {
-                if (Math.abs(dx) > 2) a.sprite.x += Math.sign(dx) * 0.7;
-                if (Math.abs(dy) > 2) a.sprite.y += Math.sign(dy) * 0.7;
-                if (moving) {
-                    a.sprite.y += Math.sin(time / 120 + a.index * 0.7) * 0.3;
-                    a.sprite.setAngle(Math.sin(time / 100 + a.index) * 2);
-                } else {
-                    a.sprite.setAngle(0);
-                    a.sprite.y += Math.sin(time / 800 + a.index * 0.5) * 0.15;
+            if (!isDead) {
+                // 正常眨眼
+                if (time-a.lastBlink > 3000+Math.random()*1500) {
+                    a.sprite.setTexture(a.closedKey); a.lastBlink = time;
+                    const sp=a.sprite, ok=a.openKey; setTimeout(()=>sp.setTexture(ok), 120+Math.random()*80);
                 }
             }
+            if (time-a.lastBubble > 8000+Math.random()*5000) { showBubble(id, data.state); a.lastBubble = time; }
 
-            if (!isDead && Math.random() < 0.002) {
+            const dx=a.target.x-a.sprite.x, dy=a.target.y-a.sprite.y, moving=Math.abs(dx)>2||Math.abs(dy)>2;
+            if (isDead) {
+                // 死亡：缓慢漂浮，几乎不动
+                a.sprite.y += Math.sin(time/2000+a.index)*0.08;
+                a.sprite.setAngle(Math.sin(time/3000+a.index)*1.5);
+            } else {
+                if (Math.abs(dx)>2) a.sprite.x += Math.sign(dx)*0.7;
+                if (Math.abs(dy)>2) a.sprite.y += Math.sign(dy)*0.7;
+                if (moving) { a.sprite.y += Math.sin(time/120+a.index*0.7)*0.3; a.sprite.setAngle(Math.sin(time/100+a.index)*2); }
+                else { a.sprite.setAngle(0); a.sprite.y += Math.sin(time/800+a.index*0.5)*0.15; }
+            }
+            if (!isDead && Math.random()<0.002) {
                 const stateInfo = STATES[data.state] || STATES.idle;
                 const area = resolveArea(id, stateInfo);
                 const totalAC = Object.keys(agentSprites).length || 15;
-                const ang = (a.index / totalAC) * Math.PI * 2 + (Math.random() - 0.5) * 2.0;
-                const r = area.spread * (isWorking ? 0.35 + Math.random() * 0.45 : 0.15 + Math.random() * 0.3);
-                a.target.x = Math.max(20, Math.min(1580, area.x + Math.cos(ang) * r));
-                a.target.y = Math.max(150, Math.min(630, area.y + Math.sin(ang) * r * 0.6));
+                const ang=(a.index/totalAC)*Math.PI*2+(Math.random()-0.5)*2.0;
+                // 工作时活动范围大，休闲时小范围晃悠
+                const isWorking = WORKING_STATES.has(data.state);
+                const r=area.spread*(isWorking ? 0.35+Math.random()*0.45 : 0.15+Math.random()*0.3);
+                a.target.x=Math.max(20,Math.min(1580,area.x+Math.cos(ang)*r));
+                a.target.y=Math.max(150,Math.min(630,area.y+Math.sin(ang)*r*0.6));
             }
-
-            const pulse = Math.abs(Math.sin(time / (isLowFxMode() ? 980 : 560) + a.phase));
-            if (a.shadow) {
-                a.shadow.setPosition(a.sprite.x + 2, a.sprite.y + 19);
-                a.shadow.setScale(1 + (moving ? 0.06 : 0), 1 + (moving ? 0.08 : 0));
-                a.shadow.setAlpha(isDead ? 0.16 : (0.2 + pulse * 0.08));
+            a.nameTag.setPosition(a.sprite.x, a.sprite.y+30);
+            a.emojiText.setPosition(a.sprite.x, a.sprite.y-30);
+            // 更新死亡气泡位置（跟随画布顶部）
+            if (a.deathBubble) {
+                updateDeathBubblePos(id);
             }
-            if (a.aura) {
-                a.aura.setPosition(a.sprite.x, a.sprite.y - 2);
-                a.aura.setScale(1 + pulse * (isLowFxMode() ? 0.06 : 0.13));
-                if (isDead) a.aura.setAlpha(0.04);
-                else if (isWorking) a.aura.setAlpha(0.16 + pulse * 0.22);
-                else a.aura.setAlpha(0.08 + pulse * 0.12);
-            }
-            if (a.spark) {
-                a.spark.setPosition(a.sprite.x + 8 + Math.sin(time / 220 + a.phase) * 4, a.sprite.y - 10);
-                a.spark.setAlpha(isDead ? 0 : (isWorking ? 0.26 + pulse * 0.5 : 0.1 + pulse * 0.14));
-                a.spark.width = isWorking ? (8 + pulse * 8) : (7 + pulse * 3);
-            }
-            if (a.highlightRing && a.highlightGlow) {
-                a.highlightRing.setPosition(a.sprite.x, a.sprite.y + 2);
-                a.highlightGlow.setPosition(a.sprite.x, a.sprite.y + 2);
-                a.highlightRing.setScale(1 + pulse * 0.08, 1 + pulse * 0.06);
-                a.highlightGlow.setScale(1 + pulse * 0.18, 1 + pulse * 0.14);
-            }
-
-            a.nameTag.setPosition(a.sprite.x, a.sprite.y + 31);
-            a.emojiText.setPosition(a.sprite.x, a.sprite.y - 31);
-            if (a.deathBubble) updateDeathBubblePos(id);
         }
-
+        // 每帧执行分离力，防止重叠
         separateAgents();
         if ((time % 500) < 16) updateDeptShopSigns();
     }
@@ -3284,31 +2268,34 @@
         fetch('/ollama').then(r => r.json()).then(data => {
             const el = document.getElementById('ollama-status');
             if (!data.running) {
-                el.innerHTML = '<div class="task-list-empty" style="padding:10px 8px;color:var(--red);border-color:rgba(244,67,54,0.35)">⚫ Ollama 未运行</div>';
+                el.innerHTML = '<span style="color:var(--red)">⚫ Ollama 未运行</span>';
                 return;
             }
             const models = data.models || [];
             const active = data.active || [];
             const activeNames = new Set(active.map(a => a.name));
-            let html = '<div class="ollama-grid">';
+            let html = '<div style="display:flex;flex-wrap:wrap;gap:6px">';
             if (!models.length) {
-                html += '<span class="task-list-empty" style="width:100%;padding:10px 8px">无已安装模型</span>';
+                html += '<span style="color:var(--text-dim)">无已安装模型</span>';
             }
             for (const m of models) {
                 const isActive = activeNames.has(m.name);
+                const dot = isActive ? '🟢' : '🔵';
+                const border = isActive ? 'var(--green)' : 'var(--border)';
                 const info = [m.params, m.quant, m.size_mb + 'MB'].filter(Boolean).join(' · ');
-                html += `<div class="ollama-pill ${isActive ? 'active' : ''}">`;
-                html += `<span>${isActive ? '🟢' : '🔵'}</span>`;
-                html += `<span class="om-name">${escapeHtml((m.name || '').split(':')[0])}</span>`;
-                html += `<span class="om-info">${escapeHtml(info)}</span>`;
-                html += `</div>`;
+                html += `<div style="background:var(--bg-card);border:1px solid ${border};border-radius:6px;padding:4px 8px;display:flex;align-items:center;gap:4px">`;
+                html += `<span>${dot}</span>`;
+                html += `<span style="color:var(--text-bright);font-weight:600">${m.name.split(':')[0]}</span>`;
+                html += `<span style="color:var(--text-dim);font-size:9px">${info}</span>`;
+                html += `<span style="color:${isActive ? 'var(--green)' : 'var(--text-dim)'};font-size:8px;margin-left:2px">${isActive ? '已加载' : '待命'}</span>`;
+                html += '</div>';
             }
             html += '</div>';
             const statusText = active.length > 0 ? `${active.length} 已加载` : '待命';
-            html += `<div class="ollama-footnote">Ollama <span style="color:var(--green)">●</span> 运行中 · ${models.length} 模型 · ${statusText}</div>`;
+            html += `<div style="margin-top:4px;font-size:9px;color:var(--text-dim)">Ollama <span style="color:var(--green)">●</span> 运行中 · ${models.length} 模型 · ${statusText}</div>`;
             el.innerHTML = html;
         }).catch(() => {
-            document.getElementById('ollama-status').innerHTML = '<div class="task-list-empty" style="padding:10px 8px">⚫ Ollama 连接失败</div>';
+            document.getElementById('ollama-status').innerHTML = '<span style="color:var(--text-dim)">⚫ Ollama 连接失败</span>';
         });
     }
     // 初始加载 + 定时刷新
@@ -3343,11 +2330,11 @@
             renderAgentChips(agents);
             renderLogs(logs, agents);
             renderAgentGrid(agents);
-            renderRecentTasks(tasksData);
             updateDeptShopSigns();
             renderStatCards(agents, tasksData);
         }).catch(() => {});
     }
+
 
     function fetchTasks() {
         fetch('/tasks').then(r => r.json()).then(data => {
@@ -3355,7 +2342,6 @@
             handleTaskTransitions(list);
             tasksData = list;
             renderStatCards(agentsData, tasksData);
-            renderRecentTasks(tasksData);
             renderGallery(agentsData);
             renderScrollTasks();
         }).catch(() => {});
@@ -3366,9 +2352,7 @@
     // 初始加载
     setTimeout(() => { fetchTasks(); }, 1500);
 
-    // 初始化性能档位 + 启动 Phaser
-    initThemeMode();
-    initPerformanceMode();
+    // 启动 Phaser
     new Phaser.Game(phaserConfig);
 
     // ============ 古卷轴任务面板 ============

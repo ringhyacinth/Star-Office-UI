@@ -1,6 +1,15 @@
 {
-  "state": "idle",
-  "detail": "Waiting...",
-  "progress": 0,
-  "updated_at": "2026-02-26T00:00:00"
+  "agents": {
+    "agent-1":  { "name": "Coder",    "state": "idle", "detail": "等待任务中...", "color": "#4FC3F7" },
+    "agent-2":  { "name": "Reviewer", "state": "idle", "detail": "等待任务中...", "color": "#81C784" },
+    "agent-3":  { "name": "Designer", "state": "idle", "detail": "等待任务中...", "color": "#FF8A65" },
+    "agent-4":  { "name": "Tester",   "state": "idle", "detail": "等待任务中...", "color": "#BA68C8" },
+    "agent-5":  { "name": "DevOps",   "state": "idle", "detail": "等待任务中...", "color": "#FFD54F" },
+    "agent-6":  { "name": "Writer",   "state": "idle", "detail": "等待任务中...", "color": "#F06292" },
+    "agent-7":  { "name": "Analyst",  "state": "idle", "detail": "等待任务中...", "color": "#4DB6AC" },
+    "agent-8":  { "name": "Security", "state": "idle", "detail": "等待任务中...", "color": "#E57373" },
+    "agent-9":  { "name": "PM",       "state": "idle", "detail": "等待任务中...", "color": "#9575CD" },
+    "agent-10": { "name": "Ops",      "state": "idle", "detail": "等待任务中...", "color": "#AED581" }
+  },
+  "updated_at": "2026-02-27T00:00:00"
 }

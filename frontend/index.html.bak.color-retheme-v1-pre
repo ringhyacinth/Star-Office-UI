@@ -11,48 +11,21 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            /* ===== 非 AI 味主题 Token（V1）- 暮色指挥站（默认） ===== */
-            --cyber-bg-0: #141821;
-            --cyber-bg-1: #1a2230;
-            --cyber-bg-2: #232d3f;
-            --cyber-surface-1: #252f42;
-            --cyber-surface-2: #2e3a52;
-            --cyber-border: #4f5f79;
-            --cyber-neon-cyan: #7f9fc3;
-            --cyber-neon-pink: #c38a55;
-            --cyber-neon-purple: #6e90b8;
-            --cyber-neon-green: #78a886;
-            --cyber-warning: #c8ac67;
-            --cyber-danger: #b9756f;
-            --cyber-text-main: #e6ebf4;
-            --cyber-text-dim: #a8b4c9;
-
-            --tone-bg-top-left: rgba(135, 162, 201, 0.14);
-            --tone-bg-bottom-right: rgba(169, 133, 97, 0.12);
-            --tone-topbar-a: rgba(31, 43, 60, 0.96);
-            --tone-topbar-b: rgba(25, 34, 49, 0.96);
-            --tone-topbar-shadow: rgba(80, 106, 142, 0.15);
-            --tone-topbar-inset: rgba(195, 138, 85, 0.18);
-            --tone-right-info-bg-a: rgba(28, 39, 56, 0.82);
-            --tone-right-info-bg-b: rgba(24, 34, 49, 0.62);
-            --tone-right-info-border: rgba(130, 157, 191, 0.26);
-
-            --log-bg: #131b28;
-            --log-section-bg: rgba(255,255,255,0.02);
-            --log-section-hover: rgba(255,255,255,0.05);
-            --log-divider: rgba(102,118,144,0.42);
-            --log-time: #8698b6;
-            --log-user: #9dbce4;
-            --log-assistant: #b8cfb4;
-            --log-tool: #d6bb92;
-            --log-error: #df8c85;
-            --log-system: #bac4d6;
-            --log-empty: #8f9db3;
-            --scroll-thumb: #617493;
-
-            --panel-bg: #1b2535;
-            --panel-header-bg-a: rgba(195,138,85,0.14);
-            --panel-header-bg-b: rgba(110,144,184,0.14);
+            /* ===== 赛博像素主题 Token（V1） ===== */
+            --cyber-bg-0: #060912;
+            --cyber-bg-1: #0a1020;
+            --cyber-bg-2: #101931;
+            --cyber-surface-1: #121a2f;
+            --cyber-surface-2: #17213d;
+            --cyber-border: #2a3555;
+            --cyber-neon-cyan: #39d5ff;
+            --cyber-neon-pink: #ff4fb9;
+            --cyber-neon-purple: #8f7bff;
+            --cyber-neon-green: #68ff9f;
+            --cyber-warning: #ffd45a;
+            --cyber-danger: #ff5f70;
+            --cyber-text-main: #d4def5;
+            --cyber-text-dim: #7f8aac;
 
             /* 兼容旧变量，避免破坏现有功能 */
             --bg-primary: var(--cyber-bg-0);
@@ -68,13 +41,12 @@
             --blue: var(--cyber-neon-cyan);
             --text: var(--cyber-text-main);
             --text-dim: var(--cyber-text-dim);
-            --text-bright: #f7f9fc;
+            --text-bright: #ffffff;
         }
-
         body {
             background:
-                radial-gradient(120% 140% at 0% 0%, var(--tone-bg-top-left), transparent 50%),
-                radial-gradient(100% 120% at 100% 100%, var(--tone-bg-bottom-right), transparent 56%),
+                radial-gradient(120% 140% at 0% 0%, rgba(57,213,255,0.12), transparent 48%),
+                radial-gradient(100% 120% at 100% 100%, rgba(255,79,185,0.1), transparent 52%),
                 linear-gradient(180deg, var(--cyber-bg-2), var(--cyber-bg-0));
             font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
             color: var(--text);
@@ -84,9 +56,9 @@
         /* ===== 顶部导航 ===== */
         #top-bar {
             height: 42px;
-            background: linear-gradient(90deg, var(--tone-topbar-a), var(--tone-topbar-b));
+            background: linear-gradient(90deg, rgba(14,26,48,0.96), rgba(12,20,40,0.96));
             border-bottom: 1px solid var(--border);
-            box-shadow: 0 2px 16px var(--tone-topbar-shadow), inset 0 -1px 0 var(--tone-topbar-inset);
+            box-shadow: 0 2px 16px rgba(57,213,255,0.08), inset 0 -1px 0 rgba(255,79,185,0.12);
             display: flex;
             align-items: center;
             padding: 0 16px;
@@ -107,64 +79,58 @@
             cursor: pointer; border-bottom: 2px solid transparent;
             transition: all 0.2s; line-height: 24px; border-radius: 4px 4px 0 0;
         }
-        .nav-tab:hover { color: var(--text); background: rgba(255,255,255,0.04); }
-        .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(195,138,85,0.12); }
+        .nav-tab:hover { color: #aaa; background: rgba(255,255,255,0.03); }
+        .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(233,69,96,0.06); }
         .nav-tab .icon { margin-right: 4px; }
         .nav-link {
             padding: 8px 16px; font-size: 12px; color: var(--text-dim);
             cursor: pointer; text-decoration: none; line-height: 24px;
             border-radius: 4px 4px 0 0; transition: all 0.2s;
         }
-        .nav-link:hover { color: var(--accent2); background: rgba(110,144,184,0.12); }
+        .nav-link:hover { color: var(--accent2); background: rgba(108,92,231,0.08); }
         .nav-link .icon { margin-right: 4px; }
         #top-bar .right-info {
-            margin-left: auto; display: flex; align-items: center; gap: 8px;
+            margin-left: auto; display: flex; align-items: center; gap: 10px;
             flex: 0 0 auto;
             padding: 3px 8px;
             border-radius: 10px;
-            background: linear-gradient(90deg, var(--tone-right-info-bg-a), var(--tone-right-info-bg-b));
-            border: 1px solid var(--tone-right-info-border);
+            background: linear-gradient(90deg, rgba(12,20,38,0.62), rgba(12,20,38,0.35));
+            border: 1px solid rgba(57,213,255,0.12);
             min-width: 0;
         }
         .live-dot {
             width: 7px; height: 7px; border-radius: 50%;
             background: var(--green); animation: pulse 1.5s infinite;
-            box-shadow: 0 0 6px rgba(120,168,134,0.55);
+            box-shadow: 0 0 6px var(--green);
         }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
         .stat-badge {
             font-size: 10px; padding: 2px 8px; border-radius: 10px;
-            background: rgba(255,255,255,0.06); border: 1px solid rgba(111,131,160,0.6);
+            background: rgba(255,255,255,0.05); border: 1px solid var(--border);
         }
         .stat-badge .num { color: var(--accent); font-weight: 700; }
         .clock-display { font-size: 11px; color: var(--text-dim); font-family: 'Courier New', monospace; min-width: 160px; }
-        .fx-toggle,
-        .theme-toggle {
-            border: 1px solid rgba(110,144,184,0.62);
-            background: rgba(110,144,184,0.16);
-            color: var(--text-bright);
+        .fx-toggle {
+            border: 1px solid rgba(57,213,255,0.35);
+            background: rgba(57,213,255,0.1);
+            color: #d5f2ff;
             border-radius: 12px;
             padding: 2px 10px;
             font-size: 10px;
             cursor: pointer;
             transition: all 0.2s;
         }
-        .fx-toggle:hover,
-        .theme-toggle:hover {
-            border-color: rgba(195,138,85,0.76);
-            color: var(--text-bright);
-            background: rgba(195,138,85,0.2);
-        }
+        .fx-toggle:hover { border-color: rgba(104,255,159,0.6); color: #fff; background: rgba(104,255,159,0.12); }
         .fx-toggle.low {
-            border-color: rgba(200,172,103,0.72);
-            background: rgba(200,172,103,0.2);
-            color: #f7e3bb;
+            border-color: rgba(255,212,90,0.55);
+            background: rgba(255,212,90,0.14);
+            color: #ffe8a2;
         }
         #fps-indicator.low {
-            border-color: rgba(200,172,103,0.6);
-            color: var(--yellow);
+            border-color: rgba(255,212,90,0.42);
+            color: #ffd45a;
         }
-    </style>
+</style>
     <style>
         /* ===== 主内容区 ===== */
         #main-content { height: calc(100vh - 42px); position: relative; }
@@ -213,7 +179,6 @@
                 radial-gradient(120% 100% at 50% 120%, rgba(255,79,185,0.18), transparent 45%),
                 linear-gradient(180deg, transparent 72%, rgba(57,213,255,0.08) 100%);
         }
-        #game-container canvas { pointer-events: none; }
         @keyframes scanlineDrift {
             0% { background-position: 0 0, 0 0; }
             100% { background-position: 0 160px, 14px 0; }
@@ -401,21 +366,39 @@
             gap: 8px;
             flex-wrap: wrap;
         }
-        .log-v1-dedup-inline {
-            font-size: 10px;
-            color: #93a4cb;
-            line-height: 1.4;
-            padding: 0 2px;
-            user-select: none;
+        .log-v1-overview {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+            width: 100%;
         }
-        .log-v1-dedup-inline .value {
+        .log-v1-overview.compact {
+            grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+        }
+        .log-v1-stat {
+            min-width: 0;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            padding: 6px 8px;
+            font-size: 10px;
+            color: var(--text-dim);
+        }
+        .log-v1-stat .label {
+            display: block;
+            font-size: 9px;
+            color: #7f7f95;
+            margin-bottom: 2px;
+        }
+        .log-v1-stat .value {
+            font-size: 14px;
             font-weight: 700;
             color: var(--text-bright);
             letter-spacing: 0.2px;
         }
-        .log-v1-dedup-inline .value.warn { color: var(--yellow); }
-        .log-v1-dedup-inline .value.err { color: var(--red); }
-        .log-v1-dedup-inline .value.ok { color: var(--green); }
+        .log-v1-stat .value.warn { color: var(--yellow); }
+        .log-v1-stat .value.err { color: var(--red); }
+        .log-v1-stat .value.ok { color: var(--green); }
 
         #log-filter-chips {
             display: flex;
@@ -511,7 +494,6 @@
             backdrop-filter: blur(2px);
         }
         .dash-header .sub { font-size: 10px; color: #96a2c2; font-weight: 500; }
-
         .right-stack {
             display: flex;
             flex-direction: column;
@@ -519,15 +501,15 @@
             padding: 10px 12px 12px;
         }
         .right-card {
-            background: rgba(17,24,40,0.84);
-            border: 1px solid rgba(118,132,170,0.24);
+            background: rgba(17, 24, 40, 0.84);
+            border: 1px solid rgba(118, 132, 170, 0.24);
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 6px 18px rgba(0,0,0,0.22);
         }
         .right-card-head {
             padding: 9px 11px;
-            border-bottom: 1px solid rgba(118,132,170,0.2);
+            border-bottom: 1px solid rgba(118, 132, 170, 0.2);
             display: flex;
             justify-content: space-between;
             align-items: baseline;
@@ -545,7 +527,6 @@
             white-space: nowrap;
         }
         .right-card-body { padding: 10px 11px 11px; }
-
         .stat-row {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -569,7 +550,6 @@
         .stat-card .sc-label { font-size: 10px; color: #9da9c6; margin-top: 4px; }
         .stat-card .sc-bar { height: 3px; border-radius: 2px; margin-top: 7px; background: #21263a; }
         .stat-card .sc-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
-
         .right-split {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -592,13 +572,7 @@
             align-items: center;
             gap: 5px;
         }
-        .mini-kpi .kpi-dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background: var(--accent2);
-            box-shadow: 0 0 8px rgba(108,92,231,0.6);
-        }
+        .mini-kpi .kpi-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent2); box-shadow: 0 0 8px rgba(108,92,231,0.6); }
 
         .agent-grid {
             display: grid;
@@ -620,15 +594,6 @@
         .agent-card:hover { border-color: rgba(136,151,191,0.45); background: rgba(255,255,255,0.04); }
         .agent-card .ac-emoji { font-size: 18px; }
         .agent-card .ac-name { font-size: 10px; color: var(--text); margin-top: 4px; font-weight: 600; }
-        .agent-card .ac-state {
-            margin-top: 4px;
-            display: inline-block;
-            padding: 1px 6px;
-            border-radius: 999px;
-            font-size: 8px;
-            font-weight: 700;
-            line-height: 1.4;
-        }
         .agent-card .ac-tasks { font-size: 9px; color: #8e99b5; margin-top: 3px; }
         .agent-card .ac-glow {
             position: absolute; top: -18px; right: -18px; width: 38px; height: 38px;
@@ -647,10 +612,7 @@
             gap: 4px;
             min-width: 0;
         }
-        .ollama-pill.active {
-            border-color: rgba(104,255,159,0.55);
-            background: rgba(104,255,159,0.08);
-        }
+        .ollama-pill.active { border-color: rgba(104,255,159,0.55); background: rgba(104,255,159,0.08); }
         .ollama-pill .om-name { color: #edf4ff; font-weight: 600; font-size: 10px; }
         .ollama-pill .om-info {
             color: #8d98b4;
@@ -688,12 +650,7 @@
         .ti-p2 { background: rgba(33,150,243,0.2); color: #2196f3; }
         .ti-p3 { background: rgba(158,158,158,0.2); color: #9e9e9e; }
         .task-item .ti-info { flex: 1; min-width: 0; }
-        .task-item .ti-name {
-            font-size: 11px;
-            color: var(--text-bright);
-            font-weight: 600;
-            line-height: 1.4;
-        }
+        .task-item .ti-name { font-size: 11px; color: var(--text-bright); font-weight: 600; line-height: 1.4; }
         .task-item .ti-desc {
             font-size: 9px;
             color: #8f9bb8;
@@ -713,21 +670,14 @@
         }
         .task-item .ti-agent { font-size: 9px; color: #8f9bb8; flex: 0 0 auto; }
         .task-item .ti-status {
-            font-size: 9px;
-            padding: 2px 6px;
-            border-radius: 6px;
-            flex: 0 0 auto;
+            font-size: 9px; padding: 2px 6px; border-radius: 6px; flex: 0 0 auto;
         }
         .ts-todo { background: rgba(158,158,158,0.15); color: #9e9e9e; }
         .ts-doing { background: rgba(33,150,243,0.15); color: #42a5f5; }
         .ts-done { background: rgba(76,175,80,0.15); color: #4caf50; }
         .ts-cancel { background: rgba(244,67,54,0.1); color: #888; }
         .task-item .ti-progress {
-            flex: 0 0 56px;
-            height: 3px;
-            background: #21263a;
-            border-radius: 2px;
-            overflow: hidden;
+            flex: 0 0 56px; height: 3px; background: #21263a; border-radius: 2px; overflow: hidden;
         }
         .task-item .ti-progress-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
         .task-list-empty {
@@ -1235,21 +1185,14 @@
             #office-left {
                 border-right: none;
                 border-bottom: 1px solid rgba(57,213,255,0.14);
-                min-height: 64vh;
+                min-height: 60vh;
             }
             #office-right {
                 flex: 0 0 auto;
                 width: 100%;
-                max-height: 34vh;
+                max-height: 40vh;
                 border-left: none;
-                border-top: 1px solid rgba(57,213,255,0.14);
             }
-            .right-stack {
-                display: grid;
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 8px;
-            }
-            .right-card:last-child { grid-column: span 2; }
             #game-container { max-height: 34vh; }
             .agent-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); }
             .log-v1-overview.compact { grid-template-columns: 1fr; }
@@ -1263,193 +1206,11 @@
             .clock-display { display: none; }
             #top-bar .right-info { margin-left: 6px; gap: 6px; }
             #fps-indicator { display: none; }
-            .fx-toggle, .theme-toggle { padding: 2px 8px; font-size: 9px; }
+            .fx-toggle { padding: 2px 8px; font-size: 9px; }
             .live-dot { width: 6px; height: 6px; }
             #agent-bar { max-height: 72px; overflow-y: auto; }
-            #office-left { min-height: 66vh; }
-            #office-right { max-height: 34vh; }
-            .right-stack { grid-template-columns: 1fr; }
-            .right-card:last-child { grid-column: auto; }
-            .agent-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+            .agent-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
             .log-header .a-model { max-width: 120px; }
-        }
-    </style>
-
-    <style id="non-ai-retheme-v1-overrides">
-        /* ===== 配色重做 V1：重点提升日志区 + 右侧面板可读性 ===== */
-        #game-container {
-            background:
-                radial-gradient(120% 100% at 50% 0%, rgba(127,159,195,0.12), transparent 52%),
-                linear-gradient(180deg, rgba(31,43,60,0.95) 0%, rgba(21,30,44,0.95) 40%, rgba(20,24,33,0.96) 100%);
-            box-shadow:
-                inset 0 -12px 30px rgba(0,0,0,0.35),
-                inset 0 1px 0 rgba(255,255,255,0.06),
-                0 10px 24px rgba(0,0,0,0.22);
-        }
-        #game-container::before {
-            background:
-                linear-gradient(rgba(0,0,0,0) 50%, rgba(8,12,20,0.14) 50%),
-                linear-gradient(90deg, transparent 96%, rgba(127,159,195,0.04) 100%);
-            opacity: 0.28;
-        }
-        #game-container::after {
-            background:
-                radial-gradient(120% 100% at 50% 120%, rgba(195,138,85,0.12), transparent 45%),
-                linear-gradient(180deg, transparent 72%, rgba(127,159,195,0.06) 100%);
-        }
-
-        #agent-bar {
-            background: rgba(24,33,47,0.94);
-            border-bottom: 1px solid rgba(79,95,121,0.85);
-        }
-        .agent-chip {
-            color: var(--text-main, var(--text));
-        }
-
-        #log-enhance-v1 {
-            border-bottom-color: var(--log-divider);
-            background: linear-gradient(180deg, rgba(22,30,43,0.98), rgba(18,25,37,0.95));
-            box-shadow: inset 0 -1px 0 rgba(195,138,85,0.15);
-        }
-        .log-v1-stat {
-            background: rgba(255,255,255,0.03);
-            border-color: rgba(111,131,160,0.42);
-            color: var(--text-dim);
-        }
-        .log-v1-stat .label { color: var(--text-dim); opacity: 0.84; }
-        .log-chip {
-            border-color: rgba(79,95,121,0.9);
-            background: rgba(255,255,255,0.02);
-            color: var(--text-dim);
-        }
-        .log-chip:hover {
-            color: var(--text-bright);
-            border-color: rgba(127,159,195,0.62);
-            background: rgba(127,159,195,0.14);
-        }
-        .log-chip.active {
-            color: var(--text-bright);
-            border-color: var(--accent2);
-            background: rgba(110,144,184,0.24);
-            box-shadow: inset 0 0 0 1px rgba(110,144,184,0.18);
-        }
-        .log-chip.danger.active {
-            border-color: var(--red);
-            background: rgba(185,117,111,0.25);
-            box-shadow: inset 0 0 0 1px rgba(185,117,111,0.18);
-        }
-        .log-action-btn {
-            border-color: rgba(79,95,121,0.8);
-            background: rgba(255,255,255,0.03);
-            color: var(--text-dim);
-        }
-        .log-action-btn:hover {
-            color: var(--text-bright);
-            border-color: rgba(127,159,195,0.68);
-            background: rgba(127,159,195,0.14);
-        }
-        .log-action-btn.active {
-            border-color: var(--accent);
-            background: rgba(195,138,85,0.25);
-        }
-
-        #log-panel {
-            background: var(--log-bg);
-        }
-        #log-panel::-webkit-scrollbar-track { background: transparent; }
-        #log-panel::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 2px; }
-        .log-section {
-            border-bottom-color: var(--log-divider);
-            background: var(--log-section-bg);
-        }
-        .log-section:hover { background: var(--log-section-hover); }
-        .log-section.has-error {
-            border-left: 2px solid var(--red);
-            background: rgba(185,117,111,0.11);
-        }
-        .log-section.is-active { border-left: 2px solid var(--green); }
-        .log-header .a-name { color: var(--text-bright); }
-        .log-header .a-model { color: var(--text-dim); }
-        .log-line {
-            font-size: 10px;
-            line-height: 1.55;
-            color: var(--log-system);
-            grid-template-columns: 118px 14px minmax(0, 1fr);
-            column-gap: 6px;
-        }
-        .log-line .lt { color: var(--log-time); }
-        .log-line.r-user .lx { color: var(--log-user); }
-        .log-line.r-assistant .lx { color: var(--log-assistant); }
-        .log-line.r-tool .lx { color: var(--log-tool); }
-        .log-line.r-error .lx { color: var(--log-error); font-weight: 600; }
-        .log-line.r-system .lx { color: var(--log-system); }
-
-        #office-right {
-            background: linear-gradient(180deg, rgba(24,34,48,0.94) 0%, var(--panel-bg) 100%);
-            border-left-color: rgba(127,159,195,0.26);
-        }
-        #office-right::-webkit-scrollbar-thumb { background: rgba(127,159,195,0.55); }
-        .dash-header {
-            color: var(--text-bright);
-            border-bottom-color: rgba(127,159,195,0.28);
-            background: linear-gradient(135deg, var(--panel-header-bg-a), var(--panel-header-bg-b));
-        }
-        .dash-header .sub { color: var(--text-dim); }
-        .right-card {
-            background: rgba(255,255,255,0.02);
-            border-color: rgba(127,159,195,0.3);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-        }
-        .right-card-head { border-bottom-color: rgba(127,159,195,0.2); }
-        .right-card-title { color: var(--text-bright); }
-        .right-card-sub { color: var(--text-dim); }
-        .stat-card,
-        .mini-kpi,
-        .agent-card,
-        .task-item,
-        .ollama-pill {
-            background: rgba(255,255,255,0.02);
-            border-color: rgba(127,159,195,0.26);
-        }
-        .stat-card:hover,
-        .agent-card:hover,
-        .task-item:hover {
-            border-color: rgba(127,159,195,0.48);
-        }
-        .stat-card .sc-label,
-        .mini-kpi .kpi-label,
-        .task-item .ti-desc,
-        .task-item .ti-agent,
-        .agent-card .ac-tasks,
-        #ollama-status,
-        .ollama-pill .om-info {
-            color: var(--text-dim);
-        }
-        .mini-kpi .kpi-value,
-        .ollama-pill .om-name,
-        .task-item .ti-name {
-            color: var(--text-bright);
-        }
-        .mini-kpi .kpi-dot {
-            background: var(--accent2);
-            box-shadow: 0 0 8px rgba(110,144,184,0.45);
-        }
-
-        .street-fx.complete {
-            color: #eef8ee;
-            background: rgba(18,40,28,0.72);
-            border-color: rgba(120,168,134,0.52);
-            text-shadow: 0 0 8px rgba(120,168,134,0.4);
-        }
-        .street-fx.failed {
-            color: #f9ecea;
-            background: rgba(48,23,24,0.72);
-            border-color: rgba(185,117,111,0.55);
-            text-shadow: 0 0 8px rgba(185,117,111,0.42);
-        }
-
-        @media (max-width: 1360px) {
-            .log-line { grid-template-columns: 104px 12px minmax(0, 1fr); column-gap: 4px; }
         }
     </style>
 </head>
@@ -1471,7 +1232,6 @@
             <span class="stat-badge">进行中 <span class="num" id="active-count">0</span></span>
             <span class="stat-badge" id="fps-indicator">FPS --</span>
             <button id="fx-toggle" class="fx-toggle" title="切换渲染质量（高质/低配）">🚀 高质</button>
-            <button id="theme-toggle" class="theme-toggle" title="切换色盘（暮色/营地）">🌆 暮色</button>
             <span class="clock-display" id="clock"></span>
         </div>
     </div>
@@ -1527,7 +1287,12 @@
                     </div>
                 </div>
                 <div id="log-enhance-v1">
-                    <div class="log-v1-dedup-inline">去重统计：<span class="value ok" id="logv1-dedup">0 / 0</span></div>
+                    <div class="log-v1-row log-v1-overview compact">
+                        <div class="log-v1-stat">
+                            <span class="label">日志去重（保留时序）</span>
+                            <span class="value ok" id="logv1-dedup">0 / 0</span>
+                        </div>
+                    </div>
                     <div class="log-v1-row" id="log-filter-chips"></div>
                     <div class="log-v1-row" id="log-actions">
                         <button class="log-action-btn" id="log-btn-clear">清屏仅视图</button>
@@ -1543,65 +1308,11 @@
                 <div class="dash-header">
                     📊 任务仪表盘 <span class="sub">实时数据 · 自动刷新</span>
                 </div>
-                <div class="right-stack">
-                    <section class="right-card">
-                        <div class="right-card-head">
-                            <span class="right-card-title">🎯 任务总览</span>
-                            <span class="right-card-sub">自动刷新</span>
-                        </div>
-                        <div class="right-card-body">
-                            <div class="stat-row" id="stat-cards"></div>
-                            <div class="right-split">
-                                <div class="mini-kpi">
-                                    <div class="kpi-label">在线 Agent</div>
-                                    <div class="kpi-value"><span class="kpi-dot"></span><span id="right-kpi-online">0/0</span></div>
-                                </div>
-                                <div class="mini-kpi">
-                                    <div class="kpi-label">活跃 Agent</div>
-                                    <div class="kpi-value"><span id="right-kpi-active">0</span></div>
-                                </div>
-                                <div class="mini-kpi">
-                                    <div class="kpi-label">待办任务</div>
-                                    <div class="kpi-value"><span id="right-kpi-todo">0</span></div>
-                                </div>
-                                <div class="mini-kpi">
-                                    <div class="kpi-label">已完成率</div>
-                                    <div class="kpi-value"><span id="right-kpi-done-rate">0%</span></div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section class="right-card">
-                        <div class="right-card-head">
-                            <span class="right-card-title">🦙 本地模型 (Ollama)</span>
-                            <span class="right-card-sub">运行态</span>
-                        </div>
-                        <div class="right-card-body">
-                            <div id="ollama-status">检测中...</div>
-                        </div>
-                    </section>
-
-                    <section class="right-card">
-                        <div class="right-card-head">
-                            <span class="right-card-title">🤖 Agent 工作负载</span>
-                            <span class="right-card-sub">实时状态</span>
-                        </div>
-                        <div class="right-card-body">
-                            <div class="agent-grid" id="agent-grid"></div>
-                        </div>
-                    </section>
-
-                    <section class="right-card">
-                        <div class="right-card-head">
-                            <span class="right-card-title">🧾 最新任务</span>
-                            <span class="right-card-sub">按优先级 / 状态</span>
-                        </div>
-                        <div class="right-card-body">
-                            <div class="task-list" id="right-task-list"></div>
-                        </div>
-                    </section>
-                </div>
+                <div class="stat-row" id="stat-cards"></div>
+                <div class="section-title">🦙 本地模型 (Ollama)</div>
+                <div id="ollama-status" style="padding:0 12px 8px;font-size:10px;color:var(--text-dim)">检测中...</div>
+                <div class="section-title">🤖 Agent 工作负载</div>
+                <div class="agent-grid" id="agent-grid"></div>
             </div>
         </div>
 
@@ -1652,12 +1363,12 @@
         cmd:  { work:{x:1151,y:508,spread:110}, rest:{x:1391,y:508,spread:70} },
     };
     const DEPT_META = {
-        info: { name: '情报室', icon: '📰', color: 0x7f9fc3 },
-        dev:  { name: '开发区', icon: '💻', color: 0x78a886 },
-        test: { name: '测试区', icon: '🧪', color: 0x8f86b8 },
-        fin:  { name: '金融区', icon: '💰', color: 0xc8ac67 },
-        plan: { name: '策划产品', icon: '📋', color: 0xc38a55 },
-        cmd:  { name: '指挥中心', icon: '🗡️', color: 0x6e90b8 },
+        info: { name: '情报室', icon: '📰', color: 0x39d5ff },
+        dev:  { name: '开发区', icon: '💻', color: 0x68ff9f },
+        test: { name: '测试区', icon: '🧪', color: 0x8f7bff },
+        fin:  { name: '金融区', icon: '💰', color: 0xffd45a },
+        plan: { name: '策划产品', icon: '📋', color: 0xff4fb9 },
+        cmd:  { name: '指挥中心', icon: '🗡️', color: 0x6ec8ff },
     };
     // 每个 agent 的归属部门
     const AGENT_HOME = {
@@ -1723,8 +1434,13 @@
         task12:'量化交易', task13:'战略顾问', task14:'趋势追踪', task15:'应急向导', task16:'防御稳定'
     };
 
+
+    const LOG_V1_TASK_IDS = Array.from({ length: 16 }, (_, i) => `task${i + 1}`);
     const LOG_V1_BASE_FILTERS = [
-        { id: 'all', label: '全部弟子' },
+        { id: 'all', label: '全部' },
+        { id: 'error', label: '错误', danger: true },
+        { id: 'warning', label: '警告' },
+        { id: 'done', label: '完成' },
     ];
     const logV1State = {
         selectedFilter: 'all',
@@ -1735,28 +1451,6 @@
         dedupStats: { sourceTotal: 0, uniqueTotal: 0, droppedTotal: 0 },
         pendingRefresh: false,
     };
-    let highlightedAgentId = null;
-
-    function setCanvasAgentHighlight(agentId) {
-        const nextId = agentId && agentId !== 'all' ? agentId : null;
-        highlightedAgentId = nextId;
-
-        for (const [id, a] of Object.entries(agentSprites || {})) {
-            if (!a) continue;
-            const active = !!nextId && id === nextId;
-            if (a.highlightRing) {
-                a.highlightRing.setVisible(active);
-                a.highlightRing.setAlpha(active ? 1 : 0);
-            }
-            if (a.highlightGlow) {
-                a.highlightGlow.setVisible(active);
-                a.highlightGlow.setAlpha(active ? 0.5 : 0);
-            }
-            if (a.highlightTween) {
-                a.highlightTween.paused = !active;
-            }
-        }
-    }
 
     function logV1IsError(log) {
         const txt = safeText(log && log.text).toLowerCase();
@@ -1864,71 +1558,41 @@
         }
         logV1UpdateDedupBadge(logV1State.dedupStats);
     }
+
     function logV1BuildChips(logsMap, agents) {
         const wrap = document.getElementById('log-filter-chips');
         if (!wrap) return;
 
-        const agentMap = agents && typeof agents === 'object' ? agents : {};
-        const allIds = Array.from(new Set([
-            ...Object.keys(agentMap),
-            ...Object.keys(logsMap || {}),
-        ]));
-
-        const sortedIds = allIds.sort((a, b) => {
-            const la = Array.isArray(logsMap && logsMap[a]) ? logsMap[a] : [];
-            const lb = Array.isArray(logsMap && logsMap[b]) ? logsMap[b] : [];
-            const ta = la.length ? safeText(la[la.length - 1].ts) : '';
-            const tb = lb.length ? safeText(lb[lb.length - 1].ts) : '';
-            if (ta !== tb) return tb.localeCompare(ta);
-            const na = safeText((agentMap[a] || {}).name || a);
-            const nb = safeText((agentMap[b] || {}).name || b);
-            return na.localeCompare(nb, 'zh-Hans-CN');
-        });
-
         const filters = [
             ...LOG_V1_BASE_FILTERS,
-            ...sortedIds.map(id => {
-                const a = agentMap[id] || {};
-                return {
-                    id,
-                    label: `${safeText(a.emoji || '🤖')} ${safeText(a.name || id)}`,
-                };
-            }),
+            ...LOG_V1_TASK_IDS.map(id => ({ id, label: id }))
         ];
+        const counts = {};
+        for (const f of filters) counts[f.id] = 0;
 
-        const counts = { all: 0 };
-        for (const id of sortedIds) {
-            const rows = Array.isArray(logsMap && logsMap[id]) ? logsMap[id] : [];
-            counts[id] = rows.length;
-            counts.all += rows.length;
-        }
-
-        const allowed = new Set(['all', ...sortedIds]);
-        if (!allowed.has(logV1State.selectedFilter)) {
-            logV1State.selectedFilter = 'all';
+        for (const [aid, rows] of Object.entries(logsMap || {})) {
+            const arr = Array.isArray(rows) ? rows : [];
+            counts.all += arr.length;
+            if (LOG_V1_TASK_IDS.includes(aid)) counts[aid] = arr.length;
+            counts.error += arr.filter(logV1IsError).length;
+            counts.warning += arr.filter(logV1IsWarning).length;
+            counts.done += arr.filter(logV1IsDone).length;
         }
 
         wrap.innerHTML = filters.map(f => {
             const active = logV1State.selectedFilter === f.id ? ' active' : '';
+            const danger = f.danger ? ' danger' : '';
             const count = counts[f.id] || 0;
-            return `<button class="log-chip${active}" data-log-filter="${f.id}">${escapeHtml(f.label)} <span style="opacity:.7">${count}</span></button>`;
+            return `<button class="log-chip${active}${danger}" data-log-filter="${f.id}">${escapeHtml(f.label)} <span style="opacity:.7">${count}</span></button>`;
         }).join('');
 
         wrap.querySelectorAll('[data-log-filter]').forEach(btn => {
             btn.addEventListener('click', () => {
-                const picked = btn.getAttribute('data-log-filter') || 'all';
-                if (picked !== 'all' && logV1State.selectedFilter === picked) {
-                    logV1State.selectedFilter = 'all';
-                } else {
-                    logV1State.selectedFilter = picked;
-                }
-                setCanvasAgentHighlight(logV1State.selectedFilter === 'all' ? null : logV1State.selectedFilter);
+                logV1State.selectedFilter = btn.getAttribute('data-log-filter') || 'all';
                 logV1State.pendingRefresh = true;
                 renderLogs(logV1State.rawLogs, logV1State.rawAgents, { force: true });
             });
         });
-
-        setCanvasAgentHighlight(logV1State.selectedFilter === 'all' ? null : logV1State.selectedFilter);
     }
 
     function logV1RefreshActionBtnState() {
@@ -2018,40 +1682,7 @@
     } else {
         initLogEnhanceV1();
     }
-    const THEME_STATE = {
-        mode: 'command',
-        key: 'star-office-theme'
-    };
 
-    function updateThemeBadge() {
-        const btn = document.getElementById('theme-toggle');
-        if (!btn) return;
-        const mode = THEME_STATE.mode === 'adventure' ? 'adventure' : 'command';
-        btn.textContent = mode === 'adventure' ? '🏕️ 营地' : '🌆 暮色';
-        btn.title = mode === 'adventure' ? '切换到暮色指挥站主题' : '切换到旅团营地主题';
-    }
-
-    function applyThemeMode(mode, opts = {}) {
-        const next = mode === 'adventure' ? 'adventure' : 'command';
-        THEME_STATE.mode = next;
-        document.body.setAttribute('data-theme', next);
-        if (opts.persist !== false) {
-            try { localStorage.setItem(THEME_STATE.key, next); } catch (e) {}
-        }
-        updateThemeBadge();
-    }
-
-    function initThemeMode() {
-        const btn = document.getElementById('theme-toggle');
-        if (btn) {
-            btn.addEventListener('click', () => {
-                applyThemeMode(THEME_STATE.mode === 'adventure' ? 'command' : 'adventure');
-            });
-        }
-        let saved = '';
-        try { saved = localStorage.getItem(THEME_STATE.key) || ''; } catch (e) {}
-        applyThemeMode(saved || 'command', { persist: false });
-    }
 
     function isLowFxMode() {
         return PERF_STATE.mode === 'low';
@@ -2168,7 +1799,7 @@
         ], side, 0.92 * alpha);
 
         const edge = scene.add.graphics();
-        edge.lineStyle(1, 0xa7bbd3, 0.3 * alpha);
+        edge.lineStyle(1, 0xc8e8ff, 0.3 * alpha);
         edge.strokeLineShape(new Phaser.Geom.Line(-width / 2, -height, width / 2, -height));
         edge.strokeLineShape(new Phaser.Geom.Line(width / 2, -height, width / 2 + depth, -height - depth * 0.55));
         edge.strokeLineShape(new Phaser.Geom.Line(width / 2 + depth, -height - depth * 0.55, width / 2 + depth, -depth * 0.55));
@@ -2183,7 +1814,7 @@
             for (let c = 0; c < cols; c++) {
                 const wx = -width / 2 + 8 + c * colW + (c % 2 ? 1 : 0);
                 const wy = -height + 12 + r * rowH;
-                const tint = (r + c) % 3 === 0 ? neon : (r % 2 ? 0xb4946d : 0x7f9fc3);
+                const tint = (r + c) % 3 === 0 ? neon : (r % 2 ? 0x8f7bff : 0x39d5ff);
                 const w = scene.add.rectangle(wx, wy, 4, 6, tint, 0.2 + Math.random() * 0.4)
                     .setOrigin(0, 0);
                 windows.push(w);
@@ -2197,8 +1828,8 @@
 
     function createCyberStreetLayers(scene) {
         const low = isLowFxMode();
-        const farBand = scene.add.rectangle(800, 188, 1600, 238, 0x1a2436, 0.96).setDepth(1);
-        const hazeBack = scene.add.rectangle(800, 220, 1600, 180, 0x2a3b55, 0.1)
+        const farBand = scene.add.rectangle(800, 188, 1600, 238, 0x0b1226, 0.96).setDepth(1);
+        const hazeBack = scene.add.rectangle(800, 220, 1600, 180, 0x13284f, 0.12)
             .setDepth(2)
             .setBlendMode(Phaser.BlendModes.ADD);
 
@@ -2216,10 +1847,10 @@
                 width: 38 + (i % 3) * 7,
                 height: h,
                 depth: 12,
-                front: 0x2a3449,
-                side: 0x212a3c,
-                top: 0x3f4d66,
-                neon: i % 2 ? 0x7f9fc3 : 0xc8ac67,
+                front: 0x15233f,
+                side: 0x0f1a2f,
+                top: 0x243a60,
+                neon: i % 2 ? 0x39d5ff : 0x8f7bff,
                 alpha: 0.9,
                 z: 2 + (i % 2),
                 rows: 3,
@@ -2239,10 +1870,10 @@
                 width: 58 + (i % 4) * 7,
                 height: 88 + (i % 5) * 15,
                 depth: 18,
-                front: 0x33435c,
-                side: 0x28364c,
-                top: 0x536788,
-                neon: i % 3 === 0 ? 0xc38a55 : 0x7f9fc3,
+                front: 0x1a2d52,
+                side: 0x12203c,
+                top: 0x325189,
+                neon: i % 3 === 0 ? 0xff4fb9 : 0x39d5ff,
                 alpha: 0.98,
                 z: 6 + (i % 3),
                 rows: 5,
@@ -2254,49 +1885,49 @@
         }
 
         const ground = scene.add.graphics();
-        ground.fillStyle(0x1a2333, 0.95);
+        ground.fillStyle(0x060c17, 0.95);
         ground.fillRect(0, 432, 1600, 220);
-        ground.fillStyle(0x2c3a50, 0.95);
+        ground.fillStyle(0x0f1e36, 0.95);
         ground.fillRect(0, 428, 1600, 12);
-        ground.lineStyle(2, 0x7f9fc3, 0.13);
+        ground.lineStyle(2, 0x39d5ff, 0.14);
         ground.lineBetween(0, 440, 1600, 440);
         for (let i = 0; i < 22; i++) {
             const x = i * 80;
-            ground.lineStyle(1, 0x7f9fc3, 0.06);
+            ground.lineStyle(1, 0x39d5ff, 0.07);
             ground.lineBetween(x, 650, 800, 430);
         }
         for (let y = 0; y < 8; y++) {
             const yy = 452 + y * 24;
-            ground.lineStyle(1, y % 2 ? 0x344663 : 0x465c7f, 0.18 - y * 0.014);
+            ground.lineStyle(1, y % 2 ? 0x22395d : 0x304f7e, 0.18 - y * 0.014);
             ground.lineBetween(0, yy, 1600, yy);
         }
 
         const roadNeon = scene.add.graphics().setDepth(9);
-        roadNeon.lineStyle(2, 0xc38a55, 0.22);
+        roadNeon.lineStyle(2, 0xff4fb9, 0.24);
         roadNeon.lineBetween(0, 484, 1600, 484);
-        roadNeon.lineStyle(1, 0x7f9fc3, 0.22);
+        roadNeon.lineStyle(1, 0x39d5ff, 0.24);
         roadNeon.lineBetween(0, 498, 1600, 498);
-        roadNeon.lineStyle(1, 0x6e90b8, 0.18);
+        roadNeon.lineStyle(1, 0x8f7bff, 0.2);
         roadNeon.lineBetween(0, 512, 1600, 512);
 
-        const sweep = scene.add.rectangle(800, 452, 1800, 10, 0x7f9fc3, 0.08).setDepth(10);
-        const scanPulse = scene.add.rectangle(800, 470, 1600, 36, 0x6e90b8, 0.07)
+        const sweep = scene.add.rectangle(800, 452, 1800, 10, 0x39d5ff, 0.09).setDepth(10);
+        const scanPulse = scene.add.rectangle(800, 470, 1600, 36, 0x66b6ff, 0.08)
             .setDepth(11)
             .setBlendMode(Phaser.BlendModes.ADD);
 
         const rainDrops = [];
         const rainCount = low ? 0 : 120;
         for (let i = 0; i < rainCount; i++) {
-            const d = scene.add.rectangle(Math.random() * 1600, Math.random() * 650, 1, 8 + Math.random() * 10, 0x8ca4c2, 0.14)
+            const d = scene.add.rectangle(Math.random() * 1600, Math.random() * 650, 1, 8 + Math.random() * 10, 0xa8d9ff, 0.18)
                 .setAngle(14)
                 .setDepth(24 + (i % 2));
             rainDrops.push({ obj: d, speed: 2.6 + Math.random() * 2.8, drift: 0.25 + Math.random() * 0.45 });
         }
 
         const fogBands = [
-            scene.add.ellipse(400, 542, 520, 92, 0x7489a8, 0.07).setDepth(23),
-            scene.add.ellipse(1120, 556, 620, 106, 0x8f7a62, 0.1).setDepth(23),
-            scene.add.ellipse(830, 575, 760, 118, 0x6b84a8, 0.07).setDepth(23),
+            scene.add.ellipse(400, 542, 520, 92, 0x8ab4ff, 0.08).setDepth(23),
+            scene.add.ellipse(1120, 556, 620, 106, 0xb5d1ff, 0.11).setDepth(23),
+            scene.add.ellipse(830, 575, 760, 118, 0x7aa8ff, 0.08).setDepth(23),
         ];
 
         farBand.setDepth(1);
@@ -2367,7 +1998,7 @@
     function createDeptShopSigns(scene) {
         deptSigns = {};
         Object.entries(DEPT_ZONES).forEach(([dept, zone]) => {
-            const meta = DEPT_META[dept] || { name: dept, icon: '🏪', color: 0x7f9fc3 };
+            const meta = DEPT_META[dept] || { name: dept, icon: '🏪', color: 0x39d5ff };
             const x = zone.work.x;
             const y = zone.work.y - 104;
 
@@ -2395,9 +2026,9 @@
             }).setOrigin(0, 0.5);
 
             const lampBase = scene.add.rectangle(64, 0, 52, 16, 0x111111, 0.75).setStrokeStyle(1, 0x5b6788, 0.5);
-            const lampG = scene.add.circle(50, 0, 4, 0x78a886, 0.3);
-            const lampY = scene.add.circle(64, 0, 4, 0xc8ac67, 0.3);
-            const lampR = scene.add.circle(78, 0, 4, 0xb9756f, 0.3);
+            const lampG = scene.add.circle(50, 0, 4, 0x68ff9f, 0.26);
+            const lampY = scene.add.circle(64, 0, 4, 0xffd45a, 0.26);
+            const lampR = scene.add.circle(78, 0, 4, 0xff5f70, 0.26);
 
             wrap.add([shadow, boardBack, boardSide, boardTop, glow, title, lampBase, lampG, lampY, lampR]);
             wrap.setDepth(30);
@@ -2589,16 +2220,6 @@
         document.getElementById('total-count').textContent = totalAgents;
         document.getElementById('active-count').textContent = activeAgents;
 
-        const doneRate = total ? Math.round(done / total * 100) : 0;
-        const kpiOnline = document.getElementById('right-kpi-online');
-        const kpiActive = document.getElementById('right-kpi-active');
-        const kpiTodo = document.getElementById('right-kpi-todo');
-        const kpiDoneRate = document.getElementById('right-kpi-done-rate');
-        if (kpiOnline) kpiOnline.textContent = `${onlineAgents}/${totalAgents}`;
-        if (kpiActive) kpiActive.textContent = String(activeAgents);
-        if (kpiTodo) kpiTodo.textContent = String(todo);
-        if (kpiDoneRate) kpiDoneRate.textContent = `${doneRate}%`;
-
         document.getElementById('stat-cards').innerHTML = `
             <div class="stat-card">
                 <div class="sc-num" style="color:var(--accent)">${total}</div>
@@ -2656,70 +2277,7 @@
     }
 
     function renderRecentTasks(tasks) {
-        const listEl = document.getElementById('right-task-list');
-        if (!listEl) return;
-
-        const safeTasks = Array.isArray(tasks) ? tasks : [];
-        if (!safeTasks.length) {
-            listEl.innerHTML = '<div class="task-list-empty">暂无任务数据</div>';
-            return;
-        }
-
-        const statusWeight = { '进行中': 0, '待办': 1, '已完成': 2, '已取消': 3 };
-        const priorityWeight = { 'P0': 0, 'P1': 1, 'P2': 2, 'P3': 3 };
-
-        const sorted = [...safeTasks].sort((a, b) => {
-            const sa = statusWeight[safeText(a && a.status)] ?? 9;
-            const sb = statusWeight[safeText(b && b.status)] ?? 9;
-            if (sa !== sb) return sa - sb;
-            const pa = priorityWeight[safeText(a && a.priority)] ?? 9;
-            const pb = priorityWeight[safeText(b && b.priority)] ?? 9;
-            if (pa !== pb) return pa - pb;
-            const pga = parseFloat(a && a.progress) || 0;
-            const pgb = parseFloat(b && b.progress) || 0;
-            return pgb - pga;
-        }).slice(0, 6);
-
-        if (!sorted.length) {
-            listEl.innerHTML = '<div class="task-list-empty">暂无可展示任务</div>';
-            return;
-        }
-
-        let html = '';
-        for (const task of sorted) {
-            const t = task && typeof task === 'object' ? task : {};
-            const priority = safeText(t.priority || 'P3').toUpperCase();
-            const status = safeText(t.status || '待办');
-            const name = safeText(t.task_name || t.name || '未命名任务');
-            const desc = safeText(t.desc || t.description || '').trim();
-            const agent = safeText(t.agent || '未分配');
-            const progressRaw = parseFloat(t.progress || 0);
-            const progress = Number.isFinite(progressRaw) ? Math.max(0, Math.min(100, Math.round(progressRaw))) : 0;
-
-            const priClass = ['P0','P1','P2','P3'].includes(priority) ? `ti-${priority.toLowerCase()}` : 'ti-p3';
-            const statusClass = status === '进行中'
-                ? 'ts-doing'
-                : status === '已完成'
-                ? 'ts-done'
-                : status === '已取消'
-                ? 'ts-cancel'
-                : 'ts-todo';
-
-            html += `<div class="task-item">`;
-            html += `<span class="ti-priority ${priClass}">${escapeHtml(priority)}</span>`;
-            html += `<div class="ti-info">`;
-            html += `<div class="ti-name" title="${escapeAttr(name)}">${escapeHtml(name)}</div>`;
-            html += `<div class="ti-desc" title="${escapeAttr(desc || '无描述')}">${escapeHtml(desc || '无描述')}</div>`;
-            html += `<div class="ti-meta">`;
-            html += `<span class="ti-agent">${escapeHtml(agent)}</span>`;
-            html += `<span class="ti-status ${statusClass}">${escapeHtml(status)}</span>`;
-            html += `</div>`;
-            html += `</div>`;
-            html += `<div class="ti-progress"><div class="ti-progress-fill" style="width:${progress}%;background:${safeColor(t.color, progressColor(progress))}"></div></div>`;
-            html += `</div>`;
-        }
-
-        listEl.innerHTML = html;
+        // 已迁移到卷轴面板，保留空函数避免报错
     }
 
     // ============ 看板渲染 ============
@@ -2761,11 +2319,10 @@
 
         const selected = logV1State.selectedFilter || 'all';
         const onlyException = !!logV1State.onlyException;
-        setCanvasAgentHighlight(selected === 'all' ? null : selected);
 
         let html = '';
         for (const aid of sortedAids) {
-            if (selected !== 'all' && aid !== selected) continue;
+            if (selected.startsWith('task') && aid !== selected) continue;
 
             const rawAgent = agentMap[aid];
             const a = rawAgent && typeof rawAgent === 'object' ? rawAgent : {};
@@ -2778,10 +2335,15 @@
             const shortModel = cfgModel ? cfgModel.split('/').pop() : '';
             const textColor = safeColor(a.color, '#ccc');
 
-            const filteredLogs = onlyException
-                ? agentLogs.filter(log => logV1IsError(log) || logV1IsWarning(log))
-                : agentLogs;
+            const filteredLogs = agentLogs.filter(log => {
+                const basic = logV1FilterLine(log, selected);
+                const ex = !onlyException || logV1IsError(log) || logV1IsWarning(log);
+                return basic && ex;
+            });
 
+            if (selected === 'error' && !(s === 'error' || s === 'dead') && !filteredLogs.length) continue;
+            if (selected === 'warning' && !filteredLogs.length) continue;
+            if (selected === 'done' && !filteredLogs.length) continue;
             if (selected === 'all' && onlyException && !filteredLogs.length && !(s === 'error' || s === 'dead')) continue;
 
             let sectionClass = 'log-section';
@@ -2852,8 +2414,8 @@
     // ============ Phaser 像素办公室 ============
     const phaserConfig = {
         type: Phaser.AUTO, width: 1600, height: 650,
-        parent: 'game-container', pixelArt: true, backgroundColor: '#1a2230',
-        input: { keyboard: false, gamepad: false }, // 强制关闭人物操控输入
+        parent: 'game-container', pixelArt: true, backgroundColor: '#0f0f1a',
+        physics: { default:'arcade', arcade:{ gravity:{y:0}, debug:false } },
         scene: { preload: pPreload, create: pCreate, update: pUpdate },
         scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_HORIZONTALLY }
     };
@@ -2872,11 +2434,16 @@
         createDeptShopSigns(this);     // V2：立体招牌 + 呼吸状态灯
         applySceneFxQuality();
 
-        const ls = { font:'18px monospace', fill:'#c9d7eb', stroke:'#000', strokeThickness: 2 };
+        const ls = { font:'18px monospace', fill:'#88a7db', stroke:'#000', strokeThickness: 2 };
         this.add.text(254, 430, '💻 工位街区', ls).setOrigin(0.5).setAlpha(0.58).setDepth(34);
         this.add.text(630, 280, '☕ 能量补给站', ls).setOrigin(0.5).setAlpha(0.52).setDepth(34);
         this.add.text(642, 560, '📋 指挥会议舱', ls).setOrigin(0.5).setAlpha(0.52).setDepth(34);
 
+        const pBg = this.add.rectangle(400, 635, 368, 28, 0x13243f, 0.9);
+        pBg.setStrokeStyle(1, 0x325f8f, 0.7).setDepth(50);
+        this.add.text(400, 635, '⚔️ AI 特工队总部 · V2 ⚔️', {
+            font:'18px monospace', fill:'#9ae8ff', stroke:'#000', strokeThickness:3
+        }).setOrigin(0.5).setDepth(51);
         fetchLive();
     }
 
@@ -2925,7 +2492,7 @@
 
             // 眼睛
             if (isDead) {
-                g.lineStyle(2.3, 0xb9756f, 0.95);
+                g.lineStyle(2.3, 0xff5f70, 0.95);
                 g.lineBetween(15, 23, 21, 29); g.lineBetween(21, 23, 15, 29);
                 g.lineBetween(30, 23, 36, 29); g.lineBetween(36, 23, 30, 29);
             } else if (variant === 'closed') {
@@ -2942,7 +2509,7 @@
                 g.fillStyle(0xffffff, 0.94);
                 g.fillCircle(18, 25, 0.9);
                 g.fillCircle(31, 25, 0.9);
-                g.fillStyle(0x78a886, 0.5);
+                g.fillStyle(0x68ff9f, 0.5);
                 g.fillRect(15, 21, 22, 1);
             }
 
@@ -3024,31 +2591,15 @@
             .setDepth(9 + index)
             .setBlendMode(Phaser.BlendModes.ADD);
 
-        const sprite = scene.add.sprite(sx, sy, id + '_open').setOrigin(0.5).setScale(1).setDepth(11 + index);
+        const sprite = scene.physics.add.sprite(sx, sy, id + '_open').setOrigin(0.5).setScale(1).setDepth(11 + index);
+        sprite.body.setCircle(20, 6, 6);
+        sprite.body.setImmovable(false);
+        sprite.body.setBounce(0.3);
 
-        const spark = scene.add.rectangle(sx + 8, sy - 11, 9, 2, 0x78a886, 0.86)
+        const spark = scene.add.rectangle(sx + 8, sy - 11, 9, 2, 0x68ff9f, 0.86)
             .setDepth(12 + index)
             .setBlendMode(Phaser.BlendModes.ADD)
             .setAlpha(0.22);
-
-        const highlightGlow = scene.add.ellipse(sx, sy + 1, 82, 50, 0xffde7a, 0.26)
-            .setDepth(12.6 + index)
-            .setBlendMode(Phaser.BlendModes.ADD)
-            .setVisible(false)
-            .setAlpha(0);
-        const highlightRing = scene.add.ellipse(sx, sy + 1, 70, 40)
-            .setStrokeStyle(4, 0xffef9f, 1)
-            .setDepth(12.8 + index)
-            .setVisible(false)
-            .setAlpha(0);
-        const highlightTween = scene.tweens.add({
-            targets: [highlightRing, highlightGlow],
-            alpha: { from: 0.38, to: 1 },
-            duration: 520,
-            yoyo: true,
-            repeat: -1,
-            paused: true,
-        });
 
         const emojiText = scene.add.text(sx, sy - 31, data.emoji || '🤖', {font:'24px sans-serif'}).setOrigin(0.5).setDepth(31 + index);
         const nameTag = scene.add.text(sx, sy + 32, data.name || id, {
@@ -3060,7 +2611,6 @@
 
         agentSprites[id] = {
             sprite, nameTag, emojiText, shadow, aura, spark,
-            highlightRing, highlightGlow, highlightTween,
             color, colorInt,
             openKey:id + '_open', closedKey:id + '_closed', deadKey:id + '_dead',
             target:{x:sx,y:sy},
@@ -3072,10 +2622,6 @@
             deathBubble:null,
             phase: Math.random() * Math.PI * 2,
         };
-
-        if (highlightedAgentId === id) {
-            setCanvasAgentHighlight(id);
-        }
     }
 
     // 分离力：防止小人重叠
@@ -3187,12 +2733,6 @@
                 a.spark.setAlpha(isDead ? 0 : (isWorking ? 0.26 + pulse * 0.5 : 0.1 + pulse * 0.14));
                 a.spark.width = isWorking ? (8 + pulse * 8) : (7 + pulse * 3);
             }
-            if (a.highlightRing && a.highlightGlow) {
-                a.highlightRing.setPosition(a.sprite.x, a.sprite.y + 2);
-                a.highlightGlow.setPosition(a.sprite.x, a.sprite.y + 2);
-                a.highlightRing.setScale(1 + pulse * 0.08, 1 + pulse * 0.06);
-                a.highlightGlow.setScale(1 + pulse * 0.18, 1 + pulse * 0.14);
-            }
 
             a.nameTag.setPosition(a.sprite.x, a.sprite.y + 31);
             a.emojiText.setPosition(a.sprite.x, a.sprite.y - 31);
@@ -3284,31 +2824,34 @@
         fetch('/ollama').then(r => r.json()).then(data => {
             const el = document.getElementById('ollama-status');
             if (!data.running) {
-                el.innerHTML = '<div class="task-list-empty" style="padding:10px 8px;color:var(--red);border-color:rgba(244,67,54,0.35)">⚫ Ollama 未运行</div>';
+                el.innerHTML = '<span style="color:var(--red)">⚫ Ollama 未运行</span>';
                 return;
             }
             const models = data.models || [];
             const active = data.active || [];
             const activeNames = new Set(active.map(a => a.name));
-            let html = '<div class="ollama-grid">';
+            let html = '<div style="display:flex;flex-wrap:wrap;gap:6px">';
             if (!models.length) {
-                html += '<span class="task-list-empty" style="width:100%;padding:10px 8px">无已安装模型</span>';
+                html += '<span style="color:var(--text-dim)">无已安装模型</span>';
             }
             for (const m of models) {
                 const isActive = activeNames.has(m.name);
+                const dot = isActive ? '🟢' : '🔵';
+                const border = isActive ? 'var(--green)' : 'var(--border)';
                 const info = [m.params, m.quant, m.size_mb + 'MB'].filter(Boolean).join(' · ');
-                html += `<div class="ollama-pill ${isActive ? 'active' : ''}">`;
-                html += `<span>${isActive ? '🟢' : '🔵'}</span>`;
-                html += `<span class="om-name">${escapeHtml((m.name || '').split(':')[0])}</span>`;
-                html += `<span class="om-info">${escapeHtml(info)}</span>`;
-                html += `</div>`;
+                html += `<div style="background:var(--bg-card);border:1px solid ${border};border-radius:6px;padding:4px 8px;display:flex;align-items:center;gap:4px">`;
+                html += `<span>${dot}</span>`;
+                html += `<span style="color:var(--text-bright);font-weight:600">${m.name.split(':')[0]}</span>`;
+                html += `<span style="color:var(--text-dim);font-size:9px">${info}</span>`;
+                html += `<span style="color:${isActive ? 'var(--green)' : 'var(--text-dim)'};font-size:8px;margin-left:2px">${isActive ? '已加载' : '待命'}</span>`;
+                html += '</div>';
             }
             html += '</div>';
             const statusText = active.length > 0 ? `${active.length} 已加载` : '待命';
-            html += `<div class="ollama-footnote">Ollama <span style="color:var(--green)">●</span> 运行中 · ${models.length} 模型 · ${statusText}</div>`;
+            html += `<div style="margin-top:4px;font-size:9px;color:var(--text-dim)">Ollama <span style="color:var(--green)">●</span> 运行中 · ${models.length} 模型 · ${statusText}</div>`;
             el.innerHTML = html;
         }).catch(() => {
-            document.getElementById('ollama-status').innerHTML = '<div class="task-list-empty" style="padding:10px 8px">⚫ Ollama 连接失败</div>';
+            document.getElementById('ollama-status').innerHTML = '<span style="color:var(--text-dim)">⚫ Ollama 连接失败</span>';
         });
     }
     // 初始加载 + 定时刷新
@@ -3343,11 +2886,11 @@
             renderAgentChips(agents);
             renderLogs(logs, agents);
             renderAgentGrid(agents);
-            renderRecentTasks(tasksData);
             updateDeptShopSigns();
             renderStatCards(agents, tasksData);
         }).catch(() => {});
     }
+
 
     function fetchTasks() {
         fetch('/tasks').then(r => r.json()).then(data => {
@@ -3355,7 +2898,6 @@
             handleTaskTransitions(list);
             tasksData = list;
             renderStatCards(agentsData, tasksData);
-            renderRecentTasks(tasksData);
             renderGallery(agentsData);
             renderScrollTasks();
         }).catch(() => {});
@@ -3367,7 +2909,6 @@
     setTimeout(() => { fetchTasks(); }, 1500);
 
     // 初始化性能档位 + 启动 Phaser
-    initThemeMode();
     initPerformanceMode();
     new Phaser.Game(phaserConfig);
 

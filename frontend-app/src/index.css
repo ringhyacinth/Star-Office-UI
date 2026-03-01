@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 224 44% 8%;
+  --foreground: 210 40% 96%;
+  --card: 223 35% 11%;
+  --card-foreground: 210 40% 96%;
+  --primary: 197 92% 66%;
+  --primary-foreground: 222 47% 10%;
+  --secondary: 223 28% 20%;
+  --secondary-foreground: 213 34% 92%;
+  --muted: 223 26% 17%;
+  --muted-foreground: 214 16% 70%;
+  --accent: 158 71% 36%;
+  --accent-foreground: 149 82% 90%;
+  --border: 214 36% 28%;
+  --input: 214 36% 28%;
+  --ring: 196 94% 68%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-width: 320px;
+  color: hsl(var(--foreground));
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', sans-serif;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(44, 106, 173, 0.33), transparent 28%),
+    radial-gradient(circle at 86% 72%, rgba(47, 124, 110, 0.24), transparent 32%),
+    linear-gradient(180deg, #090f1c 0%, #050b14 100%);
+  background-attachment: fixed;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(rgba(142, 196, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(142, 196, 255, 0.025) 1px, transparent 1px);
+  background-size: 14px 14px;
+}
+
+button {
+  font: inherit;
+}

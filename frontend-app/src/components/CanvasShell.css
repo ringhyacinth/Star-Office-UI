@@ -1,0 +1,103 @@
+.canvas-shell-v3 {
+  border-color: rgba(108, 195, 255, 0.34);
+  background: linear-gradient(180deg, rgba(8, 15, 27, 0.84), rgba(8, 14, 24, 0.78));
+  box-shadow: inset 0 0 0 1px rgba(106, 199, 255, 0.08), 0 10px 22px rgba(4, 11, 20, 0.42);
+}
+
+.canvas-shell-v3 #game-container {
+  border-color: rgba(112, 197, 255, 0.34);
+  background: linear-gradient(180deg, rgba(20, 32, 52, 0.96), rgba(10, 17, 29, 0.96));
+  box-shadow: inset 0 0 0 1px rgba(132, 208, 255, 0.16);
+}
+
+.canvas-shell-v3 #game-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(rgba(185, 219, 248, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(185, 219, 248, 0.04) 1px, transparent 1px);
+  background-size: 14px 14px;
+  mix-blend-mode: soft-light;
+  opacity: 0.45;
+}
+
+.canvas-shell-v3 .office-canvas {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.canvas-shell-v3 #v2-fx-overlays {
+  transition: opacity 240ms ease;
+  background: radial-gradient(circle at 18% 20%, rgba(93, 209, 255, 0.28), transparent 38%),
+    radial-gradient(circle at 71% 74%, rgba(86, 255, 171, 0.22), transparent 44%),
+    linear-gradient(180deg, rgba(138, 198, 255, 0.06), transparent 45%);
+  mix-blend-mode: screen;
+  opacity: 0.38;
+}
+
+.canvas-shell-v3 #v2-fx-overlays.low-fx {
+  opacity: 0.17;
+}
+
+.canvas-shell-v3 .canvas-hint {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: rgba(215, 235, 252, 0.96);
+  background: rgba(7, 13, 21, 0.7);
+  border-color: rgba(129, 206, 255, 0.34);
+  box-shadow: 0 0 0 1px rgba(85, 154, 212, 0.28);
+  text-transform: uppercase;
+}
+
+.canvas-shell-v3 .canvas-debug {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  z-index: 2;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: rgba(198, 224, 247, 0.94);
+  background: rgba(7, 13, 21, 0.66);
+  border: 1px solid rgba(108, 182, 231, 0.3);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+.canvas-shell-v3 .agent-chip {
+  background: linear-gradient(180deg, rgba(17, 29, 49, 0.9), rgba(13, 24, 41, 0.9));
+  border-width: 1px;
+}
+
+.canvas-shell-v3 .agent-chip.selected {
+  background: linear-gradient(180deg, rgba(29, 45, 70, 0.94), rgba(21, 36, 58, 0.94));
+  box-shadow: inset 0 0 0 1px rgba(158, 218, 255, 0.24), 0 0 18px rgba(116, 181, 255, 0.2);
+}
+
+.canvas-shell-v3 .status-breathing {
+  animation: statusWorkingBreathe 2.2s cubic-bezier(0.45, 0.02, 0.35, 1) infinite;
+  box-shadow: 0 0 0 0 rgba(95, 255, 174, 0.45);
+}
+
+@keyframes statusWorkingBreathe {
+  0% {
+    transform: scale(0.84);
+    opacity: 0.68;
+    box-shadow: 0 0 0 0 rgba(95, 255, 174, 0.36);
+  }
+  38% {
+    transform: scale(1.06);
+    opacity: 0.95;
+    box-shadow: 0 0 0 4px rgba(95, 255, 174, 0.16);
+  }
+  62% {
+    transform: scale(1.12);
+    opacity: 1;
+    box-shadow: 0 0 0 7px rgba(95, 255, 174, 0.08);
+  }
+  100% {
+    transform: scale(0.84);
+    opacity: 0.68;
+    box-shadow: 0 0 0 0 rgba(95, 255, 174, 0);
+  }
+}

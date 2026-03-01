@@ -1,0 +1,79 @@
+.telemetry-root {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+  pointer-events: none;
+}
+
+.telemetry-toggle,
+.telemetry-panel {
+  pointer-events: auto;
+}
+
+.telemetry-toggle {
+  border: 1px solid rgba(109, 214, 255, 0.4);
+  border-radius: 999px;
+  background: rgba(12, 17, 30, 0.82);
+  color: #d7f7ff;
+  font-size: 12px;
+  line-height: 1;
+  padding: 8px 12px;
+  backdrop-filter: blur(6px);
+}
+
+.telemetry-toggle[aria-pressed='true'] {
+  border-color: rgba(76, 240, 148, 0.6);
+  color: #c8ffe5;
+}
+
+.telemetry-panel {
+  min-width: 180px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(109, 214, 255, 0.35);
+  background: rgba(10, 14, 24, 0.84);
+  backdrop-filter: blur(8px);
+  color: #eef8ff;
+  text-align: left;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.3);
+}
+
+.telemetry-panel h2 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  color: rgba(206, 239, 255, 0.95);
+}
+
+.telemetry-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.telemetry-row + .telemetry-row {
+  margin-top: 4px;
+}
+
+.status {
+  font-weight: 600;
+}
+
+.status-refreshing {
+  color: #70ffa7;
+}
+
+.status-stalled {
+  color: #ffd166;
+}
+
+.status-background {
+  color: #93a9bf;
+}
