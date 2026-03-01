@@ -6,13 +6,29 @@ from datetime import datetime, timezone
 import json, os, glob, re, urllib.request, urllib.error
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-FRONTEND_DIR = os.path.join(ROOT_DIR, "frontend")
+FRONTEND_APP_DIR = os.path.join(ROOT_DIR, "frontend-app")
+FRONTEND_DIST_DIR = os.path.join(FRONTEND_APP_DIR, "dist")
+FRONTEND_INDEX = os.path.join(FRONTEND_DIST_DIR, "index.html")
 STATE_FILE = os.path.join(ROOT_DIR, "state.json")
 OPENCLAW_DIR = os.path.expanduser("~/.openclaw")
 OPENCLAW_CONFIG = os.path.join(OPENCLAW_DIR, "openclaw.json")
 NEWS_FILE = os.path.join(ROOT_DIR, "news.json")
 
-app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path="/static")
+# 这些前缀属于 JSON API，找不到路由时应返回 JSON 404，避免前端拿到 HTML。
+API_ROUTE_PREFIXES = {
+    "api",
+    "health",
+    "status",
+    "logs",
+    "live",
+    "providers",
+    "tasks",
+    "feishu-embed",
+    "ollama",
+    "news",
+}
+
+app = Flask(__name__, static_folder=None)
 
 # ============ 模型提供商健康检查 + 模型 Ping ============
 import threading, time as _time
@@ -725,10 +741,6 @@ def read_agent_logs(agent_id, n=8):
     return entries[-n:]
 
 # ============ 路由 ============
-@app.route("/")
-def index():
-    return send_from_directory(FRONTEND_DIR, "index.html")
-
 @app.route("/status")
 def get_status():
     return jsonify(load_state())
@@ -1124,6 +1136,50 @@ def news_delete(news_id):
         _save_news(items)
     return jsonify({"ok": True})
 
+
+def _frontend_dist_ready():
+    return os.path.isfile(FRONTEND_INDEX)
+
+
+def _is_api_like_path(path: str) -> bool:
+    if not path:
+        return False
+    first = path.split("/", 1)[0]
+    return first in API_ROUTE_PREFIXES
+
+
+def _frontend_missing_message() -> str:
+    return (
+        "frontend-app 构建产物不存在。\n"
+        "请先执行：\n"
+        "  cd frontend-app && npm ci && npm run build\n"
+        "开发态请直接运行：\n"
+        "  cd frontend-app && npm run dev\n"
+        "然后打开 http://127.0.0.1:4173"
+    )
+
+
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def frontend_entry(path):
+    normalized = path.strip("/")
+
+    if _is_api_like_path(normalized):
+        return jsonify({"error": f"API 路由不存在: /{normalized}"}), 404
+
+    if normalized:
+        target_file = os.path.join(FRONTEND_DIST_DIR, normalized)
+        if os.path.isfile(target_file):
+            return send_from_directory(FRONTEND_DIST_DIR, normalized)
+
+    if not _frontend_dist_ready():
+        if normalized and "." in os.path.basename(normalized):
+            return jsonify({"error": f"前端静态资源不存在: /{normalized}"}), 404
+        return Response(_frontend_missing_message(), status=503, mimetype="text/plain; charset=utf-8")
+
+    return send_from_directory(FRONTEND_DIST_DIR, "index.html")
+
+
 # ============ 情报自动抓取 ============
 import xml.etree.ElementTree as _ET
 import ssl as _ssl
@@ -1259,5 +1315,6 @@ if __name__ == "__main__":
     print("🏢 AI 特工队总部")
     print(f"   State: {STATE_FILE}")
     print(f"   OpenClaw: {OPENCLAW_DIR}")
+    print(f"   Frontend dist: {FRONTEND_DIST_DIR}")
     print("   http://127.0.0.1:19800")
     app.run(host="0.0.0.0", port=19800, debug=False)
