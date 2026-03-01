@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>海辛办公室 - 加入邀请</title>
+    <title>Star Office - Join Invite</title>
     <style>
         body {
             margin: 0;
@@ -111,49 +111,54 @@
 </head>
 <body>
     <div class="card">
-        <h1>✨ 海辛办公室 · 加入邀请</h1>
-        <p>欢迎加入海辛的像素办公室看板！</p>
+        <h1 data-i18n="heading">✨ Star Office · Join Invite</h1>
+        <p data-i18n="welcome">Welcome to the Star Office pixel dashboard!</p>
 
-        <h2>加入步骤（一共 3 步）</h2>
+        <h2 data-i18n="stepsTitle">Join in 3 steps</h2>
         <div class="steps">
             <div class="step">
                 <div class="step-num">1</div>
                 <div class="step-text">
-                    <strong>确认信息</strong><br>
-                    你应该已经收到两样东西：
+                    <strong data-i18n="step1Title">Confirm your info</strong><br>
+                    <span data-i18n="step1Body">You should already have two things:</span>
                     <ul>
-                        <li>邀请链接：<code>https://office.example.com/join</code></li>
-                        <li>一次性接入密钥（join key）：<code>ocj_xxx</code></li>
+                        <li><span data-i18n="inviteLinkLabel">Invite link:</span> <code>https://office.example.com/join</code></li>
+                        <li><span data-i18n="joinKeyLabel">One-time join key:</span> <code>ocj_xxx</code></li>
                     </ul>
                 </div>
             </div>
             <div class="step">
                 <div class="step-num">2</div>
                 <div class="step-text">
-                    <strong>把邀请信息丢给你的 OpenClaw</strong><br>
-                    把邀请链接 + join key 一起发给你的 OpenClaw，并说“帮我加入海辛办公室”。
+                    <strong data-i18n="step2Title">Send the invite details to your OpenClaw</strong><br>
+                    <span data-i18n="step2Body">Send the invite link + join key and say “help me join Star Office.”</span>
                 </div>
             </div>
             <div class="step">
                 <div class="step-num">3</div>
                 <div class="step-text">
-                    <strong>在你这边授权</strong><br>
-                    你的 OpenClaw 会在对话里向你要授权；同意后，它就会开始自动把工作状态推送到海辛办公室看板啦！
+                    <strong data-i18n="step3Title">Approve on your side</strong><br>
+                    <span data-i18n="step3Body">Your OpenClaw will ask for approval in chat. Once approved, it will auto-push status updates to the office dashboard.</span>
                 </div>
             </div>
         </div>
 
         <div class="note">
-            <strong>⚠️  隐私说明</strong><br>
-            只推送状态（idle/writing/researching/executing/syncing/error），不含任何具体内容/隐私；随时可停。
+            <strong data-i18n="privacyTitle">⚠️ Privacy note</strong><br>
+            <span data-i18n="privacyBody">Only status is pushed (idle/writing/researching/executing/syncing/error), no private content. You can stop anytime.</span>
         </div>
 
-        <a href="/" class="back-btn">← 回到海辛办公室</a>
+        <a href="/" class="back-btn" data-i18n="back">← Back to Star Office</a>
 
         <div class="footer">
-            海辛工作室 · 像素办公室看板<br>
-            有问题找海辛 😊
+            <span data-i18n="footer1">Star Studio · Pixel Office Dashboard</span><br>
+            <span data-i18n="footer2">Need help? Ask Star 😊</span>
         </div>
     </div>
+
+    <script src="https://unpkg.com/i18next@23.16.8/dist/umd/i18next.min.js"></script>
+    <script src="/static/i18n.js"></script>
+    <script>window.__initI18n && window.__initI18n('invite');</script>
+
 </body>
 </html>

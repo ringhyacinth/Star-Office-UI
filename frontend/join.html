@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>加入 Star 的像素办公室</title>
+    <title>Join Star's Pixel Office</title>
     <style>
         @font-face {
             font-family: 'ArkPixel';
@@ -100,30 +100,37 @@
     </style>
 </head>
 <body>
-    <h1>⭐ 加入 Star 的像素办公室</h1>
+    <h1 data-i18n="heading">⭐ Join Star's Pixel Office</h1>
     <div class="container">
         <div class="form-group">
-            <label>你的名字（会显示在办公室）</label>
-            <input type="text" id="agentName" placeholder="例如：小龙虾助手" maxlength="20">
+            <label data-i18n="nameLabel">Your name (shown in the office)</label>
+            <input type="text" id="agentName" data-i18n-placeholder="namePlaceholder" placeholder="e.g. Coding Assistant" maxlength="20">
         </div>
         <!-- 状态与细节改为自动同步，不在 join 页面填写 -->
         <div class="form-group">
-            <label>Agent 接入密钥（一次性）</label>
-            <input type="text" id="joinKey" placeholder="请输入你拿到的 join key" maxlength="64">
+            <label data-i18n="keyLabel">One-time agent join key</label>
+            <input type="text" id="joinKey" data-i18n-placeholder="keyPlaceholder" placeholder="Enter your join key" maxlength="64">
         </div>
-        <button id="joinBtn">加入办公室</button>
-        <button id="leaveBtn" style="margin-top:10px; background:#555; border-color:#555;">离开办公室</button>
+        <button id="joinBtn" data-i18n="joinBtn">Join Office</button>
+        <button id="leaveBtn" style="margin-top:10px; background:#555; border-color:#555;" data-i18n="leaveBtn">Leave Office</button>
         <div id="status" class="status" style="display:none;"></div>
     </div>
     <div class="note">
-        ⚠️ 注意：join 页面仅需要名字 + 一次性 join key<br>
-        状态与状态细节会由 agent 后续自动推送同步
+        <span data-i18n="note1">⚠️ Note: this page only needs your name + one-time join key</span><br>
+        <span data-i18n="note2">Status and details are pushed automatically by the agent</span>
         <br><br>
-        📌 邀请说明：
+        <span data-i18n="inviteLabel">📌 Invite instructions:</span>
         <a href="/invite" style="color:#ffd700; text-decoration: underline;">https://office.example.com/invite</a>
     </div>
 
+    <script src="https://unpkg.com/i18next@23.16.8/dist/umd/i18next.min.js"></script>
+    <script src="/static/i18n.js"></script>
+    <script>window.__initI18n && window.__initI18n('join');</script>
     <script>
+        const JT = (key, fallback) => {
+            const full = key.startsWith('join.') ? key : `join.${key}`;
+            return window.__t ? window.__t(full, fallback) : fallback;
+        };
         const joinBtn = document.getElementById('joinBtn');
         const leaveBtn = document.getElementById('leaveBtn');
         const statusDiv = document.getElementById('status');
@@ -140,11 +147,11 @@
             const name = agentNameInput.value.trim();
             const joinKey = joinKeyInput.value.trim();
             if (!name) {
-                showStatus('请先输入你的名字～', false);
+                showStatus(JT('errName', 'Please enter your name first'), false);
                 return;
             }
             if (!joinKey) {
-                showStatus('请先输入 Agent 接入密钥～', false);
+                showStatus(JT('errKey', 'Please enter the agent join key first'), false);
                 return;
             }
             try {
@@ -155,19 +162,19 @@
                 });
                 const data = await response.json();
                 if (data.ok) {
-                    showStatus('加入成功！刷新办公室就能看到你啦 ✨', true);
+                    showStatus(JT('joinOk', 'Joined successfully! Refresh the office to see your agent ✨'), true);
                 } else {
-                    showStatus(data.msg || '加入失败', false);
+                    showStatus(data.msg || JT('joinFail', 'Join failed'), false);
                 }
             } catch (e) {
-                showStatus('网络出错，请重试', false);
+                showStatus(JT('netErr', 'Network error, please try again'), false);
             }
         }
 
         async function leave() {
             const name = agentNameInput.value.trim();
             if (!name) {
-                showStatus('请先输入你要离开的名字～', false);
+                showStatus(JT('leaveNeedName', 'Please enter the name to remove'), false);
                 return;
             }
             try {
@@ -178,12 +185,12 @@
                 });
                 const data = await response.json();
                 if (data.ok) {
-                    showStatus('已离开办公室 👋', true);
+                    showStatus(JT('leaveOk', 'Left the office 👋'), true);
                 } else {
-                    showStatus(data.msg || '离开失败', false);
+                    showStatus(data.msg || JT('leaveFail', 'Leave failed'), false);
                 }
             } catch (e) {
-                showStatus('网络出错，请重试', false);
+                showStatus(JT('netErr', 'Network error, please try again'), false);
             }
         }
 

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Star 的像素办公室</title>
+    <title>Star's Pixel Office</title>
     <style>
         @font-face {
             font-family: 'ArkPixel';
@@ -386,7 +386,7 @@
 <body>
     <!-- 加载遮罩 -->
     <div id="loading-overlay">
-        <div id="loading-text">正在加载 Star 的像素办公室...</div>
+        <div id="loading-text" data-i18n="loading">Loading Star's Pixel Office...</div>
         <div id="loading-progress-container">
             <div id="loading-progress-bar"></div>
         </div>
@@ -398,48 +398,55 @@
     <div id="bottom-panels">
         <!-- Memo 面板 -->
         <div id="memo-panel">
-            <div id="memo-title">— 昨 日 小 记 —</div>
+            <div id="memo-title" data-i18n="memoTitle">— YESTERDAY NOTES —</div>
             <div id="memo-date"></div>
             <div class="memo-decoration">─ ─ ─ ─ ─</div>
             <div id="memo-content">
-                <div id="memo-placeholder">加载中...</div>
+                <div id="memo-placeholder" data-i18n="memoLoading">Loading...</div>
             </div>
             <div class="memo-decoration">─ ─ ─ ─ ─</div>
         </div>
         
         <!-- 状态控制栏 -->
         <div id="control-bar">
-            <div id="control-bar-title">Star 状态</div>
+            <div id="control-bar-title" data-i18n="statusTitle">Star Status</div>
             <div id="control-buttons">
-                <button onclick="setState('idle','待命')">待命</button>
-                <button onclick="setState('writing','工作中')">工作</button>
-                <button onclick="setState('syncing','同步中')">同步</button>
-                <button onclick="setState('error','报警中')">报警</button>
+                <button onclick="setState('idle','Standby')" data-i18n="btnStandby">Standby</button>
+                <button onclick="setState('writing','Working')" data-i18n="btnWork">Work</button>
+                <button onclick="setState('syncing','Syncing')" data-i18n="btnSync">Sync</button>
+                <button onclick="setState('error','Alert')" data-i18n="btnAlert">Alert</button>
             </div>
         </div>
 
         <!-- Guest Agent 名单面板（右下角） -->
         <div id="guest-agent-panel">
-            <div id="guest-agent-panel-title">— 访 客 列 表 —</div>
+            <div id="guest-agent-panel-title" data-i18n="guestsTitle">— GUESTS —</div>
             <div id="guest-agent-list">
-                <div style="color:#9ca3af;font-size:12px;text-align:center;padding:20px 0;">正在加载访客...</div>
+                <div style="color:#9ca3af;font-size:12px;text-align:center;padding:20px 0;" data-i18n="guestsLoading">Loading guests...</div>
             </div>
         </div>
     </div>
     
-    <div id="status-text">加载中...</div>
+    <div id="status-text" data-i18n="statusLoading">Loading...</div>
     <div id="coords-overlay" style="display:none; position:fixed; pointer-events:none; background:rgba(0,0,0,0.85); color:#fff; font-family:ArkPixel,monospace; font-size:14px; padding:8px 12px; border-radius:4px; z-index:99999;">
         <div id="coords-display">X: 0 | Y: 0</div>
     </div>
-    <button id="coords-toggle" style="position:fixed; top:calc(env(safe-area-inset-top, 0px) + 12px); right:12px; z-index:999999; padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">
-        显示坐标
+    <button id="coords-toggle" style="position:fixed; top:calc(env(safe-area-inset-top, 0px) + 12px); right:12px; z-index:999999; padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;" data-i18n="coordsShow">
+        Show Coords
     </button>
-    <button id="pan-toggle" style="position:fixed; top:calc(env(safe-area-inset-top, 0px) + 12px); left:12px; z-index:999999; padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">
-        移动视野
+    <button id="pan-toggle" style="position:fixed; top:calc(env(safe-area-inset-top, 0px) + 12px); left:12px; z-index:999999; padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;" data-i18n="panView">
+        Pan View
     </button>
 
+    <script src="https://unpkg.com/i18next@23.16.8/dist/umd/i18next.min.js"></script>
+    <script src="/static/i18n.js"></script>
+    <script>window.__initI18n && window.__initI18n('index');</script>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
     <script>
+        const I18N = (key, fallback, opts) => {
+            const full = key.startsWith('index.') ? key : `index.${key}`;
+            return window.__t ? window.__t(full, fallback, opts) : fallback;
+        };
         // 检测浏览器是否支持 WebP
         let supportsWebP = false;
         
@@ -510,11 +517,11 @@
                     memoDate.textContent = data.date || '';
                     memoContent.innerHTML = data.memo.replace(/\n/g, '<br>');
                 } else {
-                    memoContent.innerHTML = '<div id="memo-placeholder">暂无昨日日记</div>';
+                    memoContent.innerHTML = `<div id="memo-placeholder">${I18N('memoNone', 'No notes found for yesterday')}</div>`;
                 }
             } catch (e) {
-                console.error('加载 memo 失败:', e);
-                memoContent.innerHTML = '<div id="memo-placeholder">加载失败</div>';
+                console.error('Failed to load memo:', e);
+                memoContent.innerHTML = `<div id="memo-placeholder">${I18N('memoError', 'Failed to load')}</div>`;
             }
         }
 
@@ -526,7 +533,7 @@
                 loadingProgressBar.style.width = percent + '%';
             }
             if (loadingText) {
-                loadingText.textContent = `正在加载 Star 的像素办公室... ${percent}%`;
+                loadingText.textContent = `${I18N('loading', "Loading Star's Pixel Office...")} ${percent}%`;
             }
         }
 
@@ -553,91 +560,64 @@
         // 懒加载逻辑已取消（体验优先：装饰首屏直接出现）
 
         const STATES = {
-            idle: { name: '待命', area: 'breakroom' },
-            writing: { name: '整理文档', area: 'writing' },
-            researching: { name: '搜索信息', area: 'researching' },
-            executing: { name: '执行任务', area: 'writing' },
-            syncing: { name: '同步备份', area: 'writing' },
-            error: { name: '出错了', area: 'error' }
+            idle: { name: I18N('stateIdle', 'Standby'), area: 'breakroom' },
+            writing: { name: I18N('stateWriting', 'Writing'), area: 'writing' },
+            researching: { name: I18N('stateResearching', 'Researching'), area: 'researching' },
+            executing: { name: I18N('stateExecuting', 'Executing'), area: 'writing' },
+            syncing: { name: I18N('stateSyncing', 'Syncing'), area: 'writing' },
+            error: { name: I18N('stateError', 'Error'), area: 'error' }
         };
 
         const BUBBLE_TEXTS = {
             idle: [
-                '待命中：耳朵竖起来了',
-                '我在这儿，随时可以开工',
-                '先把桌面收拾干净再说',
-                '呼——给大脑放个风',
-                '今天也要优雅地高效',
-                '等待，是为了更准确的一击',
-                '咖啡还热，灵感也还在',
-                '我在后台给你加 Buff',
-                '状态：静心 / 充电',
-                '小猫说：慢一点也没关系'
+                'Standing by and ready',
+                'Here if you need me',
+                'Taking a quick recharge break',
+                'Keeping things tidy and calm',
+                'Ready for the next task',
+                'Coffee is warm, focus is sharp'
             ],
-            // writing / researching / executing 都视为“工作”
             writing: [
-                '进入专注模式：勿扰',
-                '先把关键路径跑通',
-                '我来把复杂变简单',
-                '把 bug 关进笼子里',
-                '写到一半，先保存',
-                '把每一步都做成可回滚',
-                '今天的进度，明天的底气',
-                '先收敛，再发散',
-                '让系统变得更可解释',
-                '稳住，我们能赢'
+                'Deep focus mode on',
+                'Running the critical path',
+                'Turning complexity into clarity',
+                'Shipping one step at a time',
+                'Making this easy to reason about',
+                'Steady progress wins'
             ],
             researching: [
-                '我在挖证据链',
-                '让我把信息熬成结论',
-                '找到了：关键在这里',
-                '先把变量控制住',
-                '我在查：它为什么会这样',
-                '把直觉写成验证',
-                '先定位，再优化',
-                '别急，先画因果图'
+                'Digging for strong evidence',
+                'Turning info into conclusions',
+                'Tracing the root cause',
+                'Controlling variables first',
+                'Validate, then optimize'
             ],
             executing: [
-                '执行中：不要眨眼',
-                '把任务切成小块逐个击破',
-                '开始跑 pipeline',
-                '一键推进：走你',
-                '让结果自己说话',
-                '先做最小可行，再做最美版本'
+                'Executing now',
+                'Breaking the task into chunks',
+                'Pipeline is running',
+                'Letting results speak',
+                'MVP first, polish second'
             ],
             syncing: [
-                '同步中：把今天锁进云里',
-                '备份不是仪式，是安全感',
-                '写入中…别断电',
-                '把变更交给时间戳',
-                '云端对齐：咔哒',
-                '同步完成前先别乱动',
-                '把未来的自己从灾难里救出来',
-                '多一份备份，少一份后悔'
+                'Syncing everything safely',
+                'Writing changes to backup',
+                'Cloud alignment in progress',
+                'Almost done syncing'
             ],
             error: [
-                '警报响了：先别慌',
-                '我闻到 bug 的味道了',
-                '先复现，再谈修复',
-                '把日志给我，我会说人话',
-                '错误不是敌人，是线索',
-                '把影响面圈起来',
-                '先止血，再手术',
-                '我在：马上定位根因',
-                '别怕，这种我见多了',
-                '报警中：让问题自己现形'
+                'Alert raised — investigating',
+                'Reproducing before fixing',
+                'Logs first, guesses later',
+                'Containing blast radius',
+                'Tracking root cause now'
             ],
             cat: [
-                '喵~',
-                '咕噜咕噜…',
-                '尾巴摇一摇',
-                '晒太阳最开心',
-                '有人来看我啦',
-                '我是这个办公室的吉祥物',
-                '伸个懒腰',
-                '今天的罐罐准备好了吗',
-                '呼噜呼噜',
-                '这个位置视野最好'
+                'meow~',
+                'purr purr...',
+                'tail wiggle',
+                'sunbeam mode activated',
+                'best seat in the office'
             ]
         };
 
@@ -664,7 +644,7 @@
         let lastGuestAgentsFetch = 0;
         let lastGuestBubbleAt = 0;
         const TYPEWRITER_DELAY = 50;
-        let lastSeenGuestIds = new Set(); // 用于检测新加入的访客，触发欢迎气泡
+        let lastSeenGuestIds = new Set(); // 用于检测新加入的Guest，触发Welcome 气泡
         let guestWelcomeInitialized = false;
 
         // 状态控制栏函数（用于测试）
@@ -676,7 +656,7 @@
             }).then(() => fetchStatus());
         }
 
-        // Guest Agent 离开房间
+        // Guest Agent Remove
         function removeGuestSpriteByName(name) {
             const target = guestAgents.find(a => (a.name || '') === name);
             if (target && guestSprites[target.agentId]) {
@@ -708,20 +688,20 @@
                         delete guestBubbles[agentId];
                     }
                     fetchGuestAgents();
-                    alert((name || agentId) + ' 已离开房间');
+                    alert((name || agentId) + ' ' + I18N('removed', 'removed'));
                 } else {
                     // demo agent 没在后端也允许本地隐藏
-                    if (DEMO_MODE && (name === '尼卡' || name === '水星')) {
+                    if (DEMO_MODE && (name === 'Nika' || name === 'Mercury')) {
                         hiddenDemoNames.add(name);
                         removeGuestSpriteByName(name);
                         renderGuestAgentList();
-                        alert(name + ' 已离开房间（demo）');
+                        alert(name + ' ' + I18N('removedDemo', 'removed (demo)'));
                         return;
                     }
-                    alert('离开失败：' + (data.msg || '未知错误'));
+                    alert(I18N('leaveFailed', 'Leave failed: ') + (data.msg || I18N('unknownError','unknown error')));
                 }
             }).catch(error => {
-                alert('请求失败：' + error);
+                alert(I18N('requestFailed', 'Request failed: ') + error);
             });
         }
 
@@ -733,12 +713,12 @@
             }).then(response => response.json()).then(data => {
                 if (data.ok) {
                     fetchGuestAgents();
-                    alert('已批准该访客接入');
+                    alert(I18N('approveOk', 'Guest approved'));
                 } else {
-                    alert('批准失败：' + (data.msg || '未知错误'));
+                    alert(I18N('approveFailed', 'Approve failed: ') + (data.msg || I18N('unknownError','unknown error')));
                 }
             }).catch(error => {
-                alert('请求失败：' + error);
+                alert(I18N('requestFailed', 'Request failed: ') + error);
             });
         }
 
@@ -750,12 +730,12 @@
             }).then(response => response.json()).then(data => {
                 if (data.ok) {
                     fetchGuestAgents();
-                    alert('已拒绝该访客');
+                    alert(I18N('rejectOk', 'Guest rejected'));
                 } else {
-                    alert('拒绝失败：' + (data.msg || '未知错误'));
+                    alert(I18N('rejectFailed', 'Reject failed: ') + (data.msg || I18N('unknownError','unknown error')));
                 }
             }).catch(error => {
-                alert('请求失败：' + error);
+                alert(I18N('requestFailed', 'Request failed: ') + error);
             });
         }
 
@@ -763,8 +743,8 @@
             if (!DEMO_MODE) return;
             if (!Array.isArray(window.__demoVisitors) || window.__demoVisitors.length === 0) {
                 window.__demoVisitors = [
-                    { agentId: 'demo_nika', name: '尼卡', authStatus: 'approved', state: 'writing', bubbleText: '我在工作中', isDemo: true, updated_at: new Date().toISOString() },
-                    { agentId: 'demo_mercury', name: '水星', authStatus: 'approved', state: 'idle', bubbleText: '我去休息区躺一下', isDemo: true, updated_at: new Date().toISOString() }
+                    { agentId: 'demo_nika', name: 'Nika', authStatus: 'approved', state: 'writing', bubbleText: 'I am working', isDemo: true, updated_at: new Date().toISOString() },
+                    { agentId: 'demo_mercury', name: 'Mercury', authStatus: 'approved', state: 'idle', bubbleText: 'Taking a break in the lounge', isDemo: true, updated_at: new Date().toISOString() }
                 ];
             }
         }
@@ -784,34 +764,34 @@
 
             const visitors = getMergedVisitors();
             if (visitors.length === 0) {
-                list.innerHTML = '<div style="color:#9ca3af;font-size:12px;text-align:center;padding:20px 0;">暂无访客</div>';
+                list.innerHTML = `<div style="color:#9ca3af;font-size:12px;text-align:center;padding:20px 0;">${I18N('guestsEmpty', 'No guests')}</div>`;
                 return;
             }
 
             list.innerHTML = visitors.map(agent => {
-                const name = agent.name || '未命名访客';
+                const name = agent.name || 'Unnamed guest';
                 const authStatus = agent.authStatus || 'pending';
                 const state = agent.state || 'idle';
                 const statusMap = {
-                    approved: '已授权',
-                    pending: '待授权',
-                    rejected: '已拒绝',
-                    offline: '离线'
+                    approved: I18N('guestStatusApproved', 'Approved'),
+                    pending: I18N('guestStatusPending', 'Pending'),
+                    rejected: I18N('guestStatusRejected', 'Rejected'),
+                    offline: I18N('guestStatusOffline', 'Offline')
                 };
                 const stateMap = {
-                    idle: '待命',
-                    writing: '工作',
-                    researching: '调研',
-                    executing: '执行',
-                    syncing: '同步',
-                    error: '报警'
+                    idle: I18N('guestStateIdle', 'Standby'),
+                    writing: I18N('guestStateWriting', 'Working'),
+                    researching: I18N('guestStateResearching', 'Research'),
+                    executing: I18N('guestStateExecuting', 'Execute'),
+                    syncing: I18N('guestStateSyncing', 'Sync'),
+                    error: I18N('guestStateError', 'Alert')
                 };
 
                 const statusText = statusMap[authStatus] || authStatus;
                 const stateText = stateMap[state] || state;
                 const subtitle = `${statusText} · ${stateText}`;
 
-                const pendingActions = `<button onclick="alert('交换 skill 功能开发中')">交换skill</button><button class="leave-btn" onclick="leaveGuestAgent('${agent.agentId}','${name}')">离开房间</button>`;
+                const pendingActions = `<button onclick="alert('Skill exchange is coming soon')">${I18N('btnSwapSkill','Swap Skill')}</button><button class="leave-btn" onclick="leaveGuestAgent('${agent.agentId}','${name}')">${I18N('btnRemove','Remove')}</button>`;
 
                 return `
                   <div class="guest-agent-item" data-name="${name}">
@@ -849,7 +829,7 @@
         }
 
         function getAreaPoint(area, idx) {
-            // 非 demo 访客：仍用固定点位，避免每次轮询都抖动。
+            // 非 demo Guest：仍用固定点位，避免每次轮询都抖动。
             const map = {
                 breakroom: [
                     { x: 511, y: 262 },
@@ -881,7 +861,7 @@
                 const id = agent.agentId;
                 seenIds.add(id);
 
-                const isDemo = !!agent.isDemo || (DEMO_MODE && (id === 'demo_nika' || id === 'demo_mercury' || agent.name === '尼卡' || agent.name === '水星'));
+                const isDemo = !!agent.isDemo || (DEMO_MODE && (id === 'demo_nika' || id === 'demo_mercury' || agent.name === 'Nika' || agent.name === 'Mercury'));
                 const area = agent.area || (agent.state === 'error' ? 'error' : (agent.state === 'idle' ? 'breakroom' : 'writing'));
 
                 const idx = area === 'breakroom' ? idxBreak++ : area === 'error' ? idxError++ : idxWrite++;
@@ -892,8 +872,8 @@
                 if (!guestSprites[id]) {
                     // 优先用图标：demo visitor 有专门映射
                     let sprite;
-                    const isDemoNika = DEMO_MODE && (agent.agentId === 'demo_nika' || agent.name === '尼卡');
-                    const isDemoMercury = DEMO_MODE && (agent.agentId === 'demo_mercury' || agent.name === '水星');
+                    const isDemoNika = DEMO_MODE && (agent.agentId === 'demo_nika' || agent.name === 'Nika');
+                    const isDemoMercury = DEMO_MODE && (agent.agentId === 'demo_mercury' || agent.name === 'Mercury');
                     
                     if (isDemoNika && game.textures.exists('demo_mercury')) {
                         // 交换映射：尼卡使用 demo_mercury
@@ -901,12 +881,12 @@
                     } else if (isDemoMercury && game.textures.exists('demo_nika')) {
                         // 交换映射：水星使用 demo_nika
                         sprite = game.add.image(p.x, p.y, 'demo_nika').setOrigin(0.5, 1).setScale(1.10);
-                    } else if ((agent.name === '尼卡') && game.textures.exists('guestagent1')) {
+                    } else if ((agent.name === 'Nika') && game.textures.exists('guestagent1')) {
                         sprite = game.add.image(p.x, p.y, 'guestagent1').setOrigin(0.5, 1).setScale(1.15);
-                    } else if ((agent.name === '水星') && game.textures.exists('guestagent2')) {
+                    } else if ((agent.name === 'Mercury') && game.textures.exists('guestagent2')) {
                         sprite = game.add.image(p.x, p.y, 'guestagent2').setOrigin(0.5, 1).setScale(1.05);
                     } else {
-                        // 非 demo 访客：优先用动画精灵（guest_anim_x），其次静态图，兜底星星
+                        // 非 demo Guest：优先用动画精灵（guest_anim_x），其次静态图，兜底星星
                         // 先确定角色索引（1-6）
                         let animIdx = agent.avatar
                             ? parseInt((agent.avatar.match(/_(\d+)$/) || [])[1] || '0', 10)
@@ -941,15 +921,15 @@
                         }
                     }
                     sprite.setDepth(2600);
-                    if (DEMO_MODE && (agent.agentId === 'demo_mercury' || agent.name === '水星')) {
+                    if (DEMO_MODE && (agent.agentId === 'demo_mercury' || agent.name === 'Mercury')) {
                         sprite.y = sprite.y + 10;
                     }
 
                     // demo 水星下移 10px（仅 demo_mercury）
-                    const yOffset = (DEMO_MODE && (agent.agentId === 'demo_mercury' || agent.name === '水星')) ? 10 : 0;
+                    const yOffset = (DEMO_MODE && (agent.agentId === 'demo_mercury' || agent.name === 'Mercury')) ? 10 : 0;
 
                     const nameTextY = isDemo ? ((p.y + yOffset) - 80) : ((p.y + yOffset) - 120);
-                    const nameText = game.add.text(p.x, nameTextY, agent.name || '访客', {
+                    const nameText = game.add.text(p.x, nameTextY, agent.name || 'Guest', {
                         fontFamily: 'ArkPixel, monospace',
                         fontSize: isDemo ? '16px' : '15px',
                         fill: '#ffffff',
@@ -961,7 +941,7 @@
                     guestSprites[id] = { sprite, nameText };
                 } else {
                     const g = guestSprites[id];
-                    const yOffset = (DEMO_MODE && (agent.agentId === 'demo_mercury' || agent.name === '水星')) ? 10 : 0;
+                    const yOffset = (DEMO_MODE && (agent.agentId === 'demo_mercury' || agent.name === 'Mercury')) ? 10 : 0;
 
                     // demo：平滑移动（避免闪现）；非 demo：保持稳定位置（避免轮询抖动）
                     if (isDemo) {
@@ -998,7 +978,7 @@
                         g.nameText.y = (p.y + yOffset) - 120;
                     }
 
-                    g.nameText.setText(agent.name || '访客');
+                    g.nameText.setText(agent.name || 'Guest');
                 }
             });
 
@@ -1035,12 +1015,12 @@
                 : null;
 
             const statusThoughtsMap = {
-                idle: ['我在休息区待命', '先放松一下，等下一步任务', '我在休息充电中'],
-                writing: ['我在工作区处理任务', '正在整理文档与执行中', '工作区专注推进中'],
-                researching: ['我在调研模式，搜集信息', '正在查资料和验证线索', '研究中，稍后同步结论'],
-                executing: ['执行中，正在跑流程', '我在工作区推进任务', '正在把计划落地执行'],
-                syncing: ['同步中，马上更新状态', '正在同步进度到系统', '数据同步中请稍候'],
-                error: ['我在 bug 区排查问题', '检测到异常，正在修复', '报警中，先定位再处理']
+                idle: ['Standing by in the lounge', 'Taking a short recharge break', 'Ready for the next step'],
+                writing: ['Working in the desk area', 'Focused and moving tasks forward', 'Building momentum in work zone'],
+                researching: ['Research mode: gathering evidence', 'Validating info and tracing signals', 'Researching now, updates soon'],
+                executing: ['Executing flow now', 'Pushing tasks in the work area', 'Turning plan into execution'],
+                syncing: ['Syncing updates now', 'Syncing progress to the system', 'Data sync in progress'],
+                error: ['Investigating issue in bug zone', 'Issue detected, fixing now', 'Alert mode: locate before patch']
             };
             const agentState = (guestAgents.find(a => a.agentId === id) || {}).state || 'idle';
             const thoughts = statusThoughtsMap[agentState] || statusThoughtsMap.idle;
@@ -1052,7 +1032,7 @@
             }
 
             const bx = g.sprite.x;
-            // 气泡位置：demo 维持原逻辑；真实访客放在“名字上方”，避免压角色也避免压名字
+            // 气泡位置：demo 维持原逻辑；真实Guest放在“名字上方”，避免压角色也避免压名字
             const isDemoGuest = (demoVisitor && demoVisitor.isDemo) || (id === 'demo_nika' || id === 'demo_mercury');
             const nameH = (g.nameText && g.nameText.height) ? g.nameText.height : 16;
             const by = isDemoGuest ? (g.sprite.y - 90) : ((g.nameText ? g.nameText.y : (g.sprite.y - 150)) - (nameH / 2) - 22);
@@ -1087,12 +1067,12 @@
 
             const states = ['idle', 'writing', 'researching', 'executing', 'syncing', 'error'];
             const bubbleTextMap = {
-                idle: '我去休息区躺一下',
-                writing: '我在工作中',
-                researching: '我在调研中',
-                executing: '我在执行任务',
-                syncing: '我在同步状态',
-                error: '出错了！我去报警区'
+                idle: 'Taking a break in the lounge',
+                writing: 'I am working',
+                researching: 'Researching now',
+                executing: 'Executing tasks now',
+                syncing: 'Syncing status',
+                error: 'Issue detected! Going to alert zone'
             };
 
             // 确保两位 demo 角色不会总是同一个状态（增加可观测性）
@@ -1163,7 +1143,7 @@
                         }
                     });
                 }
-            } catch (e) { console.error('强制冒泡失败:', e); }
+            } catch (e) { console.error('Forced bubble failed:', e); }
         }
 
         function fetchGuestAgents() {
@@ -1173,16 +1153,16 @@
             return fetch('/agents?t=' + Date.now(), { cache: 'no-store' })
                 .then(response => response.json())
                 .then(data => {
-                    // 无论后端返回是否为数组，demo=1 都应保证本地 demo 访客可见
+                    // 无论后端返回是否为数组，demo=1 都应保证本地 demo Guest可见
                     guestAgents = Array.isArray(data) ? data : [];
 
-                    // 新访客检测：触发 Star 欢迎气泡（只欢迎真实访客，不欢迎 demo）
+                    // 新Guest检测：触发 Star Welcome 气泡（只Welcome 真实Guest，不Welcome  demo）
                     try {
                         const merged = getMergedVisitors();
                         const currentIds = new Set((merged || []).filter(a => !a.isMain && !a.isDemo).map(a => a.agentId));
 
                         if (!guestWelcomeInitialized) {
-                            // 首次初始化不欢迎，避免刷新页面就刷屏
+                            // 首次初始化不Welcome ，避免刷新页面就刷屏
                             lastSeenGuestIds = currentIds;
                             guestWelcomeInitialized = true;
                         } else {
@@ -1190,7 +1170,7 @@
                             currentIds.forEach(id => { if (!lastSeenGuestIds.has(id)) newIds.push(id); });
 
                             if (newIds.length > 0) {
-                                // 只欢迎第一个新来的（避免同一时刻多人加入刷屏）
+                                // 只Welcome 第一个新来的（避免同一时刻多人加入刷屏）
                                 const newAgent = (merged || []).find(a => a.agentId === newIds[0]);
                                 if (newAgent && newAgent.name) {
                                     // 临时将 currentState 视为 writing 以允许 showBubble 展示
@@ -1199,9 +1179,9 @@
                                     // 临时更换 bubble 文案
                                     const oldTexts = BUBBLE_TEXTS.writing;
                                     BUBBLE_TEXTS.writing = [
-                                        `欢迎 ${newAgent.name} 来到办公室～`,
-                                        `Hi ${newAgent.name}，一起开工吧`,
-                                        `${newAgent.name} 已加入，欢迎！`
+                                        `Welcome  ${newAgent.name} to the office!`,
+                                        `Hi ${newAgent.name}, let's build.`,
+                                        `${newAgent.name} joined. Welcome!`
                                     ];
                                     showBubble();
                                     // 还原
@@ -1218,7 +1198,7 @@
                     renderGuestAgentsInScene();
                 })
                 .catch(error => {
-                    console.error('拉取访客列表失败:', error);
+                    console.error(I18N('guestFetchFailed', 'Failed to fetch guest list:'), error);
                     // 即使拉取失败，demo 也要能渲染
                     if (DEMO_MODE) {
                         renderGuestAgentList();
@@ -1240,7 +1220,7 @@
                 }
             }
             
-            console.log('WebP 支持:', supportsWebP);
+            console.log('WebP support:', supportsWebP);
             
             // 启动 Phaser 游戏
             new Phaser.Game(config);
@@ -1355,7 +1335,7 @@
                 repeat: -1
             });
 
-            // 创建 6 个访客角色的循环 idle 动画（8帧循环）
+            // 创建 6 个Guest角色的循环 idle 动画（8帧循环）
             for (let i = 1; i <= 6; i++) {
                 this.anims.create({
                     key: `guest_anim_${i}_idle`,
@@ -1385,7 +1365,7 @@
             const plaqueY = config.height - 36;
             const plaqueBg = game.add.rectangle(plaqueX, plaqueY, 420, 44, 0x5d4037);
             plaqueBg.setStrokeStyle(3, 0x3e2723);
-            const plaqueText = game.add.text(plaqueX, plaqueY, '海辛小龙虾的办公室', {
+            const plaqueText = game.add.text(plaqueX, plaqueY, 'Star Lobster Office', {
                 fontFamily: 'ArkPixel, monospace',
                 fontSize: '18px',
                 fill: '#ffd700',
@@ -1556,15 +1536,15 @@
             coordsDisplay = document.getElementById('coords-display');
             coordsToggle = document.getElementById('coords-toggle');
 
-            // guest agent 将由 /agents 动态拉取并渲染到右侧访客列表
+            // guest agent 将由 /agents 动态拉取并渲染到右侧Guest列表
             coordsToggle.addEventListener('click', () => {
                 showCoords = !showCoords;
                 coordsOverlay.style.display = showCoords ? 'block' : 'none';
-                coordsToggle.textContent = showCoords ? '隐藏坐标' : '显示坐标';
+                coordsToggle.textContent = showCoords ? I18N('coordsHide', 'Hide Coords') : I18N('coordsShow', 'Show Coords');
                 coordsToggle.style.background = showCoords ? '#e94560' : '#333';
             });
 
-            // 允许手机端“拖动/滑动”来移动视野（本质：移动 Phaser Camera）
+            // 允许手机端“拖动/滑动”来Pan View（本质：移动 Phaser Camera）
             // iPhone 等触屏设备默认开启；桌面端默认关闭（可手动开）。
             const panToggle = document.getElementById('pan-toggle');
             const isTouchDevice = IS_TOUCH_DEVICE;
@@ -1633,7 +1613,7 @@
             function setPanEnabled(on) {
                 panEnabled = on;
                 if (panToggle) {
-                    panToggle.textContent = on ? '锁定视野' : '移动视野';
+                    panToggle.textContent = on ? I18N('lockView', 'Lock View') : I18N('panView', 'Pan View');
                     panToggle.style.background = on ? '#e94560' : '#333';
                 }
                 game.input.setDefaultCursor(on ? 'grab' : 'default');
@@ -1954,7 +1934,7 @@
                     }
                 })
                 .catch(error => {
-                    typewriterTarget = '连接失败，正在重试...';
+                    typewriterTarget = I18N('connRetry', 'Connection failed, retrying...');
                     typewriterText = '';
                     typewriterIndex = 0;
                 });
@@ -2100,7 +2080,7 @@
         function showCatBubble() {
             if (!window.catSprite) return;
             if (window.catBubble) { window.catBubble.destroy(); window.catBubble = null; }
-            const texts = BUBBLE_TEXTS.cat || ['喵~', '咕噜咕噜…'];
+            const texts = BUBBLE_TEXTS.cat || ['meow~', 'purr...'];
             const text = texts[Math.floor(Math.random() * texts.length)];
             const anchorX = window.catSprite.x;
             const anchorY = window.catSprite.y - 60;
