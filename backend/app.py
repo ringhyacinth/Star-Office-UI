@@ -68,23 +68,23 @@ def extract_memo_from_file(file_path):
                 core_points.append(line)
         
         if not core_points:
-            return "「昨日无事记录」\n\n若有恒，何必三更眠五更起；最无益，莫过一日曝十日寒。"
+            return "No memo found for yesterday.\n\nSmall steady steps beat bursts."
         
         # 从核心内容中提取 2-3 个关键点
         selected_points = core_points[:3]
         
         # 睿智语录库
         wisdom_quotes = [
-            "「工欲善其事，必先利其器。」",
-            "「不积跬步，无以至千里；不积小流，无以成江海。」",
-            "「知行合一，方可致远。」",
-            "「业精于勤，荒于嬉；行成于思，毁于随。」",
-            "「路漫漫其修远兮，吾将上下而求索。」",
-            "「昨夜西风凋碧树，独上高楼，望尽天涯路。」",
-            "「衣带渐宽终不悔，为伊消得人憔悴。」",
-            "「众里寻他千百度，蓦然回首，那人却在，灯火阑珊处。」",
-            "「世事洞明皆学问，人情练达即文章。」",
-            "「纸上得来终觉浅，绝知此事要躬行。」"
+            """Make it work, then make it right, then make it fast.""",
+            "Small consistent progress compounds.",
+            "Clarity first, speed second.",
+            "Measure twice, ship once.",
+            "Slow is smooth, smooth is fast.",
+            "Good systems outlast good moods.",
+            "What gets logged gets improved.",
+            "Focus on the constraint, not the noise.",
+            "Done today beats perfect someday.",
+            "Stay curious, stay grounded."
         ]
         
         import random
@@ -128,8 +128,8 @@ def extract_memo_from_file(file_path):
         return "\n".join(result).strip()
         
     except Exception as e:
-        print(f"提取 memo 失败: {e}")
-        return "「昨日记录加载失败」\n\n「往者不可谏，来者犹可追。」"
+        print(f"Failed to extract memo: {e}")
+        return "Failed to load yesterday memo.\n\nRecover, adapt, move forward."
 
 app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path="/static")
 
@@ -151,7 +151,7 @@ def add_no_cache_headers(response):
 # Default state
 DEFAULT_STATE = {
     "state": "idle",
-    "detail": "等待任务中...",
+    "detail": "Waiting for tasks...",
     "progress": 0,
     "updated_at": datetime.now().isoformat()
 }
@@ -256,7 +256,7 @@ DEFAULT_AGENTS = [
         "name": "Star",
         "isMain": True,
         "state": "idle",
-        "detail": "待命中，随时准备为你服务",
+        "detail": "Standing by, ready to help",
         "updated_at": datetime.now().isoformat(),
         "area": "breakroom",
         "source": "local",
@@ -270,7 +270,7 @@ DEFAULT_AGENTS = [
         "name": "NPC 1",
         "isMain": False,
         "state": "writing",
-        "detail": "在整理热点日报...",
+        "detail": "Writing the daily brief...",
         "updated_at": datetime.now().isoformat(),
         "area": "writing",
         "source": "demo",
@@ -417,12 +417,12 @@ def agent_approve():
         data = request.get_json()
         agent_id = (data.get("agentId") or "").strip()
         if not agent_id:
-            return jsonify({"ok": False, "msg": "缺少 agentId"}), 400
+            return jsonify({"ok": False, "msg": "missing agentId"}), 400
 
         agents = load_agents_state()
         target = next((a for a in agents if a.get("agentId") == agent_id and not a.get("isMain")), None)
         if not target:
-            return jsonify({"ok": False, "msg": "未找到 agent"}), 404
+            return jsonify({"ok": False, "msg": "agent not found"}), 404
 
         target["authStatus"] = "approved"
         target["authApprovedAt"] = datetime.now().isoformat()
@@ -441,12 +441,12 @@ def agent_reject():
         data = request.get_json()
         agent_id = (data.get("agentId") or "").strip()
         if not agent_id:
-            return jsonify({"ok": False, "msg": "缺少 agentId"}), 400
+            return jsonify({"ok": False, "msg": "missing agentId"}), 400
 
         agents = load_agents_state()
         target = next((a for a in agents if a.get("agentId") == agent_id and not a.get("isMain")), None)
         if not target:
-            return jsonify({"ok": False, "msg": "未找到 agent"}), 404
+            return jsonify({"ok": False, "msg": "agent not found"}), 404
 
         target["authStatus"] = "rejected"
         target["authRejectedAt"] = datetime.now().isoformat()
@@ -478,7 +478,7 @@ def join_agent():
     try:
         data = request.get_json()
         if not isinstance(data, dict) or not data.get("name"):
-            return jsonify({"ok": False, "msg": "请提供名字"}), 400
+            return jsonify({"ok": False, "msg": "please provide a name"}), 400
 
         name = data["name"].strip()
         state = data.get("state", "idle")
@@ -489,12 +489,12 @@ def join_agent():
         state = normalize_agent_state(state)
 
         if not join_key:
-            return jsonify({"ok": False, "msg": "请提供接入密钥"}), 400
+            return jsonify({"ok": False, "msg": "please provide a join key"}), 400
 
         keys_data = load_join_keys()
         key_item = next((k for k in keys_data.get("keys", []) if k.get("key") == join_key), None)
         if not key_item:
-            return jsonify({"ok": False, "msg": "接入密钥无效"}), 403
+            return jsonify({"ok": False, "msg": "invalid join key"}), 403
         # key 可复用：不再因为 used=true 拒绝
 
         with join_lock:
@@ -502,7 +502,7 @@ def join_agent():
             keys_data = load_join_keys()
             key_item = next((k for k in keys_data.get("keys", []) if k.get("key") == join_key), None)
             if not key_item:
-                return jsonify({"ok": False, "msg": "接入密钥无效"}), 403
+                return jsonify({"ok": False, "msg": "invalid join key"}), 403
 
             agents = load_agents_state()
 
@@ -552,7 +552,7 @@ def join_agent():
 
             if active_count >= max_concurrent:
                 save_agents_state(agents)
-                return jsonify({"ok": False, "msg": f"该接入密钥当前并发已达上限（{max_concurrent}），请稍后或换另一个 key"}), 429
+                return jsonify({"ok": False, "msg": f"this join key hit max concurrent sessions ({max_concurrent}); try again later or use another key"}), 429
 
             if existing:
                 existing["state"] = state
@@ -775,7 +775,7 @@ def get_yesterday_memo():
         else:
             return jsonify({
                 "success": False,
-                "msg": "没有找到昨日日记"
+                "msg": "No yesterday memo found"
             })
     except Exception as e:
         return jsonify({
@@ -807,11 +807,14 @@ def set_state_endpoint():
 
 
 if __name__ == "__main__":
+    port = int(os.environ.get("STAR_OFFICE_PORT", os.environ.get("PORT", "18891")))
+    host = os.environ.get("STAR_OFFICE_HOST", "127.0.0.1")
+
     print("=" * 50)
     print("Star Office UI - Backend State Service")
     print("=" * 50)
     print(f"State file: {STATE_FILE}")
-    print("Listening on: http://0.0.0.0:18791")
+    print(f"Listening on: http://{host}:{port}")
     print("=" * 50)
-    
-    app.run(host="0.0.0.0", port=18791, debug=False)
+
+    app.run(host=host, port=port, debug=False)
