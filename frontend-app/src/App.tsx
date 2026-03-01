@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Activity, AlertTriangle, Bot, GaugeCircle, ListTodo, Wifi } from 'lucide-react'
 import { HEALTH_EMPTY, LIVE_EMPTY, OLLAMA_EMPTY, TASKS_EMPTY, OfficeApi, officeApi } from './api'
 import { CanvasShell } from './components/CanvasShell'
@@ -171,25 +171,16 @@ function App() {
   const logs = useMemo(() => mapLiveLogs(liveSnapshot.data.logs), [liveSnapshot.data.logs])
   const tasks = useMemo(() => mapTasks(tasksSnapshot.data), [tasksSnapshot.data])
 
-  useEffect(() => {
-    if (!selectedAgentId) {
-      return
-    }
-
-    const stillExists = agents.some((agent) => agent.id === selectedAgentId)
-    if (!stillExists) {
-      setSelectedAgentId(null)
-    }
-  }, [agents, selectedAgentId])
-
   const selectedAgent = useMemo(
     () => agents.find((agent) => agent.id === selectedAgentId) ?? null,
     [agents, selectedAgentId],
   )
 
+  const activeSelectedAgentId = selectedAgent ? selectedAgent.id : null
+
   const filteredLogs = useMemo(
-    () => applyLogFilter(logs, quickFilter, selectedAgentId),
-    [logs, quickFilter, selectedAgentId],
+    () => applyLogFilter(logs, quickFilter, activeSelectedAgentId),
+    [logs, quickFilter, activeSelectedAgentId],
   )
 
   const totalLiveLogs = useMemo(
@@ -325,7 +316,7 @@ function App() {
 
           <CanvasShell
             agents={agents}
-            selectedAgentId={selectedAgentId}
+            selectedAgentId={activeSelectedAgentId}
             onSelectAgent={handleSelectAgent}
           />
 
@@ -339,7 +330,7 @@ function App() {
             isLiveLoading={liveSnapshot.isLoading}
             quickFilter={quickFilter}
             onQuickFilterChange={setQuickFilter}
-            selectedAgentId={selectedAgentId}
+            selectedAgentId={activeSelectedAgentId}
             onClearAgentFilter={clearSelection}
           />
         </section>

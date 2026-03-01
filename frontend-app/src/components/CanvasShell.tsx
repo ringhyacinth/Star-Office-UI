@@ -727,8 +727,10 @@ export function CanvasShell({ agents, selectedAgentId, onSelectAgent }: CanvasSh
 
     rafId = window.requestAnimationFrame(paint)
 
+    const overlayElement = overlayRef.current
+
     return () => {
-      overlayRef.current?.classList.remove('low-fx')
+      overlayElement?.classList.remove('low-fx')
       delete canvas.dataset.fxTier
       window.cancelAnimationFrame(rafId)
     }

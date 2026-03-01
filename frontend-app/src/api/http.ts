@@ -22,15 +22,44 @@ export interface RequestJsonOptions {
 
 const DEFAULT_TIMEOUT_MS = 8_000
 
-async function parseBodyAsJson(response: Response): Promise<unknown> {
+function looksLikeHtml(raw: string): boolean {
+  const trimmed = raw.trimStart().toLowerCase()
+  return (
+    trimmed.startsWith('<!doctype html')
+    || trimmed.startsWith('<html')
+    || trimmed.startsWith('<head')
+    || trimmed.startsWith('<body')
+  )
+}
+
+async function parseBodyAsJson(response: Response, endpoint: string): Promise<unknown> {
   const raw = await response.text()
   if (!raw) {
     return {}
   }
 
+  const contentType = (response.headers.get('content-type') || '').toLowerCase()
+  const isJsonContentType = contentType.includes('application/json') || contentType.includes('+json')
+
+  if (!isJsonContentType && looksLikeHtml(raw)) {
+    throw new ApiError('接口返回 HTML（非 JSON），请检查 API base/proxy 配置', {
+      status: response.status,
+      endpoint,
+      cause: raw.slice(0, 300),
+    })
+  }
+
   try {
     return JSON.parse(raw) as unknown
   } catch {
+    if (response.ok) {
+      throw new ApiError('接口返回非 JSON 数据，无法解析', {
+        status: response.status,
+        endpoint,
+        cause: raw.slice(0, 300),
+      })
+    }
+
     return { raw }
   }
 }
@@ -50,6 +79,7 @@ export async function requestJson<T>(endpoint: string, options: RequestJsonOptio
     const response = await fetch(endpoint, {
       method: options.method ?? 'GET',
       headers: {
+        Accept: 'application/json',
         'Content-Type': 'application/json',
         ...options.headers,
       },
@@ -57,7 +87,7 @@ export async function requestJson<T>(endpoint: string, options: RequestJsonOptio
       signal,
     })
 
-    const data = await parseBodyAsJson(response)
+    const data = await parseBodyAsJson(response, endpoint)
 
     if (!response.ok) {
       const message = getHttpErrorMessage(response.status, data)
