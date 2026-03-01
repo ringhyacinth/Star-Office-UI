@@ -238,55 +238,25 @@
       setQueryLang(next);
     });
 
-    // Match button style used in the dashboard control panel.
-    const applyButtonStyle = (compact) => {
-      const base = [
-        'background:#3a3f4f',
-        'color:#fff',
-        'border:2px solid #555',
-        'border-radius:4px',
-        'cursor:pointer',
-        'font-family:ArkPixel, monospace',
-        'font-size:12px'
-      ];
-      if (compact) {
-        base.push('height:52px', 'width:100%', 'padding:8px 10px');
-      } else {
-        base.push('padding:8px 10px');
-      }
-      select.style.cssText = base.join(';') + ';';
+    // Match the same style as top action buttons (e.g. "Pan View").
+    wrap.style.cssText = 'position:fixed;top:calc(env(safe-area-inset-top, 0px) + 12px);left:50%;transform:translateX(-50%);z-index:999999;';
+    select.style.cssText = 'padding:8px 10px;font-family:ArkPixel,monospace;font-size:13px;cursor:pointer;border:2px solid #333;border-radius:5px;background:#333;color:#fff;';
 
-      select.addEventListener('mouseenter', () => {
-        select.style.background = '#4a4f5f';
-        select.style.borderColor = '#e94560';
-      });
-      select.addEventListener('mouseleave', () => {
-        select.style.background = '#3a3f4f';
-        select.style.borderColor = '#555';
-      });
-    };
+    select.addEventListener('mouseenter', () => {
+      select.style.background = '#e94560';
+      select.style.borderColor = '#e94560';
+    });
+    select.addEventListener('mouseleave', () => {
+      select.style.background = '#333';
+      select.style.borderColor = '#333';
+    });
 
-    // On main dashboard, place language menu in the same button grid.
-    if (scope === 'index') {
-      const controlButtons = document.getElementById('control-buttons');
-      if (controlButtons) {
-        wrap.style.cssText = 'grid-column:1 / -1;';
-        applyButtonStyle(true);
-        wrap.appendChild(select);
-        controlButtons.appendChild(wrap);
-        return;
-      }
+    // Slightly smaller on non-dashboard pages so it doesn't dominate forms.
+    if (scope !== 'index') {
+      select.style.fontSize = '12px';
+      select.style.padding = '6px 8px';
     }
 
-    // Fallback for join/invite pages.
-    wrap.style.cssText = 'position:fixed;top:calc(env(safe-area-inset-top, 0px) + 12px);right:12px;z-index:999999;display:flex;align-items:center;gap:8px;';
-    applyButtonStyle(false);
-
-    const label = document.createElement('span');
-    label.textContent = (window.__t && window.__t('common.language', 'Language')) || 'Language';
-    label.style.cssText = 'color:#fff;background:rgba(0,0,0,0.55);border-radius:4px;padding:4px 6px;font:12px ArkPixel, monospace;';
-
-    wrap.appendChild(label);
     wrap.appendChild(select);
     document.body.appendChild(wrap);
   }
