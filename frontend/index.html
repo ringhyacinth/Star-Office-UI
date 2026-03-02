@@ -687,8 +687,6 @@
                 </div>
                 <div class="asset-toolbar">
                     <input id="asset-search" placeholder="搜索资产名（如 desk / sofa / star）" oninput="renderAssetDrawerList()" />
-                    <button id="btn-filter-loaded" onclick="setAssetFilterMode('loaded')">已加载</button>
-                    <button id="btn-filter-all" onclick="setAssetFilterMode('all')">全部资产</button>
                 </div>
                 <div id="asset-list"></div>
                 <div id="asset-upload-panel">
@@ -799,8 +797,6 @@
             const brokerGoBtn = document.querySelector('#asset-broker-actions button'); if (brokerGoBtn) brokerGoBtn.textContent = t('btnBrokerGo');
 
             setPh('asset-search', 'searchPlaceholder');
-            setText('btn-filter-loaded', 'loaded');
-            setText('btn-filter-all', 'allAssets');
 
             setText('asset-choose-btn', 'chooseImage');
             setText('asset-commit-refresh-btn', 'confirmUpload');
@@ -1054,7 +1050,7 @@
         let assetDrawerOpen = false;
         let assetDrawerAuthed = (localStorage.getItem('assetDrawerAuthed') === '1');
         const ASSET_DRAWER_PASS = '6969';
-        let assetFilterMode = 'loaded';
+        let assetFilterMode = 'all';
         let assetListData = [];
         let sceneAssetItems = [];
         let selectedAssetInfo = null;
@@ -1512,16 +1508,8 @@
             const list = document.getElementById('asset-list');
             if (!list) return;
 
-            // 若“当前场景已加载”暂时抓不到（例如首帧尚未就绪），自动回退到全量资产，避免空白
-            let baseRows = [];
-            if (assetFilterMode === 'all') {
-                baseRows = assetListData.map(it => ({ ...it, key: '' }));
-            } else {
-                baseRows = sceneAssetItems.map(it => ({ ...it }));
-                if (baseRows.length === 0 && assetListData.length > 0) {
-                    baseRows = assetListData.map(it => ({ ...it, key: '' }));
-                }
-            }
+            // 统一显示后端全部资产（不再区分已加载/全部）
+            const baseRows = assetListData.map(it => ({ ...it, key: '' }));
 
             const rows = baseRows
                 .filter(it => !q || (it.path || '').toLowerCase().includes(q) || (it.key || '').toLowerCase().includes(q))
@@ -1568,7 +1556,7 @@
         }
 
         function setAssetFilterMode(mode) {
-            assetFilterMode = (mode === 'all') ? 'all' : 'loaded';
+            assetFilterMode = 'all';
             renderAssetDrawerList();
         }
 
