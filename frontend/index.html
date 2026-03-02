@@ -582,11 +582,12 @@
         <div id="control-bar">
             <div id="control-bar-title">Star 状态</div>
             <div id="control-buttons">
-                <button onclick="setState('idle','待命')">待命</button>
-                <button onclick="setState('writing','工作中')">工作</button>
-                <button onclick="setState('syncing','同步中')">同步</button>
-                <button onclick="setState('error','报警中')">报警</button>
-                <button onclick="toggleAssetDrawer()">装修房间</button>
+                <button id="btn-state-idle" onclick="setState('idle','待命')">待命</button>
+                <button id="btn-state-writing" onclick="setState('writing','工作中')">工作</button>
+                <button id="btn-state-syncing" onclick="setState('syncing','同步中')">同步</button>
+                <button id="btn-state-error" onclick="setState('error','报警中')">报警</button>
+                <button id="btn-open-drawer" onclick="toggleAssetDrawer()">装修房间</button>
+                <button id="lang-toggle-btn" onclick="toggleLanguage()">EN</button>
             </div>
         </div>
 
@@ -669,6 +670,95 @@
 
     <script src="/static/vendor/phaser-3.80.1.min.js"></script>
     <script>
+        // 简易中英文切换
+        let uiLang = localStorage.getItem('uiLang') || 'zh';
+        const I18N = {
+            zh: {
+                controlTitle: 'Star 状态',
+                btnIdle: '待命', btnWork: '工作', btnSync: '同步', btnError: '报警', btnDecor: '装修房间',
+                drawerTitle: '装修房间 · 资产侧边栏', drawerClose: '关闭',
+                authTitle: '请输入装修验证码', authPlaceholder: '输入验证码', authVerify: '验证',
+                btnMove: '搬家🏠', btnHome: '回老家', btnBroker: '找中介', btnBrokerGo: '按中介方案搬家',
+                brokerHint: '写你的风格主题（严格保持原始房间结构，只改变视觉风格）',
+                searchPlaceholder: '搜索资产名（如 desk / sofa / star）', loaded: '已加载', allAssets: '全部资产',
+                chooseImage: '选择图片', confirmUpload: '确认上传替换',
+                frameW: '单帧宽', frameH: '单帧高', cols: '列', rows: '行',
+                showCoords: '显示坐标', hideCoords: '隐藏坐标', moveView: '移动视野', lockView: '锁定视野',
+                langBtn: 'EN'
+            },
+            en: {
+                controlTitle: 'Star Status',
+                btnIdle: 'Idle', btnWork: 'Work', btnSync: 'Sync', btnError: 'Alert', btnDecor: 'Decorate Room',
+                drawerTitle: 'Decorate Room · Asset Sidebar', drawerClose: 'Close',
+                authTitle: 'Enter Decor Passcode', authPlaceholder: 'Enter passcode', authVerify: 'Verify',
+                btnMove: 'Move House🏠', btnHome: 'Back Home', btnBroker: 'Broker', btnBrokerGo: 'Move by Broker Plan',
+                brokerHint: 'Describe your visual style (keep room structure unchanged, only change visual style)',
+                searchPlaceholder: 'Search assets (desk / sofa / star)', loaded: 'Loaded', allAssets: 'All Assets',
+                chooseImage: 'Choose Image', confirmUpload: 'Confirm Upload Replace',
+                frameW: 'Frame W', frameH: 'Frame H', cols: 'Cols', rows: 'Rows',
+                showCoords: 'Show Coords', hideCoords: 'Hide Coords', moveView: 'Pan View', lockView: 'Lock View',
+                langBtn: '中'
+            }
+        };
+
+        function t(key) { return (I18N[uiLang] && I18N[uiLang][key]) || key; }
+
+        function applyLanguage() {
+            const setText = (id, key) => { const el = document.getElementById(id); if (el) el.textContent = t(key); };
+            const setPh = (id, key) => { const el = document.getElementById(id); if (el) el.placeholder = t(key); };
+
+            setText('control-bar-title', 'controlTitle');
+            setText('btn-state-idle', 'btnIdle');
+            setText('btn-state-writing', 'btnWork');
+            setText('btn-state-syncing', 'btnSync');
+            setText('btn-state-error', 'btnError');
+            setText('btn-open-drawer', 'btnDecor');
+            setText('lang-toggle-btn', 'langBtn');
+
+            const drawerTitle = document.querySelector('#asset-drawer-header span');
+            if (drawerTitle) drawerTitle.textContent = t('drawerTitle');
+            const drawerClose = document.querySelector('#asset-drawer-header button');
+            if (drawerClose) drawerClose.textContent = t('drawerClose');
+
+            const authTitle = document.querySelector('#asset-auth-gate .asset-preview-title');
+            if (authTitle) authTitle.textContent = t('authTitle');
+            setPh('asset-pass-input', 'authPlaceholder');
+            const authVerifyBtn = document.querySelector('#asset-auth-gate .asset-toolbar button');
+            if (authVerifyBtn) authVerifyBtn.textContent = t('authVerify');
+
+            const moveBtn = document.querySelector('#asset-move-row .btn-move'); if (moveBtn) moveBtn.textContent = t('btnMove');
+            const homeBtn = document.querySelector('#asset-move-row .btn-home'); if (homeBtn) homeBtn.textContent = t('btnHome');
+            const brokerBtn = document.querySelector('#asset-broker-row .btn-broker'); if (brokerBtn) brokerBtn.textContent = t('btnBroker');
+            const brokerHint = document.querySelector('#asset-broker-panel .asset-sub'); if (brokerHint) brokerHint.textContent = t('brokerHint');
+            const brokerGoBtn = document.querySelector('#asset-broker-actions button'); if (brokerGoBtn) brokerGoBtn.textContent = t('btnBrokerGo');
+
+            setPh('asset-search', 'searchPlaceholder');
+            const filterBtns = document.querySelectorAll('#asset-main-content .asset-toolbar button');
+            if (filterBtns[0]) filterBtns[0].textContent = t('loaded');
+            if (filterBtns[1]) filterBtns[1].textContent = t('allAssets');
+
+            setText('asset-choose-btn', 'chooseImage');
+            setText('asset-confirm-btn', 'confirmUpload');
+            setPh('asset-frame-w', 'frameW');
+            setPh('asset-frame-h', 'frameH');
+            setPh('asset-cols', 'cols');
+            setPh('asset-rows', 'rows');
+
+            const coordsBtn = document.getElementById('coords-toggle');
+            if (coordsBtn) coordsBtn.textContent = showCoords ? t('hideCoords') : t('showCoords');
+            const panBtn = document.getElementById('pan-toggle');
+            if (panBtn) {
+                const on = panBtn.dataset.on === '1';
+                panBtn.textContent = on ? t('lockView') : t('moveView');
+            }
+        }
+
+        function toggleLanguage() {
+            uiLang = (uiLang === 'zh') ? 'en' : 'zh';
+            localStorage.setItem('uiLang', uiLang);
+            applyLanguage();
+        }
+
         // 检测浏览器是否支持 WebP
         let supportsWebP = false;
         
@@ -2196,6 +2286,7 @@
             }
             
             console.log('WebP 支持:', supportsWebP);
+            applyLanguage();
 
             // 动态探测 flowers 精灵表帧规格（避免写死 65x65 导致显示比例异常）
             try {
@@ -2533,7 +2624,7 @@
             coordsToggle.addEventListener('click', () => {
                 showCoords = !showCoords;
                 coordsOverlay.style.display = showCoords ? 'block' : 'none';
-                coordsToggle.textContent = showCoords ? '隐藏坐标' : '显示坐标';
+                coordsToggle.textContent = showCoords ? t('hideCoords') : t('showCoords');
                 coordsToggle.style.background = showCoords ? '#e94560' : '#333';
             });
 
@@ -2606,7 +2697,8 @@
             function setPanEnabled(on) {
                 panEnabled = on;
                 if (panToggle) {
-                    panToggle.textContent = on ? '锁定视野' : '移动视野';
+                    panToggle.dataset.on = on ? '1' : '0';
+                    panToggle.textContent = on ? t('lockView') : t('moveView');
                     panToggle.style.background = on ? '#e94560' : '#333';
                 }
                 game.input.setDefaultCursor(on ? 'grab' : 'default');
