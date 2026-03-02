@@ -3381,20 +3381,9 @@ function toggleBrokerPanel() {
                     if (!window.errorBug.anims.isPlaying || window.errorBug.anims.currentAnim?.key !== 'error_bug') {
                         window.errorBug.anims.play('error_bug', true);
                     }
-                    // ping-pong move between x=1007 and x=1111 at y=221
-                    const leftX = 1007;
-                    const rightX = 1111;
-                    const speed = 0.6; // -50% speed
-                    const dir = window.errorBugDir || 1;
-                    window.errorBug.x += speed * dir;
+                    // 固定在原地（按需求取消 error 移动路径）
+                    window.errorBug.x = 1007;
                     window.errorBug.y = 221;
-                    if (window.errorBug.x >= rightX) {
-                        window.errorBug.x = rightX;
-                        window.errorBugDir = -1;
-                    } else if (window.errorBug.x <= leftX) {
-                        window.errorBug.x = leftX;
-                        window.errorBugDir = 1;
-                    }
                 } else {
                     window.errorBug.setVisible(false);
                     window.errorBug.anims.stop();
