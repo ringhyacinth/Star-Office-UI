@@ -2832,7 +2832,8 @@ function toggleBrokerPanel() {
             // Desk
             // Star working animation: repacked to grid to avoid WebGL max texture size limits
             // NOTE: prefer WebP for size, PNG fallback
-            this.load.spritesheet('star_working', '/static/star-working-spritesheet-grid.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 230, frameHeight: 144 });
+            // 动态替换后按最新素材识别：当前 writing 素材为 300x300 单帧
+            this.load.spritesheet('star_working', '/static/star-working-spritesheet-grid.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 300, frameHeight: 300 });
 
             // Sync state animation (256x256, 53 frames)
             this.load.spritesheet('sync_anim', '/static/sync-animation-spritesheet-grid.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 256, frameHeight: 256 });
@@ -3047,7 +3048,8 @@ function toggleBrokerPanel() {
             // Star working at desk (217,333)
             this.anims.create({
                 key: 'star_working',
-                frames: this.anims.generateFrameNumbers('star_working', { start: 0, end: 191 }),
+                // 38 帧（0~37），避免沿用旧 192 帧导致疯狂闪烁
+                frames: this.anims.generateFrameNumbers('star_working', { start: 0, end: 37 }),
                 frameRate: 12,
                 repeat: -1
             });
