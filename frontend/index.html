@@ -1116,12 +1116,26 @@
             assetThumbTimers = [];
         }
 
-        function getSpritesheetFrameMeta(item) {
-            // 不再写死每个资产：优先使用列表里的 width/height（来自后端探测）
-            if (item && Number(item.width) > 0 && Number(item.height) > 0) {
-                return { w: Number(item.width), h: Number(item.height) };
+        function inferSpritesheetFrameMetaByPath(path) {
+            const p = (path || '').toLowerCase();
+            if (!p) return null;
+            // 优先用文件命名约定推断（不写死具体尺寸）
+            if (p.includes('spritesheet') || p.includes('sprite-sheet') || p.includes('sheet') || p.includes('anim') || p.includes('grid')) {
+                return { w: null, h: null };
             }
             return null;
+        }
+
+        function getSpritesheetFrameMeta(item) {
+            // 先看命名是否属于精灵表
+            const inferred = inferSpritesheetFrameMetaByPath(item?.path || '');
+            if (!inferred) return null;
+            // 尺寸未知时返回 null 尺寸，调用侧需兜底
+            if (item && Number(item.width) > 0 && Number(item.height) > 0) {
+                // 宽高是整图尺寸，不等于单帧；这里只用于“这是精灵表资源”的判断
+                return { w: Number(item.width), h: Number(item.height), isSheet: true };
+            }
+            return { w: null, h: null, isSheet: true };
         }
 
         function tryAnimateAssetThumb(item) {
@@ -1349,18 +1363,32 @@
 
             const nameLower = (file.name || '').toLowerCase();
             const isAnimInput = nameLower.endsWith('.gif') || nameLower.endsWith('.webp');
-            const isSheetTarget = path.toLowerCase().endsWith('.webp') || path.toLowerCase().endsWith('.png');
-            if (isAnimInput && isSheetTarget) {
-                const frameMeta = getSpritesheetFrameMeta(selectedAssetInfo);
-                const fw = frameMeta ? frameMeta.w : 64;
-                const fh = frameMeta ? frameMeta.h : 64;
+            const isSheetTarget = !!inferSpritesheetFrameMetaByPath(path);
+
+            // 规则：
+            // 1) 上传动图到精灵表目标 => 自动转精灵表
+            // 2) 上传静态图到精灵表目标 => 也按等网格切帧自动转精灵表（避免整张图被当单帧）
+            if (isSheetTarget) {
                 fd.append('auto_spritesheet', '1');
-                fd.append('frame_w', String(fw));
-                fd.append('frame_h', String(fh));
-                // star-idle 已升级为 256x256 原生帧：保留原始尺寸，避免糊化
-                // 其他精灵表仍按目标帧规格转换，防止切帧错乱
-                const isStarIdle = path.toLowerCase().includes('star-idle-spritesheet');
-                fd.append('preserve_original', isStarIdle ? '1' : '0');
+
+                if (isAnimInput) {
+                    // 动图：默认按输入帧处理（后端会探测）
+                    fd.append('preserve_original', '1');
+                } else {
+                    // 静态图：按 √N 网格切帧（常见4x4/8x8），避免整张贴图
+                    // 优先从当前已选资源推导一个合理帧尺寸
+                    const sw = Number(selectedAssetInfo?.width || 0);
+                    const sh = Number(selectedAssetInfo?.height || 0);
+                    let fw = 64, fh = 64;
+                    if (sw > 0 && sh > 0) {
+                        const grid = Math.max(1, Math.round(Math.sqrt(Math.max(1, Math.round(sw / Math.max(1, sh))))));
+                        fw = Math.max(16, Math.round(sw / Math.max(1, grid)));
+                        fh = Math.max(16, Math.round(sh / Math.max(1, grid)));
+                    }
+                    fd.append('frame_w', String(fw));
+                    fd.append('frame_h', String(fh));
+                    fd.append('preserve_original', '0');
+                }
                 fd.append('pixel_art', '1');
             }
 
