@@ -3070,9 +3070,9 @@ function toggleBrokerPanel() {
             errorBug.anims.play('error_bug', true);
             window.errorBug = errorBug;
             window.errorBugDir = 1; // 1 -> to right, -1 -> to left
-            const starWorking = this.add.sprite(217, 333, 'star_working', 0).setOrigin(0.5);
+            const starWorking = this.add.sprite(217, 343, 'star_working', 0).setOrigin(0.5);
             starWorking.setVisible(false);
-            starWorking.setScale(1);
+            starWorking.setScale(0.9);
             starWorking.setDepth(900);  // starWorking under desk so desk partially covers it
             // Store reference to starWorking for state logic
             window.starWorking = starWorking;
