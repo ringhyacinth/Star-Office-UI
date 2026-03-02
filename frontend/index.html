@@ -854,8 +854,6 @@
 
         let game, star, sofa, serverroom, officeBgSprite, areas = {}, currentState = 'idle', pendingDesiredState = null, statusText, lastFetch = 0, lastBlink = 0, lastBubble = 0, targetX = 660, targetY = 170, bubble = null, typewriterText = '', typewriterTarget = '', typewriterIndex = 0, lastTypewriter = 0, syncAnimSprite = null, catBubble = null, selectionBoxGraphics = null;
         const IDLE_SOFA_ANCHOR = { x: 798, y: 272 }; // 统一中心锚点（原 sofa 左上 670,144 的中心）
-        // 可达鸭 idle 精灵在 128x128 帧里内容重心偏右下，按 2x 缩放后做补偿
-        const IDLE_STAR_OFFSET = { x: -8, y: -4 };
         let currentOfficeBgTextureKey = 'office_bg';
         let assetDrawerOpen = false;
         let assetDrawerAuthed = (localStorage.getItem('assetDrawerAuthed') === '1');
@@ -2210,7 +2208,7 @@
 
             star = game.physics.add.sprite(areas.breakroom.x, areas.breakroom.y, 'star_idle');
             star.setOrigin(0.5);
-            star.setScale(2.0);
+            star.setScale(1.0);
             star.setAlpha(0.95);
             star.setDepth(20); // Put Star on top of everything
             // Default: idle shows Star idle animation
@@ -2728,9 +2726,7 @@
 
                             star.setVisible(true);
                             star.anims.play('star_idle', true);
-                            star.setOrigin(0.5);
-                            star.setScale(2.0);
-                            star.setPosition(IDLE_SOFA_ANCHOR.x + IDLE_STAR_OFFSET.x, IDLE_SOFA_ANCHOR.y + IDLE_STAR_OFFSET.y);
+                            star.setPosition(IDLE_SOFA_ANCHOR.x, IDLE_SOFA_ANCHOR.y);
                         } else if (nextState === 'error') {
                             // Error: no working animation at desk
                             sofa.anims.stop();
@@ -2844,9 +2840,7 @@
                                 }
                                 star.setVisible(true);
                                 star.anims.play('star_idle', true);
-                                star.setOrigin(0.5);
-                                star.setScale(2.0);
-                                star.setPosition(IDLE_SOFA_ANCHOR.x + IDLE_STAR_OFFSET.x, IDLE_SOFA_ANCHOR.y + IDLE_STAR_OFFSET.y);
+                                star.setPosition(IDLE_SOFA_ANCHOR.x, IDLE_SOFA_ANCHOR.y);
                                 sofa.anims.stop();
                                 sofa.setTexture('sofa_idle');
                             } else {
@@ -2873,9 +2867,7 @@
                             }
                             star.setVisible(true);
                             star.anims.play('star_idle', true);
-                            star.setOrigin(0.5);
-                            star.setScale(2.0);
-                            star.setPosition(IDLE_SOFA_ANCHOR.x + IDLE_STAR_OFFSET.x, IDLE_SOFA_ANCHOR.y + IDLE_STAR_OFFSET.y);
+                            star.setPosition(IDLE_SOFA_ANCHOR.x, IDLE_SOFA_ANCHOR.y);
                             sofa.anims.stop();
                             sofa.setTexture('sofa_idle');
                         } else {
