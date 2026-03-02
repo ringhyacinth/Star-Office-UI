@@ -82,17 +82,18 @@
         }
         #status-text {
             position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            bottom: 12px;
+            left: 12px;
+            transform: none;
             color: #eee;
             font-size: 14px;
             background: rgba(0,0,0,0.7);
-            padding: 10px 20px;
+            padding: 10px 14px;
             border-radius: 4px;
-            max-width: 90%;
-            text-align: center;
+            max-width: 42vw;
+            text-align: left;
             font-family: 'ArkPixel', 'Courier New', monospace;
+            z-index: 20;
         }
         /* 状态控制栏 */
         #control-bar {
@@ -542,6 +543,8 @@
 
             #status-text {
                 bottom: 8px;
+                left: 8px;
+                max-width: 64vw;
                 font-size: 12px;
                 padding: 8px 12px;
             }
@@ -677,7 +680,7 @@
     <script src="/static/vendor/phaser-3.80.1.min.js"></script>
     <script>
         // 简易中英文切换
-        let uiLang = localStorage.getItem('uiLang') || 'zh';
+        let uiLang = localStorage.getItem('uiLang') || 'en';
         const I18N = {
             zh: {
                 controlTitle: 'Star 状态',
@@ -690,6 +693,7 @@
                 chooseImage: '选择图片', confirmUpload: '确认并刷新',
                 frameW: '单帧宽', frameH: '单帧高', cols: '列', rows: '行',
                 showCoords: '显示坐标', hideCoords: '隐藏坐标', moveView: '移动视野', lockView: '锁定视野',
+                memoTitle: '— 昨 日 小 记 —', guestTitle: '— 访 客 列 表 —', officeTitle: '海辛小龙虾的办公室',
                 langBtn: 'EN'
             },
             en: {
@@ -703,6 +707,7 @@
                 chooseImage: 'Choose Image', confirmUpload: 'Confirm & Refresh',
                 frameW: 'Frame W', frameH: 'Frame H', cols: 'Cols', rows: 'Rows',
                 showCoords: 'Show Coords', hideCoords: 'Hide Coords', moveView: 'Pan View', lockView: 'Lock View',
+                memoTitle: '— YESTERDAY NOTES —', guestTitle: '— VISITOR LIST —', officeTitle: 'Haixin Lobster Office',
                 langBtn: '中'
             }
         };
@@ -748,6 +753,14 @@
             setPh('asset-frame-h', 'frameH');
             setPh('asset-cols', 'cols');
             setPh('asset-rows', 'rows');
+
+            const memoTitle = document.getElementById('memo-title');
+            if (memoTitle) memoTitle.textContent = t('memoTitle');
+            const guestTitle = document.getElementById('guest-agent-panel-title');
+            if (guestTitle) guestTitle.textContent = t('guestTitle');
+            if (window.officePlaqueText && window.officePlaqueText.setText) {
+                window.officePlaqueText.setText(t('officeTitle'));
+            }
 
             const coordsBtn = document.getElementById('coords-toggle');
             if (coordsBtn) coordsBtn.textContent = showCoords ? t('hideCoords') : t('showCoords');
@@ -2457,7 +2470,7 @@ async function generateRpgBackground() {
             const plaqueY = config.height - 36;
             const plaqueBg = game.add.rectangle(plaqueX, plaqueY, 420, 44, 0x5d4037);
             plaqueBg.setStrokeStyle(3, 0x3e2723);
-            const plaqueText = game.add.text(plaqueX, plaqueY, '海辛小龙虾的办公室', {
+            const plaqueText = game.add.text(plaqueX, plaqueY, t('officeTitle'), {
                 fontFamily: 'ArkPixel, monospace',
                 fontSize: '18px',
                 fill: '#ffd700',
@@ -2468,6 +2481,7 @@ async function generateRpgBackground() {
             // 牌匾两边加个小装饰（跟随牌匾居中）
             game.add.text(plaqueX - 190, plaqueY, '⭐', { fontFamily: 'ArkPixel, monospace', fontSize: '20px' }).setOrigin(0.5);
             game.add.text(plaqueX + 190, plaqueY, '⭐', { fontFamily: 'ArkPixel, monospace', fontSize: '20px' }).setOrigin(0.5);
+            window.officePlaqueText = plaqueText;
 
             // Random plant at (565,178) (frame 0-15, 160x160 each)
             const plantFrameCount = 16;
