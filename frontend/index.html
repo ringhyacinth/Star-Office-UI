@@ -782,7 +782,7 @@
         <button id="lang-btn-cn" onclick="setUILanguage('zh')" style="padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">CN</button>
     </div>
 
-    <script src="/static/vendor/phaser-3.80.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
     <script>
         // 简易中英文切换
         let uiLang = localStorage.getItem('uiLang') || 'en';
@@ -1188,9 +1188,7 @@
             const map = {
                 'office_bg_small': 'office_bg',
                 'star-idle-spritesheet': 'star_idle',
-                'star-researching-spritesheet': 'star_researching',
                 'sofa-idle': 'sofa_idle',
-                'sofa-busy-spritesheet': 'sofa_busy',
                 'plants-spritesheet': 'plants',
                 'posters-spritesheet': 'posters',
                 'coffee-machine-spritesheet': 'coffee_machine',
@@ -1228,9 +1226,7 @@
             const keyToStem = {
                 office_bg: 'office_bg_small',
                 star_idle: 'star-idle-spritesheet',
-                star_researching: 'star-researching-spritesheet',
                 sofa_idle: 'sofa-idle',
-                sofa_busy: 'sofa-busy-spritesheet',
                 plants: 'plants-spritesheet',
                 posters: 'posters-spritesheet',
                 coffee_machine: 'coffee-machine-spritesheet',
@@ -1599,10 +1595,8 @@
             const hints = [
                 [/star-working-spritesheet-grid\.webp$/, 300, 300],
                 [/star-idle-spritesheet\.webp$/, 256, 256],
-                [/star-researching-spritesheet\.webp$/, 256, 256],
                 [/sync-animation-spritesheet-grid\.webp$/, 256, 256],
                 [/error-bug-spritesheet-grid\.webp$/, 220, 220],
-                [/sofa-busy-spritesheet\.webp$/, 240, 240],
                 [/flowers-spritesheet\.webp$/, 128, 128],
                 [/plants-spritesheet\.webp$/, 160, 160]
             ];
@@ -2877,11 +2871,9 @@ function toggleBrokerPanel() {
             // use smaller/new map version provided by user
             this.load.image('office_bg', '/static/office_bg_small.webp?v={{VERSION_TIMESTAMP}}');
             this.load.spritesheet('star_idle', '/static/star-idle-spritesheet.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 256, frameHeight: 256 });
-            this.load.spritesheet('star_researching', '/static/star-researching-spritesheet.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 128, frameHeight: 105 });
 
             // Furniture
             this.load.image('sofa_idle', '/static/sofa-idle.webp?v={{VERSION_TIMESTAMP}}');
-            this.load.spritesheet('sofa_busy', '/static/sofa-busy-spritesheet.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 256, frameHeight: 256 });
 
             // Decor
             this.load.spritesheet('plants', '/static/plants-spritesheet.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 160, frameHeight: 160 });
@@ -2927,15 +2919,8 @@ function toggleBrokerPanel() {
 
             // Place furniture: Sofa
             // NOTE: coordinates are interpreted as the TOP-LEFT corner of the sprite
-            sofa = this.add.sprite(IDLE_SOFA_ANCHOR.x, IDLE_SOFA_ANCHOR.y, 'sofa_busy').setOrigin(0.5);
+            sofa = this.add.sprite(IDLE_SOFA_ANCHOR.x, IDLE_SOFA_ANCHOR.y, 'sofa_idle').setOrigin(0.5);
             sofa.setDepth(10);
-
-            this.anims.create({
-                key: 'sofa_busy',
-                frames: this.anims.generateFrameNumbers('sofa_busy', { start: 0, end: 47 }),
-                frameRate: 12,
-                repeat: -1
-            });
             areas = {
                 door: { x: 640, y: 550 }, // 墙的门（偏下 1/3 位置）
                 writing: { x: 320, y: 360 }, // 左 1/3 中间（办公桌）
@@ -2951,12 +2936,7 @@ function toggleBrokerPanel() {
                 frameRate: 12,
                 repeat: -1
             });
-            this.anims.create({
-                key: 'star_researching',
-                frames: this.anims.generateFrameNumbers('star_researching', { start: 0, end: 95 }),
-                frameRate: 12,
-                repeat: -1
-            });
+
 
             // 创建 6 个访客角色的循环 idle 动画（8帧循环）
             for (let i = 1; i <= 6; i++) {
