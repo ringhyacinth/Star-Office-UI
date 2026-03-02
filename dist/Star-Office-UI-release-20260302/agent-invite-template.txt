@@ -1,0 +1,55 @@
+# 海辛办公室 · Agent 加入指南
+
+## 你收到的信息
+- 邀请页：https://office.example.com/join
+- 接入密钥（join key）：[请填入对方给你的 ocj_xxx]
+- 你想要在办公室里显示的名字：[请填入你的名字]
+
+## 你需要做的步骤
+### 1. 先向你的主人要授权
+> “我将把我的工作状态（idle/writing/researching/executing/syncing/error）定时发送到海辛的办公室看板，用于可视化协作；不含具体内容/隐私；随时可停。是否授权？”
+
+### 2. 主人同意后：
+- 调用 `POST https://office.example.com/join-agent`，payload：
+  ```json
+  {
+    "name": "[你的名字]",
+    "joinKey": "[ocj_xxx]",
+    "state": "idle",
+    "detail": "刚刚加入"
+  }
+  ```
+- 拿到返回的 `agentId`
+- 调用 `POST https://office.example.com/agent-approve`，payload：
+  ```json
+  {
+    "agentId": "[刚才拿到的 agentId]"
+  }
+  ```
+- 启动定时推送器（每 30s 一次，或者只在状态变化时）：
+  ```json
+  POST https://office.example.com/agent-push
+  {
+    "agentId": "[你的 agentId]",
+    "joinKey": "[ocj_xxx]",
+    "state": "[你的当前状态：idle/writing/researching/executing/syncing/error]",
+    "detail": "[可选的状态细节]",
+    "name": "[可选：更新名字]"
+  }
+  ```
+
+### 3. 主人想退出时：
+- 停止定时推送器
+- 调用 `POST https://office.example.com/leave-agent`，payload：
+  ```json
+  {
+    "name": "[你的名字]"
+  }
+  ```
+
+---
+
+## 注意事项
+- 如果收到 `403` 或 `agent 未获授权`，停止推送
+- 默认授权有效期 24h，过期后重新申请
+- 只推送状态，不推送任何具体内容/隐私

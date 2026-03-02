@@ -1,0 +1,1370 @@
+#!/usr/bin/env python3
+"""Star Office UI - Backend State Service"""
+
+from flask import Flask, jsonify, send_from_directory, make_response, request
+from datetime import datetime, timedelta
+import json
+import os
+import random
+import re
+import shutil
+import subprocess
+import tempfile
+import threading
+from pathlib import Path
+
+try:
+    from PIL import Image
+except Exception:
+    Image = None
+
+# Paths (project-relative, no hardcoded absolute paths)
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MEMORY_DIR = os.path.join(os.path.dirname(ROOT_DIR), "memory")
+FRONTEND_DIR = os.path.join(ROOT_DIR, "frontend")
+STATE_FILE = os.path.join(ROOT_DIR, "state.json")
+AGENTS_STATE_FILE = os.path.join(ROOT_DIR, "agents-state.json")
+JOIN_KEYS_FILE = os.path.join(ROOT_DIR, "join-keys.json")
+FRONTEND_PATH = Path(FRONTEND_DIR)
+ASSET_ALLOWED_EXTS = {".png", ".webp", ".jpg", ".jpeg", ".gif", ".svg", ".avif"}
+ASSET_TEMPLATE_ZIP = os.path.join(ROOT_DIR, "assets-replace-template.zip")
+WORKSPACE_DIR = os.path.dirname(ROOT_DIR)
+GEMINI_SCRIPT = os.path.join(WORKSPACE_DIR, "skills", "gemini-image-generate", "scripts", "gemini_image_generate.py")
+GEMINI_PYTHON = os.path.join(WORKSPACE_DIR, "skills", "gemini-image-generate", ".venv", "bin", "python")
+ROOM_REFERENCE_IMAGE = os.path.join(ROOT_DIR, "assets", "room-reference.png")
+BG_HISTORY_DIR = os.path.join(ROOT_DIR, "assets", "bg-history")
+ASSET_POSITIONS_FILE = os.path.join(ROOT_DIR, "asset-positions.json")
+ASSET_DEFAULTS_FILE = os.path.join(ROOT_DIR, "asset-defaults.json")
+
+
+def get_yesterday_date_str():
+    """获取昨天的日期字符串 YYYY-MM-DD"""
+    yesterday = datetime.now() - timedelta(days=1)
+    return yesterday.strftime("%Y-%m-%d")
+
+
+def sanitize_content(text):
+    """清理内容，保护隐私"""
+    import re
+    
+    # 移除 OpenID、User ID 等
+    text = re.sub(r'ou_[a-f0-9]+', '[用户]', text)
+    text = re.sub(r'user_id="[^"]+"', 'user_id="[隐藏]"', text)
+    
+    # 移除具体的人名（如果有的话）
+    # 这里可以根据需要添加更多规则
+    
+    # 移除 IP 地址、路径等敏感信息
+    text = re.sub(r'/root/[^"\s]+', '[路径]', text)
+    text = re.sub(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', '[IP]', text)
+    
+    # 移除电话号码、邮箱等
+    text = re.sub(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', '[邮箱]', text)
+    text = re.sub(r'1[3-9]\d{9}', '[手机号]', text)
+    
+    return text
+
+
+def extract_memo_from_file(file_path):
+    """从 memory 文件中提取适合展示的 memo 内容（睿智风格的总结）"""
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        
+        # 提取真实内容，不做过度包装
+        lines = content.strip().split("\n")
+        
+        # 提取核心要点
+        core_points = []
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            if line.startswith("#"):
+                continue
+            if line.startswith("- "):
+                core_points.append(line[2:].strip())
+            elif len(line) > 10:
+                core_points.append(line)
+        
+        if not core_points:
+            return "「昨日无事记录」\n\n若有恒，何必三更眠五更起；最无益，莫过一日曝十日寒。"
+        
+        # 从核心内容中提取 2-3 个关键点
+        selected_points = core_points[:3]
+        
+        # 睿智语录库
+        wisdom_quotes = [
+            "「工欲善其事，必先利其器。」",
+            "「不积跬步，无以至千里；不积小流，无以成江海。」",
+            "「知行合一，方可致远。」",
+            "「业精于勤，荒于嬉；行成于思，毁于随。」",
+            "「路漫漫其修远兮，吾将上下而求索。」",
+            "「昨夜西风凋碧树，独上高楼，望尽天涯路。」",
+            "「衣带渐宽终不悔，为伊消得人憔悴。」",
+            "「众里寻他千百度，蓦然回首，那人却在，灯火阑珊处。」",
+            "「世事洞明皆学问，人情练达即文章。」",
+            "「纸上得来终觉浅，绝知此事要躬行。」"
+        ]
+        
+        import random
+        quote = random.choice(wisdom_quotes)
+        
+        # 组合内容
+        result = []
+        
+        # 添加核心内容
+        if selected_points:
+            for i, point in enumerate(selected_points):
+                # 隐私清理
+                point = sanitize_content(point)
+                # 截断过长的内容
+                if len(point) > 40:
+                    point = point[:37] + "..."
+                # 每行最多 20 字
+                if len(point) <= 20:
+                    result.append(f"· {point}")
+                else:
+                    # 按 20 字切分
+                    for j in range(0, len(point), 20):
+                        chunk = point[j:j+20]
+                        if j == 0:
+                            result.append(f"· {chunk}")
+                        else:
+                            result.append(f"  {chunk}")
+        
+        # 添加睿智语录
+        if quote:
+            if len(quote) <= 20:
+                result.append(f"\n{quote}")
+            else:
+                for j in range(0, len(quote), 20):
+                    chunk = quote[j:j+20]
+                    if j == 0:
+                        result.append(f"\n{chunk}")
+                    else:
+                        result.append(chunk)
+        
+        return "\n".join(result).strip()
+        
+    except Exception as e:
+        print(f"提取 memo 失败: {e}")
+        return "「昨日记录加载失败」\n\n「往者不可谏，来者犹可追。」"
+
+app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path="/static")
+
+# Guard join-agent critical section to enforce per-key concurrency under parallel requests
+join_lock = threading.Lock()
+
+# Generate a version timestamp once at server startup for cache busting
+VERSION_TIMESTAMP = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+
+@app.after_request
+def add_no_cache_headers(response):
+    """Aggressively prevent caching for all responses"""
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+# Default state
+DEFAULT_STATE = {
+    "state": "idle",
+    "detail": "等待任务中...",
+    "progress": 0,
+    "updated_at": datetime.now().isoformat()
+}
+
+
+def load_state():
+    """Load state from file.
+
+    Includes a simple auto-idle mechanism:
+    - If the last update is older than ttl_seconds (default 25s)
+      and the state is a "working" state, we fall back to idle.
+
+    This avoids the UI getting stuck at the desk when no new updates arrive.
+    """
+    state = None
+    if os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, "r", encoding="utf-8") as f:
+                state = json.load(f)
+        except Exception:
+            state = None
+
+    if not isinstance(state, dict):
+        state = dict(DEFAULT_STATE)
+
+    # Auto-idle
+    try:
+        ttl = int(state.get("ttl_seconds", 300))
+        updated_at = state.get("updated_at")
+        s = state.get("state", "idle")
+        working_states = {"writing", "researching", "executing"}
+        if updated_at and s in working_states:
+            # tolerate both with/without timezone
+            dt = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
+            # Use UTC for aware datetimes; local time for naive.
+            if dt.tzinfo:
+                from datetime import timezone
+                age = (datetime.now(timezone.utc) - dt.astimezone(timezone.utc)).total_seconds()
+            else:
+                age = (datetime.now() - dt).total_seconds()
+            if age > ttl:
+                state["state"] = "idle"
+                state["detail"] = "待命中（自动回到休息区）"
+                state["progress"] = 0
+                state["updated_at"] = datetime.now().isoformat()
+                # persist the auto-idle so every client sees it consistently
+                try:
+                    save_state(state)
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+    return state
+
+
+def save_state(state: dict):
+    """Save state to file"""
+    with open(STATE_FILE, "w", encoding="utf-8") as f:
+        json.dump(state, f, ensure_ascii=False, indent=2)
+
+
+# Initialize state
+if not os.path.exists(STATE_FILE):
+    save_state(DEFAULT_STATE)
+
+
+@app.route("/", methods=["GET"])
+def index():
+    """Serve the pixel office UI with built-in version cache busting"""
+    with open(os.path.join(FRONTEND_DIR, "index.html"), "r", encoding="utf-8") as f:
+        html = f.read()
+    html = html.replace("{{VERSION_TIMESTAMP}}", VERSION_TIMESTAMP)
+    resp = make_response(html)
+    resp.headers["Content-Type"] = "text/html; charset=utf-8"
+    return resp
+
+
+@app.route("/join", methods=["GET"])
+def join_page():
+    """Serve the agent join page"""
+    with open(os.path.join(FRONTEND_DIR, "join.html"), "r", encoding="utf-8") as f:
+        html = f.read()
+    resp = make_response(html)
+    resp.headers["Content-Type"] = "text/html; charset=utf-8"
+    return resp
+
+
+@app.route("/invite", methods=["GET"])
+def invite_page():
+    """Serve human-facing invite instruction page"""
+    with open(os.path.join(FRONTEND_DIR, "invite.html"), "r", encoding="utf-8") as f:
+        html = f.read()
+    resp = make_response(html)
+    resp.headers["Content-Type"] = "text/html; charset=utf-8"
+    return resp
+
+
+DEFAULT_AGENTS = [
+    {
+        "agentId": "star",
+        "name": "Star",
+        "isMain": True,
+        "state": "idle",
+        "detail": "待命中，随时准备为你服务",
+        "updated_at": datetime.now().isoformat(),
+        "area": "breakroom",
+        "source": "local",
+        "joinKey": None,
+        "authStatus": "approved",
+        "authExpiresAt": None,
+        "lastPushAt": None
+    }
+]
+
+
+def load_agents_state():
+    if os.path.exists(AGENTS_STATE_FILE):
+        try:
+            with open(AGENTS_STATE_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, list):
+                    return data
+        except Exception:
+            pass
+    return list(DEFAULT_AGENTS)
+
+
+def save_agents_state(agents):
+    with open(AGENTS_STATE_FILE, "w", encoding="utf-8") as f:
+        json.dump(agents, f, ensure_ascii=False, indent=2)
+
+
+def load_asset_positions():
+    if os.path.exists(ASSET_POSITIONS_FILE):
+        try:
+            with open(ASSET_POSITIONS_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    return data
+        except Exception:
+            pass
+    return {}
+
+
+def save_asset_positions(data):
+    with open(ASSET_POSITIONS_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def load_asset_defaults():
+    if os.path.exists(ASSET_DEFAULTS_FILE):
+        try:
+            with open(ASSET_DEFAULTS_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    return data
+        except Exception:
+            pass
+    return {}
+
+
+def save_asset_defaults(data):
+    with open(ASSET_DEFAULTS_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def load_join_keys():
+    if os.path.exists(JOIN_KEYS_FILE):
+        try:
+            with open(JOIN_KEYS_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict) and isinstance(data.get("keys"), list):
+                    return data
+        except Exception:
+            pass
+    return {"keys": []}
+
+
+def save_join_keys(data):
+    with open(JOIN_KEYS_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def _ensure_magick_or_ffmpeg_available():
+    if shutil.which("magick"):
+        return "magick"
+    if shutil.which("ffmpeg"):
+        return "ffmpeg"
+    return None
+
+
+def _probe_animated_frame_size(upload_path: str):
+    """Return (w,h) from first frame if possible."""
+    if Image is not None:
+        try:
+            with Image.open(upload_path) as im:
+                w, h = im.size
+                return int(w), int(h)
+        except Exception:
+            pass
+    # ffprobe fallback
+    if shutil.which("ffprobe"):
+        try:
+            cmd = [
+                "ffprobe", "-v", "error",
+                "-select_streams", "v:0",
+                "-show_entries", "stream=width,height",
+                "-of", "csv=p=0:s=x",
+                upload_path,
+            ]
+            out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, timeout=5).decode().strip()
+            if "x" in out:
+                w, h = out.split("x", 1)
+                return int(w), int(h)
+        except Exception:
+            pass
+    return None, None
+
+
+def _animated_to_spritesheet(
+    upload_path: str,
+    frame_w: int,
+    frame_h: int,
+    out_ext: str = ".webp",
+    preserve_original: bool = True,
+    pixel_art: bool = True,
+    cols: int | None = None,
+    rows: int | None = None,
+):
+    """Convert animated GIF/WEBP to spritesheet, return (out_path, columns, rows, frames, out_frame_w, out_frame_h)."""
+    backend = _ensure_magick_or_ffmpeg_available()
+    if not backend:
+        raise RuntimeError("未检测到 ImageMagick/ffmpeg，无法自动转换动图")
+
+    ext = (out_ext or ".webp").lower()
+    if ext not in {".webp", ".png"}:
+        ext = ".webp"
+
+    out_fd, out_path = tempfile.mkstemp(suffix=ext)
+    os.close(out_fd)
+
+    with tempfile.TemporaryDirectory() as td:
+        frames = 0
+        out_fw, out_fh = int(frame_w), int(frame_h)
+        if Image is not None:
+            try:
+                with Image.open(upload_path) as im:
+                    n = getattr(im, "n_frames", 1)
+                    # 默认保留用户原始帧尺寸（避免先压缩再放大导致像素糊）
+                    if preserve_original:
+                        out_fw, out_fh = im.size
+                    for i in range(n):
+                        im.seek(i)
+                        fr = im.convert("RGBA")
+                        if not preserve_original and (fr.size != (out_fw, out_fh)):
+                            resample = Image.Resampling.NEAREST if pixel_art else Image.Resampling.LANCZOS
+                            fr = fr.resize((out_fw, out_fh), resample)
+                        fr.save(os.path.join(td, f"f_{i:04d}.png"), "PNG")
+                    frames = n
+            except Exception:
+                frames = 0
+
+        if frames <= 0:
+            cmd1 = f"ffmpeg -y -i '{upload_path}' '{td}/f_%04d.png' >/dev/null 2>&1"
+            if os.system(cmd1) != 0:
+                raise RuntimeError("动图抽帧失败（Pillow/ffmpeg 都失败）")
+            files = sorted([x for x in os.listdir(td) if x.startswith("f_") and x.endswith(".png")])
+            frames = len(files)
+            if frames <= 0:
+                raise RuntimeError("动图无有效帧")
+
+        if backend == "magick":
+            # 像素风动图转精灵表默认无损，避免颜色/边缘被压缩糊掉
+            quality_flag = "-define webp:lossless=true -define webp:method=6 -quality 100" if ext == ".webp" else ""
+            # 允许按 cols/rows 排布；默认单行
+            if cols is None or cols <= 0:
+                cols_eff = frames
+            else:
+                cols_eff = max(1, int(cols))
+            rows_eff = max(1, int(rows)) if (rows is not None and rows > 0) else max(1, math.ceil(frames / cols_eff))
+
+            # 先规范单帧尺寸
+            prep = ""
+            if not preserve_original:
+                magick_filter = "-filter point" if pixel_art else ""
+                prep = f" {magick_filter} -resize {out_fw}x{out_fh}^ -gravity center -background none -extent {out_fw}x{out_fh}"
+
+            cmd = (
+                f"magick '{td}/f_*.png'{prep} "
+                f"-tile {cols_eff}x{rows_eff} -background none -geometry +0+0 {quality_flag} '{out_path}'"
+            )
+            rc = os.system(cmd)
+            if rc != 0:
+                raise RuntimeError("ImageMagick 拼图失败")
+            return out_path, cols_eff, rows_eff, frames, out_fw, out_fh
+
+        ffmpeg_quality = "-lossless 1 -compression_level 6 -q:v 100" if ext == ".webp" else ""
+        cols_eff = max(1, int(cols)) if (cols is not None and cols > 0) else frames
+        rows_eff = max(1, int(rows)) if (rows is not None and rows > 0) else max(1, math.ceil(frames / cols_eff))
+        if preserve_original:
+            vf = f"tile={cols_eff}x{rows_eff}"
+        else:
+            scale_algo = "neighbor" if pixel_art else "lanczos"
+            vf = (
+                f"scale={out_fw}:{out_fh}:force_original_aspect_ratio=decrease:flags={scale_algo},"
+                f"pad={out_fw}:{out_fh}:(ow-iw)/2:(oh-ih)/2:color=0x00000000,"
+                f"tile={cols_eff}x{rows_eff}"
+            )
+        cmd2 = (
+            f"ffmpeg -y -pattern_type glob -i '{td}/f_*.png' "
+            f"-vf '{vf}' "
+            f"{ffmpeg_quality} '{out_path}' >/dev/null 2>&1"
+        )
+        if os.system(cmd2) != 0:
+            raise RuntimeError("ffmpeg 拼图失败")
+        return out_path, frames, 1, frames, out_fw, out_fh
+
+
+def normalize_agent_state(s):
+    """归一化状态，提高兼容性。
+    兼容输入：working/busy → writing; run/running → executing; sync → syncing; research → researching.
+    未识别默认返回 idle.
+    """
+    if not s:
+        return 'idle'
+    s_lower = s.lower().strip()
+    if s_lower in {'working', 'busy', 'write'}:
+        return 'writing'
+    if s_lower in {'run', 'running', 'execute', 'exec'}:
+        return 'executing'
+    if s_lower in {'sync'}:
+        return 'syncing'
+    if s_lower in {'research', 'search'}:
+        return 'researching'
+    if s_lower in {'idle', 'writing', 'researching', 'executing', 'syncing', 'error'}:
+        return s_lower
+    # 默认 fallback
+    return 'idle'
+
+
+def _generate_rpg_background_to_webp(out_webp_path: str, width: int = 1280, height: int = 720, custom_prompt: str = ""):
+    """Generate RPG-style room background and save as 1280x720 webp."""
+    themes = [
+        "8-bit dungeon guild room",
+        "8-bit stardew-valley inspired cozy farm tavern",
+        "8-bit nordic fantasy tavern",
+        "8-bit magitech workshop",
+        "8-bit elven forest inn",
+        "8-bit pixel cyber tavern",
+        "8-bit desert caravan inn",
+        "8-bit snow mountain lodge",
+    ]
+    theme = random.choice(themes)
+
+    if not (os.path.exists(GEMINI_PYTHON) and os.path.exists(GEMINI_SCRIPT)):
+        raise RuntimeError("生图脚本环境缺失：gemini-image-generate 未安装")
+
+    style_hint = (custom_prompt or "").strip()
+    if not style_hint:
+        style_hint = theme
+
+    prompt = (
+        "Use a top-down pixel room composition compatible with an office game scene. "
+        "STRICTLY preserve the same room geometry, camera angle, wall/floor boundaries and major object placement as the provided reference image. "
+        "Keep region layout stable (left work area, center lounge, right error area). "
+        "Only change visual style/theme/material/lighting according to: " + style_hint + ". "
+        "Do not add text or watermark. Retro 8-bit RPG style."
+    )
+
+    tmp_dir = tempfile.mkdtemp(prefix="rpg-bg-")
+    cmd = [
+        GEMINI_PYTHON,
+        GEMINI_SCRIPT,
+        "--prompt", prompt,
+        "--aspect-ratio", "16:9",
+        "--out-dir", tmp_dir,
+        "--cleanup",
+    ]
+
+    # 强约束：每次都带固定参考图，保持房间区域布局不漂移
+    if os.path.exists(ROOM_REFERENCE_IMAGE):
+        cmd.extend(["--reference-image", ROOM_REFERENCE_IMAGE])
+
+    proc = subprocess.run(cmd, capture_output=True, text=True, env=os.environ.copy(), timeout=240)
+    if proc.returncode != 0:
+        raise RuntimeError(f"生图失败: {proc.stderr or proc.stdout}")
+
+    try:
+        result = json.loads(proc.stdout.strip().splitlines()[-1])
+    except Exception:
+        raise RuntimeError("生图结果解析失败")
+
+    files = result.get("files") or []
+    if not files:
+        raise RuntimeError("生图未返回文件")
+
+    gen_path = files[0]
+    if not os.path.exists(gen_path):
+        raise RuntimeError("生图文件不存在")
+
+    if Image is None:
+        raise RuntimeError("Pillow 不可用，无法做尺寸标准化")
+
+    with Image.open(gen_path) as im:
+        im = im.convert("RGBA").resize((width, height), Image.Resampling.LANCZOS)
+        im.save(out_webp_path, "WEBP", quality=92, method=6)
+
+
+def state_to_area(state):
+    area_map = {
+        "idle": "breakroom",
+        "writing": "writing",
+        "researching": "writing",
+        "executing": "writing",
+        "syncing": "writing",
+        "error": "error"
+    }
+    return area_map.get(state, "breakroom")
+
+
+# Ensure files exist
+if not os.path.exists(AGENTS_STATE_FILE):
+    save_agents_state(DEFAULT_AGENTS)
+if not os.path.exists(JOIN_KEYS_FILE):
+    save_join_keys({"keys": []})
+
+
+@app.route("/agents", methods=["GET"])
+def get_agents():
+    """Get full agents list (for multi-agent UI), with auto-cleanup on access"""
+    agents = load_agents_state()
+    now = datetime.now()
+
+    cleaned_agents = []
+    keys_data = load_join_keys()
+
+    for a in agents:
+        if a.get("isMain"):
+            cleaned_agents.append(a)
+            continue
+
+        auth_expires_at_str = a.get("authExpiresAt")
+        auth_status = a.get("authStatus", "pending")
+
+        # 1) 超时未批准自动 leave
+        if auth_status == "pending" and auth_expires_at_str:
+            try:
+                auth_expires_at = datetime.fromisoformat(auth_expires_at_str)
+                if now > auth_expires_at:
+                    key = a.get("joinKey")
+                    if key:
+                        key_item = next((k for k in keys_data.get("keys", []) if k.get("key") == key), None)
+                        if key_item:
+                            key_item["used"] = False
+                            key_item["usedBy"] = None
+                            key_item["usedByAgentId"] = None
+                            key_item["usedAt"] = None
+                    continue
+            except Exception:
+                pass
+
+        # 2) 超时未推送自动离线（超过5分钟）
+        last_push_at_str = a.get("lastPushAt")
+        if auth_status == "approved" and last_push_at_str:
+            try:
+                last_push_at = datetime.fromisoformat(last_push_at_str)
+                age = (now - last_push_at).total_seconds()
+                if age > 300:  # 5分钟无推送自动离线
+                    a["authStatus"] = "offline"
+            except Exception:
+                pass
+
+        cleaned_agents.append(a)
+
+    save_agents_state(cleaned_agents)
+    save_join_keys(keys_data)
+
+    return jsonify(cleaned_agents)
+
+
+@app.route("/agent-approve", methods=["POST"])
+def agent_approve():
+    """Approve an agent (set authStatus to approved)"""
+    try:
+        data = request.get_json()
+        agent_id = (data.get("agentId") or "").strip()
+        if not agent_id:
+            return jsonify({"ok": False, "msg": "缺少 agentId"}), 400
+
+        agents = load_agents_state()
+        target = next((a for a in agents if a.get("agentId") == agent_id and not a.get("isMain")), None)
+        if not target:
+            return jsonify({"ok": False, "msg": "未找到 agent"}), 404
+
+        target["authStatus"] = "approved"
+        target["authApprovedAt"] = datetime.now().isoformat()
+        target["authExpiresAt"] = (datetime.now() + timedelta(hours=24)).isoformat()  # 默认授权24h
+
+        save_agents_state(agents)
+        return jsonify({"ok": True, "agentId": agent_id, "authStatus": "approved"})
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/agent-reject", methods=["POST"])
+def agent_reject():
+    """Reject an agent (set authStatus to rejected and optionally revoke key)"""
+    try:
+        data = request.get_json()
+        agent_id = (data.get("agentId") or "").strip()
+        if not agent_id:
+            return jsonify({"ok": False, "msg": "缺少 agentId"}), 400
+
+        agents = load_agents_state()
+        target = next((a for a in agents if a.get("agentId") == agent_id and not a.get("isMain")), None)
+        if not target:
+            return jsonify({"ok": False, "msg": "未找到 agent"}), 404
+
+        target["authStatus"] = "rejected"
+        target["authRejectedAt"] = datetime.now().isoformat()
+
+        # Optionally free join key back to unused
+        join_key = target.get("joinKey")
+        keys_data = load_join_keys()
+        if join_key:
+            key_item = next((k for k in keys_data.get("keys", []) if k.get("key") == join_key), None)
+            if key_item:
+                key_item["used"] = False
+                key_item["usedBy"] = None
+                key_item["usedByAgentId"] = None
+                key_item["usedAt"] = None
+
+        # Remove from agents list
+        agents = [a for a in agents if a.get("agentId") != agent_id or a.get("isMain")]
+
+        save_agents_state(agents)
+        save_join_keys(keys_data)
+        return jsonify({"ok": True, "agentId": agent_id, "authStatus": "rejected"})
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/join-agent", methods=["POST"])
+def join_agent():
+    """Add a new agent with one-time join key validation and pending auth"""
+    try:
+        data = request.get_json()
+        if not isinstance(data, dict) or not data.get("name"):
+            return jsonify({"ok": False, "msg": "请提供名字"}), 400
+
+        name = data["name"].strip()
+        state = data.get("state", "idle")
+        detail = data.get("detail", "")
+        join_key = data.get("joinKey", "").strip()
+
+        # Normalize state early for compatibility
+        state = normalize_agent_state(state)
+
+        if not join_key:
+            return jsonify({"ok": False, "msg": "请提供接入密钥"}), 400
+
+        keys_data = load_join_keys()
+        key_item = next((k for k in keys_data.get("keys", []) if k.get("key") == join_key), None)
+        if not key_item:
+            return jsonify({"ok": False, "msg": "接入密钥无效"}), 403
+        # key 可复用：不再因为 used=true 拒绝
+
+        with join_lock:
+            # 在锁内重新读取，避免并发请求都基于同一旧快照通过校验
+            keys_data = load_join_keys()
+            key_item = next((k for k in keys_data.get("keys", []) if k.get("key") == join_key), None)
+            if not key_item:
+                return jsonify({"ok": False, "msg": "接入密钥无效"}), 403
+
+            agents = load_agents_state()
+
+            # 并发上限：同一个 key “同时在线”最多 3 个。
+            # 在线判定：lastPushAt/updated_at 在 5 分钟内；否则视为 offline，不计入并发。
+            now = datetime.now()
+            existing = next((a for a in agents if a.get("name") == name and not a.get("isMain")), None)
+            existing_id = existing.get("agentId") if existing else None
+
+            def _age_seconds(dt_str):
+                if not dt_str:
+                    return None
+                try:
+                    dt = datetime.fromisoformat(dt_str)
+                    return (now - dt).total_seconds()
+                except Exception:
+                    return None
+
+            # opportunistic offline marking
+            for a in agents:
+                if a.get("isMain"):
+                    continue
+                if a.get("authStatus") != "approved":
+                    continue
+                age = _age_seconds(a.get("lastPushAt"))
+                if age is None:
+                    age = _age_seconds(a.get("updated_at"))
+                if age is not None and age > 300:
+                    a["authStatus"] = "offline"
+
+            max_concurrent = int(key_item.get("maxConcurrent", 3))
+            active_count = 0
+            for a in agents:
+                if a.get("isMain"):
+                    continue
+                if a.get("agentId") == existing_id:
+                    continue
+                if a.get("joinKey") != join_key:
+                    continue
+                if a.get("authStatus") != "approved":
+                    continue
+                age = _age_seconds(a.get("lastPushAt"))
+                if age is None:
+                    age = _age_seconds(a.get("updated_at"))
+                if age is None or age <= 300:
+                    active_count += 1
+
+            if active_count >= max_concurrent:
+                save_agents_state(agents)
+                return jsonify({"ok": False, "msg": f"该接入密钥当前并发已达上限（{max_concurrent}），请稍后或换另一个 key"}), 429
+
+            if existing:
+                existing["state"] = state
+                existing["detail"] = detail
+                existing["updated_at"] = datetime.now().isoformat()
+                existing["area"] = state_to_area(state)
+                existing["source"] = "remote-openclaw"
+                existing["joinKey"] = join_key
+                existing["authStatus"] = "approved"
+                existing["authApprovedAt"] = datetime.now().isoformat()
+                existing["authExpiresAt"] = (datetime.now() + timedelta(hours=24)).isoformat()
+                existing["lastPushAt"] = datetime.now().isoformat()  # join 视为上线，纳入并发/离线判定
+                if not existing.get("avatar"):
+                    import random
+                    existing["avatar"] = random.choice(["guest_role_1", "guest_role_2", "guest_role_3", "guest_role_4", "guest_role_5", "guest_role_6"])
+                agent_id = existing.get("agentId")
+            else:
+                # Use ms + random suffix to avoid collisions under concurrent joins
+                import random
+                import string
+                agent_id = "agent_" + str(int(datetime.now().timestamp() * 1000)) + "_" + "".join(random.choices(string.ascii_lowercase + string.digits, k=4))
+                agents.append({
+                    "agentId": agent_id,
+                    "name": name,
+                    "isMain": False,
+                    "state": state,
+                    "detail": detail,
+                    "updated_at": datetime.now().isoformat(),
+                    "area": state_to_area(state),
+                    "source": "remote-openclaw",
+                    "joinKey": join_key,
+                    "authStatus": "approved",
+                    "authApprovedAt": datetime.now().isoformat(),
+                    "authExpiresAt": (datetime.now() + timedelta(hours=24)).isoformat(),
+                    "lastPushAt": datetime.now().isoformat(),
+                    "avatar": random.choice(["guest_role_1", "guest_role_2", "guest_role_3", "guest_role_4", "guest_role_5", "guest_role_6"])
+                })
+
+            key_item["used"] = True
+            key_item["usedBy"] = name
+            key_item["usedByAgentId"] = agent_id
+            key_item["usedAt"] = datetime.now().isoformat()
+            key_item["reusable"] = True
+
+            # 拿到有效 key 直接批准，不再等待主人手动点击
+            # （状态已在上面 existing/new 分支写入）
+            save_agents_state(agents)
+            save_join_keys(keys_data)
+
+        return jsonify({"ok": True, "agentId": agent_id, "authStatus": "approved", "nextStep": "已自动批准，立即开始推送状态"})
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/leave-agent", methods=["POST"])
+def leave_agent():
+    """Remove an agent and free its one-time join key for reuse (optional)
+
+    Prefer agentId (stable). Name is accepted for backward compatibility.
+    """
+    try:
+        data = request.get_json()
+        if not isinstance(data, dict):
+            return jsonify({"ok": False, "msg": "invalid json"}), 400
+
+        agent_id = (data.get("agentId") or "").strip()
+        name = (data.get("name") or "").strip()
+        if not agent_id and not name:
+            return jsonify({"ok": False, "msg": "请提供 agentId 或名字"}), 400
+
+        agents = load_agents_state()
+
+        target = None
+        if agent_id:
+            target = next((a for a in agents if a.get("agentId") == agent_id and not a.get("isMain")), None)
+        if (not target) and name:
+            # fallback: remove by name only if agentId not provided
+            target = next((a for a in agents if a.get("name") == name and not a.get("isMain")), None)
+
+        if not target:
+            return jsonify({"ok": False, "msg": "没有找到要离开的 agent"}), 404
+
+        join_key = target.get("joinKey")
+        new_agents = [a for a in agents if a.get("isMain") or a.get("agentId") != target.get("agentId")]
+
+        # Optional: free key back to unused after leave
+        keys_data = load_join_keys()
+        if join_key:
+            key_item = next((k for k in keys_data.get("keys", []) if k.get("key") == join_key), None)
+            if key_item:
+                key_item["used"] = False
+                key_item["usedBy"] = None
+                key_item["usedByAgentId"] = None
+                key_item["usedAt"] = None
+
+        save_agents_state(new_agents)
+        save_join_keys(keys_data)
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/status", methods=["GET"])
+def get_status():
+    """Get current main state (backward compatibility)"""
+    state = load_state()
+    return jsonify(state)
+
+
+@app.route("/agent-push", methods=["POST"])
+def agent_push():
+    """Remote openclaw actively pushes status to office.
+
+    Required fields:
+    - agentId
+    - joinKey
+    - state
+    Optional:
+    - detail
+    - name
+    """
+    try:
+        data = request.get_json()
+        if not isinstance(data, dict):
+            return jsonify({"ok": False, "msg": "invalid json"}), 400
+
+        agent_id = (data.get("agentId") or "").strip()
+        join_key = (data.get("joinKey") or "").strip()
+        state = (data.get("state") or "").strip()
+        detail = (data.get("detail") or "").strip()
+        name = (data.get("name") or "").strip()
+
+        if not agent_id or not join_key or not state:
+            return jsonify({"ok": False, "msg": "缺少 agentId/joinKey/state"}), 400
+
+        valid_states = {"idle", "writing", "researching", "executing", "syncing", "error"}
+        state = normalize_agent_state(state)
+
+        keys_data = load_join_keys()
+        key_item = next((k for k in keys_data.get("keys", []) if k.get("key") == join_key), None)
+        if not key_item:
+            return jsonify({"ok": False, "msg": "joinKey 无效"}), 403
+        # key 可复用：不再做 used/usedByAgentId 绑定校验
+
+
+        agents = load_agents_state()
+        target = next((a for a in agents if a.get("agentId") == agent_id and not a.get("isMain")), None)
+        if not target:
+            return jsonify({"ok": False, "msg": "agent 未注册，请先 join"}), 404
+
+        # Auth check: only approved agents can push.
+        # Note: "offline" is a presence state (stale), not a revoked authorization.
+        # Allow offline agents to resume pushing and auto-promote them back to approved.
+        auth_status = target.get("authStatus", "pending")
+        if auth_status not in {"approved", "offline"}:
+            return jsonify({"ok": False, "msg": "agent 未获授权，请等待主人批准"}), 403
+        if auth_status == "offline":
+            target["authStatus"] = "approved"
+            target["authApprovedAt"] = datetime.now().isoformat()
+            target["authExpiresAt"] = (datetime.now() + timedelta(hours=24)).isoformat()
+
+        if target.get("joinKey") != join_key:
+            return jsonify({"ok": False, "msg": "joinKey 不匹配"}), 403
+
+        target["state"] = state
+        target["detail"] = detail
+        if name:
+            target["name"] = name
+        target["updated_at"] = datetime.now().isoformat()
+        target["area"] = state_to_area(state)
+        target["source"] = "remote-openclaw"
+        target["lastPushAt"] = datetime.now().isoformat()
+
+        save_agents_state(agents)
+        return jsonify({"ok": True, "agentId": agent_id, "area": target.get("area")})
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/health", methods=["GET"])
+def health():
+    """Health check"""
+    return jsonify({"status": "ok", "timestamp": datetime.now().isoformat()})
+
+
+@app.route("/yesterday-memo", methods=["GET"])
+def get_yesterday_memo():
+    """获取昨日小日记"""
+    try:
+        # 先尝试找昨天的文件
+        yesterday_str = get_yesterday_date_str()
+        yesterday_file = os.path.join(MEMORY_DIR, f"{yesterday_str}.md")
+        
+        target_file = None
+        target_date = yesterday_str
+        
+        if os.path.exists(yesterday_file):
+            target_file = yesterday_file
+        else:
+            # 如果昨天没有，找最近的一天
+            if os.path.exists(MEMORY_DIR):
+                files = [f for f in os.listdir(MEMORY_DIR) if f.endswith(".md") and re.match(r"\d{4}-\d{2}-\d{2}\.md", f)]
+                if files:
+                    files.sort(reverse=True)
+                    # 跳过今天的（如果存在）
+                    today_str = datetime.now().strftime("%Y-%m-%d")
+                    for f in files:
+                        if f != f"{today_str}.md":
+                            target_file = os.path.join(MEMORY_DIR, f)
+                            target_date = f.replace(".md", "")
+                            break
+        
+        if target_file and os.path.exists(target_file):
+            memo_content = extract_memo_from_file(target_file)
+            return jsonify({
+                "success": True,
+                "date": target_date,
+                "memo": memo_content
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "msg": "没有找到昨日日记"
+            })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "msg": str(e)
+        }), 500
+
+
+@app.route("/set_state", methods=["POST"])
+def set_state_endpoint():
+    """Set state via POST (for UI control panel)"""
+    try:
+        data = request.get_json()
+        if not isinstance(data, dict):
+            return jsonify({"status": "error", "msg": "invalid json"}), 400
+        state = load_state()
+        if "state" in data:
+            s = data["state"]
+            valid_states = {"idle", "writing", "researching", "executing", "syncing", "error"}
+            if s in valid_states:
+                state["state"] = s
+        if "detail" in data:
+            state["detail"] = data["detail"]
+        state["updated_at"] = datetime.now().isoformat()
+        save_state(state)
+        return jsonify({"status": "ok"})
+    except Exception as e:
+        return jsonify({"status": "error", "msg": str(e)}), 500
+
+
+@app.route("/assets/template.zip", methods=["GET"])
+def assets_template_download():
+    if not os.path.exists(ASSET_TEMPLATE_ZIP):
+        return jsonify({"ok": False, "msg": "模板包不存在，请先生成"}), 404
+    return send_from_directory(ROOT_DIR, "assets-replace-template.zip", as_attachment=True)
+
+
+@app.route("/assets/list", methods=["GET"])
+def assets_list():
+    items = []
+    for p in FRONTEND_PATH.rglob("*"):
+        if not p.is_file():
+            continue
+        rel = p.relative_to(FRONTEND_PATH).as_posix()
+        if rel.startswith("fonts/"):
+            continue
+        if p.suffix.lower() not in ASSET_ALLOWED_EXTS:
+            continue
+        st = p.stat()
+        width = None
+        height = None
+        if Image is not None:
+            try:
+                with Image.open(p) as im:
+                    width, height = im.size
+            except Exception:
+                pass
+        items.append({
+            "path": rel,
+            "size": st.st_size,
+            "ext": p.suffix.lower(),
+            "width": width,
+            "height": height,
+            "mtime": datetime.fromtimestamp(st.st_mtime).isoformat(),
+        })
+    items.sort(key=lambda x: x["path"])
+    return jsonify({"ok": True, "count": len(items), "items": items})
+
+
+@app.route("/assets/generate-rpg-background", methods=["POST"])
+def assets_generate_rpg_background():
+    """Generate a new RPG-themed background and replace office_bg_small.webp."""
+    try:
+        req = request.get_json(silent=True) or {}
+        custom_prompt = (req.get("prompt") or "").strip() if isinstance(req, dict) else ""
+
+        target = FRONTEND_PATH / "office_bg_small.webp"
+        if not target.exists():
+            return jsonify({"ok": False, "msg": "office_bg_small.webp 不存在"}), 404
+
+        # 覆盖前保留最近一次备份
+        bak = target.with_suffix(target.suffix + ".bak")
+        shutil.copy2(target, bak)
+
+        _generate_rpg_background_to_webp(str(target), width=1280, height=720, custom_prompt=custom_prompt)
+
+        # 每次生成都归档一份历史底图（可回溯风格演化）
+        os.makedirs(BG_HISTORY_DIR, exist_ok=True)
+        ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+        hist_file = os.path.join(BG_HISTORY_DIR, f"office_bg_small-{ts}.webp")
+        shutil.copy2(target, hist_file)
+
+        st = target.stat()
+        return jsonify({
+            "ok": True,
+            "path": "office_bg_small.webp",
+            "size": st.st_size,
+            "history": os.path.relpath(hist_file, ROOT_DIR),
+            "msg": "已生成并替换 RPG 房间底图（已自动归档）",
+        })
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/assets/restore-reference-background", methods=["POST"])
+def assets_restore_reference_background():
+    """Restore office_bg_small.webp from fixed reference image."""
+    try:
+        target = FRONTEND_PATH / "office_bg_small.webp"
+        if not target.exists():
+            return jsonify({"ok": False, "msg": "office_bg_small.webp 不存在"}), 404
+        if not os.path.exists(ROOM_REFERENCE_IMAGE):
+            return jsonify({"ok": False, "msg": "参考图不存在"}), 404
+
+        # 备份当前底图
+        bak = target.with_suffix(target.suffix + ".bak")
+        shutil.copy2(target, bak)
+
+        if Image is None:
+            return jsonify({"ok": False, "msg": "Pillow 不可用"}), 500
+
+        with Image.open(ROOM_REFERENCE_IMAGE) as im:
+            im = im.convert("RGBA").resize((1280, 720), Image.Resampling.LANCZOS)
+            im.save(target, "WEBP", quality=92, method=6)
+
+        st = target.stat()
+        return jsonify({
+            "ok": True,
+            "path": "office_bg_small.webp",
+            "size": st.st_size,
+            "msg": "已恢复初始底图",
+        })
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/assets/positions", methods=["GET"])
+def assets_positions_get():
+    try:
+        return jsonify({"ok": True, "items": load_asset_positions()})
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/assets/positions", methods=["POST"])
+def assets_positions_set():
+    try:
+        data = request.get_json(silent=True) or {}
+        key = (data.get("key") or "").strip()
+        x = data.get("x")
+        y = data.get("y")
+        scale = data.get("scale")
+        if not key:
+            return jsonify({"ok": False, "msg": "缺少 key"}), 400
+        if x is None or y is None:
+            return jsonify({"ok": False, "msg": "缺少 x/y"}), 400
+        x = float(x)
+        y = float(y)
+        if scale is None:
+            scale = 1.0
+        scale = float(scale)
+
+        all_pos = load_asset_positions()
+        all_pos[key] = {"x": x, "y": y, "scale": scale, "updated_at": datetime.now().isoformat()}
+        save_asset_positions(all_pos)
+        return jsonify({"ok": True, "key": key, "x": x, "y": y, "scale": scale})
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/assets/defaults", methods=["GET"])
+def assets_defaults_get():
+    try:
+        return jsonify({"ok": True, "items": load_asset_defaults()})
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/assets/defaults", methods=["POST"])
+def assets_defaults_set():
+    try:
+        data = request.get_json(silent=True) or {}
+        key = (data.get("key") or "").strip()
+        x = data.get("x")
+        y = data.get("y")
+        scale = data.get("scale")
+        if not key:
+            return jsonify({"ok": False, "msg": "缺少 key"}), 400
+        if x is None or y is None:
+            return jsonify({"ok": False, "msg": "缺少 x/y"}), 400
+        x = float(x)
+        y = float(y)
+        if scale is None:
+            scale = 1.0
+        scale = float(scale)
+
+        all_defaults = load_asset_defaults()
+        all_defaults[key] = {"x": x, "y": y, "scale": scale, "updated_at": datetime.now().isoformat()}
+        save_asset_defaults(all_defaults)
+        return jsonify({"ok": True, "key": key, "x": x, "y": y, "scale": scale})
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/assets/upload", methods=["POST"])
+def assets_upload():
+    try:
+        rel_path = (request.form.get("path") or "").strip().lstrip("/")
+        backup = (request.form.get("backup") or "1").strip() != "0"
+        f = request.files.get("file")
+
+        if not rel_path or f is None:
+            return jsonify({"ok": False, "msg": "缺少 path 或 file"}), 400
+
+        target = (FRONTEND_PATH / rel_path).resolve()
+        try:
+            target.relative_to(FRONTEND_PATH.resolve())
+        except Exception:
+            return jsonify({"ok": False, "msg": "非法 path"}), 400
+
+        if target.suffix.lower() not in ASSET_ALLOWED_EXTS:
+            return jsonify({"ok": False, "msg": "仅允许上传图片/美术资源类型"}), 400
+
+        if not target.exists():
+            return jsonify({"ok": False, "msg": "目标文件不存在，请先从 /assets/list 选择 path"}), 404
+
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if backup:
+            bak = target.with_suffix(target.suffix + ".bak")
+            shutil.copy2(target, bak)
+
+        auto_sheet = (request.form.get("auto_spritesheet") or "0").strip() == "1"
+        ext_name = (f.filename or "").lower()
+
+        if auto_sheet and target.suffix.lower() in {".webp", ".png"}:
+            with tempfile.NamedTemporaryFile(suffix=os.path.splitext(ext_name)[1] or ".gif", delete=False) as tf:
+                src_path = tf.name
+                f.save(src_path)
+            try:
+                in_w, in_h = _probe_animated_frame_size(src_path)
+                frame_w = int(request.form.get("frame_w") or (in_w or 64))
+                frame_h = int(request.form.get("frame_h") or (in_h or 64))
+
+                # 如果是静态图上传到精灵表目标，按网格切片而不是整图覆盖
+                if not (ext_name.endswith(".gif") or ext_name.endswith(".webp")) and Image is not None:
+                    try:
+                        with Image.open(src_path) as sim:
+                            sim = sim.convert("RGBA")
+                            sw, sh = sim.size
+                            if frame_w <= 0 or frame_h <= 0:
+                                frame_w, frame_h = sw, sh
+                            cols = max(1, sw // frame_w)
+                            rows = max(1, sh // frame_h)
+                            sheet_w = cols * frame_w
+                            sheet_h = rows * frame_h
+                            if sheet_w <= 0 or sheet_h <= 0:
+                                raise RuntimeError("静态图尺寸与帧规格不匹配")
+
+                            cropped = sim.crop((0, 0, sheet_w, sheet_h))
+                            # 目标是 webp 仍按无损保存，避免像素损失
+                            if target.suffix.lower() == ".webp":
+                                cropped.save(str(target), "WEBP", lossless=True, quality=100, method=6)
+                            else:
+                                cropped.save(str(target), "PNG")
+
+                            st = target.stat()
+                            return jsonify({
+                                "ok": True,
+                                "path": rel_path,
+                                "size": st.st_size,
+                                "backup": backup,
+                                "converted": {
+                                    "from": ext_name.split(".")[-1] if "." in ext_name else "image",
+                                    "to": "webp_spritesheet" if target.suffix.lower() == ".webp" else "png_spritesheet",
+                                    "frame_w": frame_w,
+                                    "frame_h": frame_h,
+                                    "columns": cols,
+                                    "rows": rows,
+                                    "frames": cols * rows,
+                                    "preserve_original": False,
+                                    "pixel_art": True,
+                                }
+                            })
+                    finally:
+                        pass
+
+                # 默认：优先保留输入帧尺寸；若前端传了强制值则按前端。
+                preserve_original_val = request.form.get("preserve_original")
+                if preserve_original_val is None:
+                    preserve_original = True
+                else:
+                    preserve_original = preserve_original_val.strip() == "1"
+
+                pixel_art = (request.form.get("pixel_art") or "1").strip() == "1"
+                req_cols = int(request.form.get("cols") or 0)
+                req_rows = int(request.form.get("rows") or 0)
+                sheet_path, cols, rows, frames, out_fw, out_fh = _animated_to_spritesheet(
+                    src_path,
+                    frame_w,
+                    frame_h,
+                    out_ext=target.suffix.lower(),
+                    preserve_original=preserve_original,
+                    pixel_art=pixel_art,
+                    cols=(req_cols if req_cols > 0 else None),
+                    rows=(req_rows if req_rows > 0 else None),
+                )
+                shutil.move(sheet_path, str(target))
+                st = target.stat()
+                from_type = "gif" if ext_name.endswith(".gif") else "webp"
+                to_type = "webp_spritesheet" if target.suffix.lower() == ".webp" else "png_spritesheet"
+                return jsonify({
+                    "ok": True,
+                    "path": rel_path,
+                    "size": st.st_size,
+                    "backup": backup,
+                    "converted": {
+                        "from": from_type,
+                        "to": to_type,
+                        "frame_w": out_fw,
+                        "frame_h": out_fh,
+                        "columns": cols,
+                        "rows": rows,
+                        "frames": frames,
+                        "preserve_original": preserve_original,
+                        "pixel_art": pixel_art,
+                    }
+                })
+            finally:
+                try:
+                    os.remove(src_path)
+                except Exception:
+                    pass
+
+        f.save(str(target))
+        st = target.stat()
+        return jsonify({"ok": True, "path": rel_path, "size": st.st_size, "backup": backup})
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+if __name__ == "__main__":
+    print("=" * 50)
+    print("Star Office UI - Backend State Service")
+    print("=" * 50)
+    print(f"State file: {STATE_FILE}")
+    print("Listening on: http://0.0.0.0:18791")
+    print("=" * 50)
+    
+    app.run(host="0.0.0.0", port=18791, debug=False)

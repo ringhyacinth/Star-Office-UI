@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.venv/
+venv/
+.env
+
+# OS
+.DS_Store
+
+# Runtime / local files
+state.json
+agents-state.json
+# keep join-keys.json in repo for first-run demo
+*.log
+*.out
+*.pid
+*.backup*
+*.original
+cloudflared.pid
+cloudflared.out
+healthcheck.log
+backend.log
+frontend/office_bg.png
