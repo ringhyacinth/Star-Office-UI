@@ -163,10 +163,19 @@ ASSET_DRAWER_PASS_DEFAULT = os.getenv("ASSET_DRAWER_PASS", "1234")
 
 @app.after_request
 def add_no_cache_headers(response):
-    """Aggressively prevent caching for all responses"""
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
+    """Apply cache policy by path:
+    - HTML/API/state: no-cache (always fresh)
+    - /static assets: long cache (filenames are versioned with ?v=VERSION_TIMESTAMP)
+    """
+    path = (request.path or "")
+    if path.startswith('/static/'):
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        response.headers.pop("Pragma", None)
+        response.headers.pop("Expires", None)
+    else:
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
     return response
 
 # Default state
