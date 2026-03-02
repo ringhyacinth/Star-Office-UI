@@ -867,6 +867,11 @@
         let game, star, sofa, serverroom, officeBgSprite, areas = {}, currentState = 'idle', pendingDesiredState = null, statusText, lastFetch = 0, lastBlink = 0, lastBubble = 0, targetX = 660, targetY = 170, bubble = null, typewriterText = '', typewriterTarget = '', typewriterIndex = 0, lastTypewriter = 0, syncAnimSprite = null, catBubble = null, selectionBoxGraphics = null;
         const IDLE_SOFA_ANCHOR = { x: 798, y: 272 }; // 统一中心锚点（原 sofa 左上 670,144 的中心）
         const IDLE_STAR_SCALE = 1.0; // star idle 改为256帧原生显示，不再放大
+        // flowers 精灵表规格：启动时按当前资产动态探测，默认 65x65 (260/4)
+        let FLOWERS_FRAME_W = 65;
+        let FLOWERS_FRAME_H = 65;
+        let FLOWERS_FRAME_COLS = 4;
+        let FLOWERS_FRAME_ROWS = 4;
         let currentOfficeBgTextureKey = 'office_bg';
         let assetDrawerOpen = false;
         let assetDrawerAuthed = (localStorage.getItem('assetDrawerAuthed') === '1');
@@ -1078,6 +1083,19 @@
             selectionBoxGraphics.setDepth(999999);
             selectionBoxGraphics.setVisible(true);
             return true;
+        }
+
+
+        function getLiveFrameSizeByAssetPath(path) {
+            try {
+                const sprite = mapAssetPathToSprite(path);
+                if (sprite && sprite.frame) {
+                    const w = Number(sprite.frame.width || 0);
+                    const h = Number(sprite.frame.height || 0);
+                    if (w > 0 && h > 0) return { w, h };
+                }
+            } catch (e) {}
+            return null;
         }
 
         function applyScenePreview(path) {
@@ -1371,22 +1389,19 @@
             if (isSheetTarget) {
                 fd.append('auto_spritesheet', '1');
 
-                if (isAnimInput) {
-                    // 动图：默认按输入帧处理（后端会探测）
+                // 关键：沿用当前场景已生效的帧规格，避免用户替换后尺寸跑偏
+                const liveFrame = getLiveFrameSizeByAssetPath(path);
+                if (liveFrame) {
+                    fd.append('frame_w', String(liveFrame.w));
+                    fd.append('frame_h', String(liveFrame.h));
+                    fd.append('preserve_original', '0');
+                } else if (isAnimInput) {
+                    // 无法探测时，动图让后端按输入帧探测
                     fd.append('preserve_original', '1');
                 } else {
-                    // 静态图：按 √N 网格切帧（常见4x4/8x8），避免整张贴图
-                    // 优先从当前已选资源推导一个合理帧尺寸
-                    const sw = Number(selectedAssetInfo?.width || 0);
-                    const sh = Number(selectedAssetInfo?.height || 0);
-                    let fw = 64, fh = 64;
-                    if (sw > 0 && sh > 0) {
-                        const grid = Math.max(1, Math.round(Math.sqrt(Math.max(1, Math.round(sw / Math.max(1, sh))))));
-                        fw = Math.max(16, Math.round(sw / Math.max(1, grid)));
-                        fh = Math.max(16, Math.round(sh / Math.max(1, grid)));
-                    }
-                    fd.append('frame_w', String(fw));
-                    fd.append('frame_h', String(fh));
+                    // 无法探测时的静态图兜底
+                    fd.append('frame_w', '64');
+                    fd.append('frame_h', '64');
                     fd.append('preserve_original', '0');
                 }
                 fd.append('pixel_art', '1');
@@ -2122,7 +2137,27 @@
             }
             
             console.log('WebP 支持:', supportsWebP);
-            
+
+            // 动态探测 flowers 精灵表帧规格（避免写死 65x65 导致显示比例异常）
+            try {
+                const res = await fetch('/assets/list?t=' + Date.now(), { cache: 'no-store' });
+                const data = await res.json();
+                if (data && data.ok && Array.isArray(data.items)) {
+                    const flowerItem = data.items.find(it => (it.path || '').toLowerCase().includes('flowers-spritesheet'));
+                    if (flowerItem && Number(flowerItem.width) > 0 && Number(flowerItem.height) > 0) {
+                        const w = Number(flowerItem.width);
+                        const h = Number(flowerItem.height);
+                        // 默认按 4x4 逻辑（历史行为）动态推导单帧尺寸
+                        FLOWERS_FRAME_COLS = 4;
+                        FLOWERS_FRAME_ROWS = 4;
+                        FLOWERS_FRAME_W = Math.max(1, Math.floor(w / FLOWERS_FRAME_COLS));
+                        FLOWERS_FRAME_H = Math.max(1, Math.floor(h / FLOWERS_FRAME_ROWS));
+                    }
+                }
+            } catch (e) {
+                console.warn('flowers 规格探测失败，使用默认 65x65', e);
+            }
+
             // 启动 Phaser 游戏
             new Phaser.Game(config);
         }
@@ -2184,7 +2219,7 @@
             // New desk image (v2) - force transparent PNG
             this.load.image('desk_v2', '/static/desk-v2.png');
             // Flower spritesheet (65x65, 16 frames)
-            this.load.spritesheet('flowers', '/static/flowers-spritesheet' + (supportsWebP ? '.webp' : '.png'), { frameWidth: 65, frameHeight: 65 });
+            this.load.spritesheet('flowers', '/static/flowers-spritesheet' + (supportsWebP ? '.webp' : '.png'), { frameWidth: FLOWERS_FRAME_W, frameHeight: FLOWERS_FRAME_H });
 
             // Guest/Demo agent sprites
             this.load.image('guestagent1', '/static/guestagent1.webp?v={{VERSION_TIMESTAMP}}');
@@ -2371,7 +2406,7 @@
             desk.setDepth(1001);  // desk above starWorking
 
             // Random flower pot at (310,405) (65x65 frames, top layer)
-            const flowerFrameCount = 16; // 4x4 65x65 frames
+            const flowerFrameCount = Math.max(1, FLOWERS_FRAME_COLS * FLOWERS_FRAME_ROWS); // 动态帧数
             const randomFlowerFrame = Math.floor(Math.random() * flowerFrameCount);
             const flower = this.add.sprite(310, 405, 'flowers', randomFlowerFrame).setOrigin(0.5);
             flower.setDepth(1100); // highest among desk/starWorking
