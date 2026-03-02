@@ -550,9 +550,46 @@
             }
 
             #coords-toggle,
-            #pan-toggle {
+            #pan-toggle,
+            #lang-toggle-btn {
                 font-size: 12px !important;
                 padding: 6px 8px !important;
+            }
+
+            #asset-drawer {
+                width: 100vw;
+                max-width: 100vw;
+            }
+            #asset-drawer-body { padding: 8px; }
+            #asset-list {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 6px;
+            }
+            .asset-item {
+                grid-template-columns: 52px 1fr 36px;
+                padding: 6px;
+                gap: 6px;
+            }
+            .asset-thumb { width:52px; height:52px; }
+            .asset-path { font-size: 11px; line-height: 1.3; }
+            .asset-sub { font-size: 10px; }
+            #asset-upload-panel {
+                position: sticky;
+                bottom: 0;
+                padding: 8px;
+            }
+            #asset-upload-panel .asset-toolbar {
+                gap: 6px;
+                margin-bottom: 6px;
+            }
+            #asset-upload-panel input {
+                min-width: 0;
+                flex: 1 1 42%;
+            }
+            #asset-upload-panel button {
+                flex: 1 1 100%;
+                min-height: 42px;
             }
         }
     </style>
@@ -1304,10 +1341,9 @@
 
         function updateAssetConfirmButtonState() {
             const btn = document.getElementById('asset-commit-refresh-btn');
-            const fi = document.getElementById('asset-upload-file');
             if (!btn) return;
-            // 只要选中了资产且上传了文件即可；坐标可选（不填则仅做上传替换）
-            const can = !!(selectedAssetInfo && selectedAssetInfo.path && fi && fi.files && fi.files.length > 0);
+            // 只要选中了资产就允许确认并刷新（可仅做坐标写入）
+            const can = !!(selectedAssetInfo && selectedAssetInfo.path);
             btn.disabled = !can;
             btn.style.opacity = can ? '1' : '.55';
         }
@@ -1528,7 +1564,8 @@
             input.onchange = () => {
                 const f = input.files && input.files[0];
                 if (!f) {
-                    out.textContent = '';
+                    const targetPath = (selectedAssetInfo && selectedAssetInfo.path) ? selectedAssetInfo.path : '';
+                    out.textContent = targetPath ? `已选中：${targetPath}（可只填坐标后确认并刷新）` : '';
                     updateAssetConfirmButtonState();
                     return;
                 }
@@ -1603,7 +1640,7 @@
             const fi = document.getElementById('asset-upload-file');
             const out = document.getElementById('asset-upload-result');
             if (!path) { out.textContent = '请先选中一个资产路径'; return false; }
-            if (!fi.files.length) { out.textContent = '请先选择文件'; return false; }
+            if (!fi.files.length) { return true; } // 允许仅改坐标
             const file = fi.files[0];
             const fd = new FormData();
             fd.append('path', path);
@@ -1673,17 +1710,25 @@
 
         async function commitAndRefresh() {
             const out = document.getElementById('asset-upload-result');
+            const fi = document.getElementById('asset-upload-file');
+            const hasFile = !!(fi && fi.files && fi.files.length > 0);
+
             const okUpload = await commitAssetUpdate();
             if (!okUpload) return;
 
             // 坐标输入可选；填了就写后端并应用
             const xVal = document.getElementById('asset-pos-x')?.value;
             const yVal = document.getElementById('asset-pos-y')?.value;
-            if ((xVal || '').trim() !== '' && (yVal || '').trim() !== '') {
+            const hasPos = (xVal || '').trim() !== '' && (yVal || '').trim() !== '';
+            if (hasPos) {
                 await applyAssetPosition();
             }
 
-            if (out) out.textContent += ' ｜ ✅ 已确认并刷新';
+            if (out) {
+                if (!hasFile && hasPos) out.textContent = '✅ 已写入坐标并刷新';
+                else if (hasFile && !hasPos) out.textContent += ' ｜ ✅ 已上传并刷新';
+                else out.textContent += ' ｜ ✅ 已确认并刷新';
+            }
             setTimeout(() => window.location.reload(), 400);
         }
 
