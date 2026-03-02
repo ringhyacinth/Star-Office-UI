@@ -85,7 +85,7 @@
             transition: width 0.3s ease;
         }
         #status-text {
-            position: absolute;
+            position: fixed;
             bottom: 12px;
             left: 12px;
             transform: none;
@@ -94,10 +94,10 @@
             background: rgba(0,0,0,0.7);
             padding: 10px 14px;
             border-radius: 4px;
-            max-width: min(560px, 42%);
+            max-width: 520px;
             text-align: left;
             font-family: 'ArkPixel', 'Courier New', monospace;
-            z-index: 20;
+            z-index: 1000002;
             pointer-events: none;
         }
         /* 状态控制栏 */
@@ -1982,28 +1982,42 @@ function toggleBrokerPanel() {
             p.classList.toggle('open');
         }
 
+        function placeOverlayAndStatusAtCanvasBottomLeft() {
+            const canvasEl = game?.canvas || document.querySelector('#game-container canvas');
+            const fallbackBox = document.getElementById('game-container');
+            const rect = canvasEl?.getBoundingClientRect?.() || fallbackBox?.getBoundingClientRect?.();
+
+            // 1) loading 遮罩
+            const overlay = document.getElementById('room-loading-overlay');
+            if (overlay) {
+                if (!rect || !(rect.width > 0 && rect.height > 0)) {
+                    overlay.style.left = '0px';
+                    overlay.style.top = '0px';
+                    overlay.style.width = window.innerWidth + 'px';
+                    overlay.style.height = window.innerHeight + 'px';
+                } else {
+                    overlay.style.left = rect.left + 'px';
+                    overlay.style.top = rect.top + 'px';
+                    overlay.style.width = rect.width + 'px';
+                    overlay.style.height = rect.height + 'px';
+                }
+            }
+
+            // 2) detail/status 左下角（猫窝下方）
+            const st = document.getElementById('status-text');
+            if (st && rect && rect.width > 0 && rect.height > 0) {
+                st.style.left = (rect.left + 14) + 'px';
+                st.style.top = (rect.top + rect.height - st.offsetHeight - 14) + 'px';
+            }
+        }
+
         function showRoomLoadingOverlay(baseText) {
             const overlay = document.getElementById('room-loading-overlay');
             const textEl = document.getElementById('room-loading-text');
             const emojiEl = document.getElementById('room-loading-emoji');
             if (!overlay || !textEl || !emojiEl) return;
 
-            const canvasEl = game?.canvas || document.querySelector('#game-container canvas');
-            const fallbackBox = document.getElementById('game-container');
-            const rect = canvasEl?.getBoundingClientRect?.() || fallbackBox?.getBoundingClientRect?.();
-            if (!rect || !(rect.width > 0 && rect.height > 0)) {
-                // 兜底：即使画布尚未 ready，也先给个全屏遮罩，保证“看得见”
-                overlay.style.left = '0px';
-                overlay.style.top = '0px';
-                overlay.style.width = window.innerWidth + 'px';
-                overlay.style.height = window.innerHeight + 'px';
-            } else {
-                // 精准覆盖办公室画布区域
-                overlay.style.left = rect.left + 'px';
-                overlay.style.top = rect.top + 'px';
-                overlay.style.width = rect.width + 'px';
-                overlay.style.height = rect.height + 'px';
-            }
+            placeOverlayAndStatusAtCanvasBottomLeft();
             const loadingTexts = {
                 zh: [
                     '正在给小龙虾擦亮钳子……',
@@ -3057,6 +3071,8 @@ function toggleBrokerPanel() {
             window.starSprite = star;
 
             statusText = document.getElementById('status-text');
+            placeOverlayAndStatusAtCanvasBottomLeft();
+            window.addEventListener('resize', placeOverlayAndStatusAtCanvasBottomLeft);
             coordsOverlay = document.getElementById('coords-overlay');
             coordsDisplay = document.getElementById('coords-display');
             coordsToggle = document.getElementById('coords-toggle');
@@ -3129,6 +3145,7 @@ function toggleBrokerPanel() {
             if (isTouchDevice && game.scale) {
                 game.scale.on('resize', () => {
                     applyMobileCameraFit();
+                    placeOverlayAndStatusAtCanvasBottomLeft();
                 });
             }
 
