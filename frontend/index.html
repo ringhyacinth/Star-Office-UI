@@ -705,6 +705,7 @@
                     <div class="asset-toolbar" style="gap:6px; flex-wrap:wrap; margin-bottom:6px;">
                         <input id="asset-pos-x" type="number" step="1" placeholder="X" style="width:86px;" />
                         <input id="asset-pos-y" type="number" step="1" placeholder="Y" style="width:86px;" />
+                        <input id="asset-scale" type="number" min="1" step="1" value="100" placeholder="缩放%" style="width:92px;" />
                         <button id="asset-commit-refresh-btn" onclick="commitAndRefresh()" disabled style="opacity:.55;">确认并刷新</button>
                     </div>
                     <div id="asset-upload-result" class="asset-sub"></div>
@@ -739,7 +740,7 @@
                 brokerHint: '写你的风格主题（严格保持原始房间结构，只改变视觉风格）',
                 searchPlaceholder: '搜索资产名（如 desk / sofa / star）', loaded: '已加载', allAssets: '全部资产',
                 chooseImage: '选择图片', confirmUpload: '确认并刷新',
-                frameW: '单帧宽', frameH: '单帧高', cols: '列', rows: '行',
+                frameW: '单帧宽', frameH: '单帧高', cols: '列', rows: '行', scalePct: '缩放%',
                 showCoords: '显示坐标', hideCoords: '隐藏坐标', moveView: '移动视野', lockView: '锁定视野',
                 memoTitle: '— 昨 日 小 记 —', guestTitle: '— 访 客 列 表 —', officeTitle: '海辛小龙虾的办公室',
                 langBtn: 'EN'
@@ -753,7 +754,7 @@
                 brokerHint: 'Describe your visual style (keep room structure unchanged, only change visual style)',
                 searchPlaceholder: 'Search assets (desk / sofa / star)', loaded: 'Loaded', allAssets: 'All Assets',
                 chooseImage: 'Choose Image', confirmUpload: 'Confirm & Refresh',
-                frameW: 'Frame W', frameH: 'Frame H', cols: 'Cols', rows: 'Rows',
+                frameW: 'Frame W', frameH: 'Frame H', cols: 'Cols', rows: 'Rows', scalePct: 'Scale%',
                 showCoords: 'Show Coords', hideCoords: 'Hide Coords', moveView: 'Pan View', lockView: 'Lock View',
                 memoTitle: '— YESTERDAY NOTES —', guestTitle: '— VISITOR LIST —', officeTitle: 'Haixin Lobster Office',
                 langBtn: '中'
@@ -806,6 +807,7 @@
             setPh('asset-frame-h', 'frameH');
             setPh('asset-cols', 'cols');
             setPh('asset-rows', 'rows');
+            setPh('asset-scale', 'scalePct');
 
             const memoTitle = document.getElementById('memo-title');
             if (memoTitle) memoTitle.textContent = t('memoTitle');
@@ -1278,14 +1280,17 @@
             const sprite = mapAssetPathToSprite(path);
             const x = Number(document.getElementById('asset-pos-x')?.value || NaN);
             const y = Number(document.getElementById('asset-pos-y')?.value || NaN);
+            const scalePct = Number(document.getElementById('asset-scale')?.value || 100);
             if (!Number.isFinite(x) || !Number.isFinite(y)) {
                 if (out) out.textContent = '请输入有效的 X/Y 坐标';
                 return;
             }
+            const scale = Number.isFinite(scalePct) && scalePct > 0 ? (scalePct / 100) : 1;
 
             if (sprite) {
                 sprite.x = x;
                 sprite.y = y;
+                if (sprite.setScale) sprite.setScale(scale);
                 drawSelectionBoxOnScene(path);
                 highlightSpriteByAssetPath(path);
             }
@@ -1293,12 +1298,12 @@
             const texKey = sprite?.texture?.key;
             const persistKey = path;
             if (persistKey) {
-                assetPositionOverrides[persistKey] = { x, y };
+                assetPositionOverrides[persistKey] = { x, y, scale };
                 try {
                     await fetch('/assets/positions', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ key: persistKey, x, y, textureKey: texKey || null, stem: toAssetStem(persistKey) })
+                        body: JSON.stringify({ key: persistKey, x, y, scale, textureKey: texKey || null, stem: toAssetStem(persistKey) })
                     });
                 } catch (e) {
                     console.warn('坐标写入后端失败，已保留本地', e);
@@ -1306,8 +1311,8 @@
             }
 
             if (out) out.textContent = sprite
-                ? `✅ 已应用并写入后端：(${Math.round(x)}, ${Math.round(y)})`
-                : `✅ 已写入后端（当前画面无该对象，刷新或切换场景后生效）：(${Math.round(x)}, ${Math.round(y)})`;
+                ? `✅ 已应用并写入后端：(${Math.round(x)}, ${Math.round(y)}), 缩放 ${Math.round(scale*100)}%`
+                : `✅ 已写入后端（当前画面无该对象，刷新或切换场景后生效）：(${Math.round(x)}, ${Math.round(y)}), 缩放 ${Math.round(scale*100)}%`;
         }
 
         async function applySavedPositionOverrides() {
@@ -1343,10 +1348,11 @@
                     }
 
                     if (!ov) continue;
-                    const x = Number(ov.x), y = Number(ov.y);
+                    const x = Number(ov.x), y = Number(ov.y), sc = Number(ov.scale || 1);
                     if (Number.isFinite(x) && Number.isFinite(y)) {
                         ch.x = x;
                         ch.y = y;
+                        if (Number.isFinite(sc) && sc > 0 && ch.setScale) ch.setScale(sc);
                     }
                 }
             } catch (e) {}
@@ -1401,15 +1407,32 @@
         function refreshAssetPositionInputs(path) {
             const xInput = document.getElementById('asset-pos-x');
             const yInput = document.getElementById('asset-pos-y');
-            if (!xInput || !yInput) return;
+            const sInput = document.getElementById('asset-scale');
+            if (!xInput || !yInput || !sInput) return;
+
+            // 先读后端保存值（相当于读配置）
+            const key = path;
+            const cfg = (assetPositionOverrides && assetPositionOverrides[key]) ? assetPositionOverrides[key] : null;
+            if (cfg) {
+                xInput.value = String(Math.round(Number(cfg.x || 0)));
+                yInput.value = String(Math.round(Number(cfg.y || 0)));
+                const sc = Number(cfg.scale || 1);
+                sInput.value = String(Math.round(sc * 100));
+                return;
+            }
+
+            // 再读当前场景对象
             const sprite = mapAssetPathToSprite(path);
             if (!sprite) {
                 xInput.value = '';
                 yInput.value = '';
+                sInput.value = '100';
                 return;
             }
             xInput.value = String(Math.round(Number(sprite.x || 0)));
             yInput.value = String(Math.round(Number(sprite.y || 0)));
+            const sc = Number(sprite.scaleX || 1);
+            sInput.value = String(Math.round(sc * 100));
         }
 
         function selectAssetInDrawer(path) {
