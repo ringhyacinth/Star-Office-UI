@@ -1208,7 +1208,7 @@
             try { localStorage.setItem('assetPositionOverrides', JSON.stringify(assetPositionOverrides || {})); } catch (e) {}
         }
 
-        function applyAssetPosition() {
+        async function applyAssetPosition() {
             const path = selectedAssetInfo?.path || '';
             const out = document.getElementById('asset-upload-result');
             if (!path) {
@@ -1234,6 +1234,15 @@
             if (texKey) {
                 assetPositionOverrides[texKey] = { x, y };
                 saveAssetPositionOverrides();
+                try {
+                    await fetch('/assets/positions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ key: texKey, x, y })
+                    });
+                } catch (e) {
+                    console.warn('坐标写入后端失败，已保留本地', e);
+                }
             }
 
             drawSelectionBoxOnScene(path);
@@ -1241,13 +1250,23 @@
             if (out) out.textContent = `✅ 已应用坐标：(${Math.round(x)}, ${Math.round(y)})`;
         }
 
-        function applySavedPositionOverrides() {
+        async function applySavedPositionOverrides() {
             try {
+                // 先拉后端持久化坐标，再叠加本地临时坐标
+                let serverPositions = {};
+                try {
+                    const res = await fetch('/assets/positions?t=' + Date.now(), { cache: 'no-store' });
+                    const data = await res.json();
+                    if (data && data.ok && data.items) serverPositions = data.items;
+                } catch (e) {}
+
                 const children = getSceneChildren();
                 for (const ch of children) {
                     const key = ch?.texture?.key;
                     if (!key) continue;
-                    const ov = assetPositionOverrides[key];
+                    const ovServer = serverPositions[key];
+                    const ovLocal = assetPositionOverrides[key];
+                    const ov = ovLocal || ovServer;
                     if (!ov) continue;
                     const x = Number(ov.x), y = Number(ov.y);
                     if (Number.isFinite(x) && Number.isFinite(y)) {
@@ -2389,7 +2408,7 @@
 
             // 启动 Phaser 游戏
             new Phaser.Game(config);
-            setTimeout(() => applySavedPositionOverrides(), 600);
+            setTimeout(() => { applySavedPositionOverrides(); }, 600);
         }
 
         function preload() {

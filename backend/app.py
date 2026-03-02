@@ -33,6 +33,7 @@ GEMINI_SCRIPT = os.path.join(WORKSPACE_DIR, "skills", "gemini-image-generate", "
 GEMINI_PYTHON = os.path.join(WORKSPACE_DIR, "skills", "gemini-image-generate", ".venv", "bin", "python")
 ROOM_REFERENCE_IMAGE = os.path.join(ROOT_DIR, "assets", "room-reference.png")
 BG_HISTORY_DIR = os.path.join(ROOT_DIR, "assets", "bg-history")
+ASSET_POSITIONS_FILE = os.path.join(ROOT_DIR, "asset-positions.json")
 
 
 def get_yesterday_date_str():
@@ -301,6 +302,23 @@ def load_agents_state():
 def save_agents_state(agents):
     with open(AGENTS_STATE_FILE, "w", encoding="utf-8") as f:
         json.dump(agents, f, ensure_ascii=False, indent=2)
+
+
+def load_asset_positions():
+    if os.path.exists(ASSET_POSITIONS_FILE):
+        try:
+            with open(ASSET_POSITIONS_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    return data
+        except Exception:
+            pass
+    return {}
+
+
+def save_asset_positions(data):
+    with open(ASSET_POSITIONS_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
 
 def load_join_keys():
@@ -1105,6 +1123,36 @@ def assets_restore_reference_background():
             "size": st.st_size,
             "msg": "已恢复初始底图",
         })
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/assets/positions", methods=["GET"])
+def assets_positions_get():
+    try:
+        return jsonify({"ok": True, "items": load_asset_positions()})
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/assets/positions", methods=["POST"])
+def assets_positions_set():
+    try:
+        data = request.get_json(silent=True) or {}
+        key = (data.get("key") or "").strip()
+        x = data.get("x")
+        y = data.get("y")
+        if not key:
+            return jsonify({"ok": False, "msg": "缺少 key"}), 400
+        if x is None or y is None:
+            return jsonify({"ok": False, "msg": "缺少 x/y"}), 400
+        x = float(x)
+        y = float(y)
+
+        all_pos = load_asset_positions()
+        all_pos[key] = {"x": x, "y": y, "updated_at": datetime.now().isoformat()}
+        save_asset_positions(all_pos)
+        return jsonify({"ok": True, "key": key, "x": x, "y": y})
     except Exception as e:
         return jsonify({"ok": False, "msg": str(e)}), 500
 
