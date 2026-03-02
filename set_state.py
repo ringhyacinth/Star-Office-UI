@@ -6,7 +6,7 @@ import os
 import sys
 from datetime import datetime
 
-STATE_FILE = "/root/.openclaw/workspace/star-office-ui/state.json"
+STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "state.json")
 
 VALID_STATES = [
     "idle",
