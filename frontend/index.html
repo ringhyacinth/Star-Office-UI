@@ -257,36 +257,14 @@
             background:#22c55e; color:#052e16; border-color:#16a34a; font-weight:700;
         }
 
-        .asset-inline-plus {
-            width:28px; height:28px;
-            border:1.5px solid rgba(148,163,184,.55);
-            border-radius:999px;
+        .asset-inline-switch {
             display:flex; align-items:center; justify-content:center;
-            cursor:pointer;
-            background:linear-gradient(180deg,#1f2937,#111827);
-            box-shadow:0 2px 8px rgba(0,0,0,.28);
-            opacity:0; transform:translateX(-10px) scale(.9);
-            pointer-events:none;
-            transition:all .16s ease;
-            margin-right:10px;
-            position: relative;
+            width:36px;
         }
-        .asset-inline-plus span,
-        .asset-inline-plus span::before {
-            content:'';
-            position:absolute;
-            background:#e2e8f0;
-            border-radius:2px;
+        .asset-inline-switch input[type="checkbox"] {
+            width:16px; height:16px; cursor:pointer;
+            accent-color:#22c55e;
         }
-        .asset-inline-plus span { width:12px; height:2px; }
-        .asset-inline-plus span::before { width:2px; height:12px; left:5px; top:-5px; }
-        .asset-item.active .asset-inline-plus {
-            opacity:1; transform:translateX(-4px) scale(1);
-            pointer-events:auto;
-        }
-        .asset-inline-plus:hover { border-color:#22c55e; box-shadow:0 0 0 2px rgba(34,197,94,.18); }
-        .asset-inline-plus:hover span,
-        .asset-inline-plus:hover span::before { background:#86efac; }
         #asset-highlight {
             position: fixed;
             border: 3px solid #22c55e;
@@ -565,7 +543,8 @@
 
             #coords-toggle,
             #pan-toggle,
-            #lang-toggle-btn {
+            #lang-toggle-btn,
+            #lang-toggle-jp-btn {
                 font-size: 12px !important;
                 padding: 6px 8px !important;
             }
@@ -725,6 +704,9 @@
     <button id="lang-toggle-btn" onclick="toggleLanguage()" style="position:fixed; top:calc(env(safe-area-inset-top, 0px) + 52px); left:12px; z-index:999999; padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">
         EN
     </button>
+    <button id="lang-toggle-jp-btn" onclick="toggleJapanese()" style="position:fixed; top:calc(env(safe-area-inset-top, 0px) + 92px); left:12px; z-index:999999; padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">
+        日本語
+    </button>
 
     <script src="/static/vendor/phaser-3.80.1.min.js"></script>
     <script>
@@ -743,7 +725,7 @@
                 frameW: '单帧宽', frameH: '单帧高', cols: '列', rows: '行', scalePct: '缩放%',
                 showCoords: '显示坐标', hideCoords: '隐藏坐标', moveView: '移动视野', lockView: '锁定视野',
                 memoTitle: '— 昨 日 小 记 —', guestTitle: '— 访 客 列 表 —', officeTitle: '海辛小龙虾的办公室',
-                langBtn: 'EN'
+                langBtn: 'EN', langBtnJp: '日本語'
             },
             en: {
                 controlTitle: 'Star Status',
@@ -757,7 +739,21 @@
                 frameW: 'Frame W', frameH: 'Frame H', cols: 'Cols', rows: 'Rows', scalePct: 'Scale%',
                 showCoords: 'Show Coords', hideCoords: 'Hide Coords', moveView: 'Pan View', lockView: 'Lock View',
                 memoTitle: '— YESTERDAY NOTES —', guestTitle: '— VISITOR LIST —', officeTitle: 'Haixin Lobster Office',
-                langBtn: '中'
+                langBtn: '中', langBtnJp: '日本語'
+            },
+            ja: {
+                controlTitle: 'Star ステータス',
+                btnIdle: '待機', btnWork: '作業', btnSync: '同期', btnError: '警報', btnDecor: '部屋を編集',
+                drawerTitle: '部屋編集・アセットサイドバー', drawerClose: '閉じる',
+                authTitle: '編集パスコードを入力', authPlaceholder: 'パスコード入力', authVerify: '認証',
+                btnMove: '🏠引っ越し', btnHome: '🐚実家に戻る', btnBroker: '仲介', btnBrokerGo: '仲介に任せる',
+                brokerHint: '部屋構造は維持し、見た目スタイルのみ指定してください',
+                searchPlaceholder: 'アセット検索（desk / sofa / star）', loaded: '読み込み済み', allAssets: '全アセット',
+                chooseImage: '画像を選択', confirmUpload: '確定して更新',
+                frameW: 'フレーム幅', frameH: 'フレーム高', cols: '列', rows: '行', scalePct: '拡大率%',
+                showCoords: '座標表示', hideCoords: '座標非表示', moveView: '視点移動', lockView: '視点固定',
+                memoTitle: '— 昨日のメモ —', guestTitle: '— 訪問者リスト —', officeTitle: 'ハイシン・ロブスターのオフィス',
+                langBtn: 'EN', langBtnJp: '中'
             }
         };
 
@@ -781,6 +777,7 @@
             setText('btn-state-error', 'btnError');
             setText('btn-open-drawer', 'btnDecor');
             setText('lang-toggle-btn', 'langBtn');
+            setText('lang-toggle-jp-btn', 'langBtnJp');
 
             const drawerTitle = document.querySelector('#asset-drawer-header span');
             if (drawerTitle) drawerTitle.textContent = t('drawerTitle');
@@ -829,6 +826,12 @@
 
         function toggleLanguage() {
             uiLang = (uiLang === 'zh') ? 'en' : 'zh';
+            localStorage.setItem('uiLang', uiLang);
+            applyLanguage();
+        }
+
+        function toggleJapanese() {
+            uiLang = (uiLang === 'ja') ? 'zh' : 'ja';
             localStorage.setItem('uiLang', uiLang);
             applyLanguage();
         }
@@ -1042,6 +1045,10 @@
         let sceneAssetItems = [];
         let selectedAssetInfo = null;
         let assetThumbTimers = [];
+        let assetVisibility = (() => {
+            try { return JSON.parse(localStorage.getItem('assetVisibility') || '{}') || {}; }
+            catch (e) { return {}; }
+        })();
         // 坐标以服务端为准；清理历史本地缓存，避免把素材挪飞
         let assetPositionOverrides = {};
         try { localStorage.removeItem('assetPositionOverrides'); } catch (e) {}
@@ -1454,6 +1461,17 @@
             assetThumbTimers = [];
         }
 
+        function saveAssetVisibility() {
+            try { localStorage.setItem('assetVisibility', JSON.stringify(assetVisibility || {})); } catch (e) {}
+        }
+
+        function setAssetVisible(path, visible) {
+            assetVisibility[path] = !!visible;
+            saveAssetVisibility();
+            const sprite = mapAssetPathToSprite(path);
+            if (sprite && sprite.setVisible) sprite.setVisible(!!visible);
+        }
+
         function inferSpritesheetFrameMetaByPath(path) {
             const p = (path || '').toLowerCase();
             if (!p) return null;
@@ -1537,14 +1555,15 @@
                 const isActive = ((selectedAssetInfo && selectedAssetInfo.path) ? selectedAssetInfo.path : '') === it.path;
                 const reso = (it.width && it.height) ? `${it.width}×${it.height}` : '-';
                 const thumbId = `asset-thumb-canvas-${(it.path || '').replace(/[^a-zA-Z0-9]/g, '_')}`;
+                const visible = assetVisibility[it.path] !== false;
                 return `<div class="asset-item ${isActive ? 'active' : ''}" data-path="${it.path}" onclick="selectAssetInDrawer('${(it.path || '').replace(/'/g, "\\'")}')">
                     <canvas id="${thumbId}" class="asset-thumb" width="56" height="56"></canvas>
                     <div class="asset-meta">
                         <div class="asset-path">${it.path}</div>
                         <div class="asset-sub">${reso}</div>
                     </div>
-                    <div>
-                        <div class="asset-inline-plus" title="上传替换" onclick="event.stopPropagation(); openInlineAssetUploader()"><span></span></div>
+                    <div class="asset-inline-switch" title="可见性">
+                        <input type="checkbox" ${visible ? 'checked' : ''} onchange="event.stopPropagation(); setAssetVisible('${(it.path || '').replace(/'/g, "\\'")}', this.checked)" />
                     </div>
                 </div>`;
             }).join('');
@@ -2620,6 +2639,7 @@ function toggleBrokerPanel() {
             // Expose to global for click handler
             window.plantSprite = plant;
             window.plantFrameCount = plantFrameCount;
+            if (assetVisibility['plants-spritesheet.webp'] === false) plant.setVisible(false);
             plant.on('pointerdown', () => {
                 const next = Math.floor(Math.random() * window.plantFrameCount);
                 window.plantSprite.setFrame(next);
@@ -2632,6 +2652,7 @@ function toggleBrokerPanel() {
             plant2.setInteractive({ useHandCursor: true });
             // Expose to global for click handler
             window.plantSprite2 = plant2;
+            if (assetVisibility['plants-spritesheet.webp'] === false) plant2.setVisible(false);
             plant2.on('pointerdown', () => {
                 const next = Math.floor(Math.random() * window.plantFrameCount);
                 window.plantSprite2.setFrame(next);
@@ -2644,6 +2665,7 @@ function toggleBrokerPanel() {
             plant3.setInteractive({ useHandCursor: true });
             // Expose to global for click handler
             window.plantSprite3 = plant3;
+            if (assetVisibility['plants-spritesheet.webp'] === false) plant3.setVisible(false);
             plant3.on('pointerdown', () => {
                 const next = Math.floor(Math.random() * window.plantFrameCount);
                 window.plantSprite3.setFrame(next);
@@ -2658,6 +2680,7 @@ function toggleBrokerPanel() {
             // Expose to global for click handler
             window.posterSprite = poster;
             window.posterFrameCount = postersFrameCount;
+            if (assetVisibility['posters-spritesheet.webp'] === false) poster.setVisible(false);
             poster.on('pointerdown', () => {
                 const next = Math.floor(Math.random() * window.posterFrameCount);
                 window.posterSprite.setFrame(next);
