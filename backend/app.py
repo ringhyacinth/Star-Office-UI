@@ -633,9 +633,9 @@ def _generate_rpg_background_to_webp(out_webp_path: str, width: int = 1280, heig
         cmd.extend(["--reference-image", ref_for_call])
 
     env = os.environ.copy()
-    # 运行时配置优先
+    # 运行时配置优先：只保留 GEMINI_API_KEY，避免脚本因双 key 报错
+    env.pop("GOOGLE_API_KEY", None)
     env["GEMINI_API_KEY"] = api_key
-    env.setdefault("GOOGLE_API_KEY", api_key)
     env["GEMINI_MODEL"] = selected_model
 
     proc = subprocess.run(cmd, capture_output=True, text=True, env=env, timeout=240)
