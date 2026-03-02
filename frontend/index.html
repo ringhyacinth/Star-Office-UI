@@ -392,7 +392,7 @@
         #memo-panel {
             width: 400px;
             height: 300px;
-            background-image: url('/static/memo-bg.png');
+            background-image: url('/static/memo-bg.webp');
             background-size: cover;
             background-position: center;
             border: 3px solid #e94560;
@@ -765,7 +765,7 @@
         function ensureMemoBgVisible() {
             const panel = document.getElementById('memo-panel');
             if (!panel) return;
-            panel.style.backgroundImage = "url('/static/memo-bg.png?v={{VERSION_TIMESTAMP}}')";
+            panel.style.backgroundImage = "url('/static/memo-bg.webp?v={{VERSION_TIMESTAMP}}')";
             panel.classList.remove('no-bg');
         }
 
@@ -854,23 +854,6 @@
                 img.onerror = () => resolve(false);
                 img.src = 'data:image/webp;base64,UklGRkoAAABXRUJQVlA4WAoAAAAQAAAAAAAAAAAAQUxQSAwAAAABBxAR/Q9ERP8DAABWUDggGAAAADABAJ0BKgEAAQADADQlpAADcAD++/1QAA==';
             });
-        }
-        
-        // 获取文件扩展名（根据 WebP 支持情况）
-        function getExt(pngFile) {
-            // 回退到 PNG 时，必须保证 png 尺寸与 webp 同规格，否则动画会错帧
-            // 目前这些资源在历史上出现过 png/webp 规格不一致，强制使用 webp 规避错乱
-            const forceWebp = new Set([
-                'star-idle-spritesheet.png',
-                'flowers-spritesheet.png'
-            ]);
-            if (forceWebp.has(pngFile)) return '.webp';
-
-            // star-working-spritesheet.png 太宽，始终用 PNG
-            if (pngFile === 'star-working-spritesheet.png') {
-                return '.png';
-            }
-            return supportsWebP ? '.webp' : '.png';
         }
 
         const IS_TOUCH_DEVICE = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.matchMedia('(pointer: coarse)').matches;
@@ -2432,21 +2415,21 @@ async function generateRpgBackground() {
             // cache-busting to avoid stale background on client/CDN
             // use smaller/new map version provided by user
             this.load.image('office_bg', '/static/office_bg_small.webp?v={{VERSION_TIMESTAMP}}');
-            this.load.spritesheet('star_idle', '/static/star-idle-spritesheet' + getExt('star-idle-spritesheet.png') + '?v={{VERSION_TIMESTAMP}}', { frameWidth: 256, frameHeight: 256 });
-            this.load.spritesheet('star_researching', '/static/star-researching-spritesheet' + getExt('star-researching-spritesheet.png'), { frameWidth: 128, frameHeight: 105 });
+            this.load.spritesheet('star_idle', '/static/star-idle-spritesheet.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 256, frameHeight: 256 });
+            this.load.spritesheet('star_researching', '/static/star-researching-spritesheet.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 128, frameHeight: 105 });
 
             // Furniture
-            this.load.image('sofa_idle', '/static/sofa-idle' + getExt('sofa-idle.png'));
-            this.load.spritesheet('sofa_busy', '/static/sofa-busy-spritesheet' + getExt('sofa-busy-spritesheet.png'), { frameWidth: 256, frameHeight: 256 });
+            this.load.image('sofa_idle', '/static/sofa-idle.webp?v={{VERSION_TIMESTAMP}}');
+            this.load.spritesheet('sofa_busy', '/static/sofa-busy-spritesheet.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 256, frameHeight: 256 });
 
             // Decor
-            this.load.spritesheet('plants', '/static/plants-spritesheet' + getExt('plants-spritesheet.png'), { frameWidth: 160, frameHeight: 160 });
-            this.load.spritesheet('posters', '/static/posters-spritesheet' + getExt('posters-spritesheet.png'), { frameWidth: 160, frameHeight: 160 });
-            this.load.spritesheet('coffee_machine', '/static/coffee-machine-spritesheet' + getExt('coffee-machine-spritesheet.png'), { frameWidth: 230, frameHeight: 230 });
-            this.load.spritesheet('serverroom', '/static/serverroom-spritesheet' + getExt('serverroom-spritesheet.png'), { frameWidth: 180, frameHeight: 251 });
+            this.load.spritesheet('plants', '/static/plants-spritesheet.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 160, frameHeight: 160 });
+            this.load.spritesheet('posters', '/static/posters-spritesheet.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 160, frameHeight: 160 });
+            this.load.spritesheet('coffee_machine', '/static/coffee-machine-spritesheet.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 230, frameHeight: 230 });
+            this.load.spritesheet('serverroom', '/static/serverroom-spritesheet.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 180, frameHeight: 251 });
 
             // Error / bug animation: 180x180, 96 frames (repacked grid)
-            this.load.spritesheet('error_bug', '/static/error-bug-spritesheet-grid' + (supportsWebP ? '.webp' : '.png'), { frameWidth: 180, frameHeight: 180 });
+            this.load.spritesheet('error_bug', '/static/error-bug-spritesheet-grid.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 180, frameHeight: 180 });
 
             // Cat spritesheet: 160x160, 4x4=16 cats
             this.load.spritesheet('cats', '/static/cats-spritesheet.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 160, frameHeight: 160 });
@@ -2454,18 +2437,18 @@ async function generateRpgBackground() {
             // Desk
             // Star working animation: repacked to grid to avoid WebGL max texture size limits
             // NOTE: prefer WebP for size, PNG fallback
-            this.load.spritesheet('star_working', '/static/star-working-spritesheet-grid' + (supportsWebP ? '.webp' : '.png'), { frameWidth: 230, frameHeight: 144 });
+            this.load.spritesheet('star_working', '/static/star-working-spritesheet-grid.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 230, frameHeight: 144 });
 
             // Sync state animation (256x256, 53 frames)
-            this.load.spritesheet('sync_anim', '/static/sync-animation-spritesheet-grid' + (supportsWebP ? '.webp' : '.png'), { frameWidth: 256, frameHeight: 256 });
+            this.load.spritesheet('sync_anim', '/static/sync-animation-spritesheet-grid.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 256, frameHeight: 256 });
 
             // Memo background image
             // memo 底图固定走 png，避免某些端 webp 透明通道异常导致“底图丢失”
-            this.load.image('memo_bg', '/static/memo-bg.png?v={{VERSION_TIMESTAMP}}');
+            this.load.image('memo_bg', '/static/memo-bg.webp?v={{VERSION_TIMESTAMP}}');
             // Desk v2 (webp only)
             this.load.image('desk_v2', '/static/desk-v2.webp?v={{VERSION_TIMESTAMP}}');
             // Flower spritesheet (65x65, 16 frames)
-            this.load.spritesheet('flowers', '/static/flowers-spritesheet' + (supportsWebP ? '.webp' : '.png') + '?v={{VERSION_TIMESTAMP}}', { frameWidth: FLOWERS_FRAME_W, frameHeight: FLOWERS_FRAME_H });
+            this.load.spritesheet('flowers', '/static/flowers-spritesheet.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: FLOWERS_FRAME_W, frameHeight: FLOWERS_FRAME_H });
 
             // Guest/Demo agent sprites
             this.load.spritesheet('guest_anim_1', '/static/guest_anim_1.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 32, frameHeight: 32 });
