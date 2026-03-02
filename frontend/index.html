@@ -274,6 +274,46 @@
             display: none;
             z-index: 999998;
         }
+        #room-loading-overlay {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: min(72vw, 1280px);
+            height: min(56vw, 720px);
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999997;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            border-radius: 10px;
+        }
+        .room-loading-inner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,.18);
+            background: rgba(0,0,0,.28);
+            color: #fff;
+            font-family: 'ArkPixel', monospace;
+            font-size: 18px;
+            text-shadow: 0 2px 6px rgba(0,0,0,.45);
+        }
+        .room-loading-spinner {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 3px solid rgba(255,255,255,.35);
+            border-top-color: #fff;
+            animation: roomSpin .9s linear infinite;
+        }
+        @keyframes roomSpin {
+            to { transform: rotate(360deg); }
+        }
         #control-buttons button { height: 52px; }
         #control-bar button {
             background: #3a3f4f;
@@ -633,6 +673,12 @@
     
     <div id="status-text">加载中...</div>
     <div id="asset-highlight"></div>
+    <div id="room-loading-overlay" aria-live="polite" aria-busy="true">
+        <div class="room-loading-inner">
+            <div class="room-loading-spinner"></div>
+            <div id="room-loading-text">正在打包虾头……</div>
+        </div>
+    </div>
 
     <aside id="asset-drawer">
         <div id="asset-drawer-header">
@@ -1068,6 +1114,8 @@
         })();
         // 坐标以服务端为准；清理历史本地缓存，避免把素材挪飞
         let assetPositionOverrides = {};
+        let roomLoadingTimer = null;
+        let roomLoadingIndex = 0;
         try { localStorage.removeItem('assetPositionOverrides'); } catch (e) {}
         let isMoving = false;
         let waypoints = []; // list of (x,y) to walk through in order
@@ -1930,6 +1978,42 @@ function toggleBrokerPanel() {
             p.classList.toggle('open');
         }
 
+        function showRoomLoadingOverlay(baseText) {
+            const overlay = document.getElementById('room-loading-overlay');
+            const textEl = document.getElementById('room-loading-text');
+            if (!overlay || !textEl) return;
+            const steps = [
+                '正在打包虾头……',
+                '正在打包虾壳……',
+                '正在给小龙虾系蝴蝶结……',
+                '正在搬运桌椅到新房间……',
+                '正在给地板抛光上蜡……',
+                '正在调试像素风灯光……',
+                '正在安放咖啡机与花盆……'
+            ];
+            roomLoadingIndex = 0;
+            textEl.textContent = baseText || steps[0];
+            overlay.style.display = 'flex';
+            if (roomLoadingTimer) clearInterval(roomLoadingTimer);
+            roomLoadingTimer = setInterval(() => {
+                roomLoadingIndex = (roomLoadingIndex + 1) % steps.length;
+                textEl.textContent = steps[roomLoadingIndex];
+            }, 1100);
+        }
+
+        function hideRoomLoadingOverlay() {
+            const overlay = document.getElementById('room-loading-overlay');
+            if (roomLoadingTimer) {
+                clearInterval(roomLoadingTimer);
+                roomLoadingTimer = null;
+            }
+            if (overlay) overlay.style.display = 'none';
+        }
+
+        async function refreshOfficeBackgroundOnly() {
+            return await refreshSceneObjectByAssetPath('office_bg_small.webp');
+        }
+
         async function generateCustomRpgBackground() {
             const out = document.getElementById('asset-upload-result');
             const prompt = (document.getElementById('asset-broker-prompt')?.value || '').trim();
@@ -1938,6 +2022,7 @@ function toggleBrokerPanel() {
                 return;
             }
             out.textContent = t('brokerGenerating');
+            showRoomLoadingOverlay('正在打包虾头……');
             try {
                 const res = await fetch('/assets/generate-rpg-background', {
                     method: 'POST',
@@ -1954,12 +2039,15 @@ function toggleBrokerPanel() {
                 if (!ok) out.textContent = '✅ 已生成并替换底图（局部刷新失败，可手动刷新页面）';
             } catch (e) {
                 out.textContent = `❌ 生成失败：${e}`;
+            } finally {
+                hideRoomLoadingOverlay();
             }
         }
 
         async function generateRpgBackground() {
             const out = document.getElementById('asset-upload-result');
             out.textContent = '🎨 正在生成 RPG 房间底图，请稍候（约20-90秒）...';
+            showRoomLoadingOverlay('正在打包虾壳……');
             try {
                 const res = await fetch('/assets/generate-rpg-background', { method: 'POST' });
                 const data = await res.json();
@@ -1972,12 +2060,15 @@ function toggleBrokerPanel() {
                 if (!ok) out.textContent = '✅ 已生成并替换底图（局部刷新失败，可手动刷新页面）';
             } catch (e) {
                 out.textContent = `❌ 生成失败：${e}`;
+            } finally {
+                hideRoomLoadingOverlay();
             }
         }
 
         async function restoreHomeBackground() {
             const out = document.getElementById('asset-upload-result');
             out.textContent = '🏡 正在回老家（恢复初始底图）...';
+            showRoomLoadingOverlay('正在召唤老家的虾味记忆……');
             try {
                 const res = await fetch('/assets/restore-reference-background', { method: 'POST' });
                 const data = await res.json();
@@ -1990,6 +2081,8 @@ function toggleBrokerPanel() {
                 if (!ok) out.textContent = '✅ 已恢复初始底图（局部刷新失败，可手动刷新页面）';
             } catch (e) {
                 out.textContent = `❌ 恢复失败：${e}`;
+            } finally {
+                hideRoomLoadingOverlay();
             }
         }
 
