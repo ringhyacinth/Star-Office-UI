@@ -1,10 +1,10 @@
-// Star Office UI - 游戏主逻辑
-// 依赖: layout.js（必须在这个之前加载）
+// コメント
+// コメント
 
-// 检测浏览器是否支持 WebP
+// コメント
 let supportsWebP = false;
 
-// 方法 1: 使用 canvas 检测
+// コメント
 function checkWebPSupport() {
   return new Promise((resolve) => {
     const canvas = document.createElement('canvas');
@@ -16,7 +16,7 @@ function checkWebPSupport() {
   });
 }
 
-// 方法 2: 使用 image 检测（备用）
+// コメント
 function checkWebPSupportFallback() {
   return new Promise((resolve) => {
     const img = new Image();
@@ -26,18 +26,185 @@ function checkWebPSupportFallback() {
   });
 }
 
-// 获取文件扩展名（根据 WebP 支持情况 + 布局配置的 forcePng）
+// コメント
 function getExt(pngFile) {
-  // star-working-spritesheet.png 太宽了，WebP 不支持，始终用 PNG
+  // コメント
   if (pngFile === 'star-working-spritesheet.png') {
     return '.png';
   }
-  // 如果布局配置里强制用 PNG，就用 .png
+  // コメント
   if (LAYOUT.forcePng && LAYOUT.forcePng[pngFile.replace(/\.(png|webp)$/, '')]) {
     return '.png';
   }
   return supportsWebP ? '.webp' : '.png';
 }
+
+const LANG_STORAGE_KEY = 'starOfficeLang';
+const LEGACY_LANG_STORAGE_KEY = 'starOfficeUILang';
+const I18N = {
+  ja: {
+    loadingProgress: 'Star のピクセルオフィスを読み込み中... {percent}%',
+    loadingBase: 'Star のピクセルオフィスを読み込み中...',
+    memoEmpty: '昨日のメモはありません',
+    memoError: '読み込みに失敗しました',
+    coordsShow: '座標を表示',
+    coordsHide: '座標を非表示',
+    connectionRetry: '接続に失敗しました。再試行中...',
+    plaque: '海辛のオフィス',
+    demoDetail: 'ピクセル絵を描いてる...'
+  },
+  en: {
+    loadingProgress: 'Loading Star Pixel Office... {percent}%',
+    loadingBase: 'Loading Star Pixel Office...',
+    memoEmpty: 'No memo from yesterday.',
+    memoError: 'Failed to load memo.',
+    coordsShow: 'Show Coords',
+    coordsHide: 'Hide Coords',
+    connectionRetry: 'Connection failed. Retrying...',
+    plaque: 'Kaishin Office',
+    demoDetail: 'Drawing pixel art...'
+  },
+  zh: {
+    loadingProgress: '正在加载 Star 像素办公室... {percent}%',
+    loadingBase: '正在加载 Star 像素办公室...',
+    memoEmpty: '昨天没有备忘录。',
+    memoError: '加载失败。',
+    coordsShow: '显示坐标',
+    coordsHide: '隐藏坐标',
+    connectionRetry: '连接失败，正在重试...',
+    plaque: '海辛办公室',
+    demoDetail: '正在画像素图...'
+  }
+};
+
+const LOCALIZED_STATES = {
+  ja: {
+    idle: '待機',
+    writing: '文書整理',
+    researching: '情報収集',
+    executing: 'タスク実行',
+    syncing: 'バックアップ同期',
+    error: 'エラー'
+  },
+  en: {
+    idle: 'Idle',
+    writing: 'Writing',
+    researching: 'Researching',
+    executing: 'Executing',
+    syncing: 'Syncing',
+    error: 'Error'
+  },
+  zh: {
+    idle: '待机',
+    writing: '文档整理',
+    researching: '信息收集',
+    executing: '任务执行',
+    syncing: '同步备份',
+    error: '错误'
+  }
+};
+
+const LOCALIZED_BUBBLES = {
+  ja: {
+    idle: ['待機中：耳がピンと立ってる', 'ここにいるよ、いつでも開始できる', 'まずはデスクを片付けよう'],
+    writing: ['集中モードに入ります：取り込み中です', 'まずクリティカルパスを通す', '複雑さをシンプルに落とし込む'],
+    researching: ['根拠の連鎖を掘っている', '情報を煮詰めて結論にする', 'なぜこうなるかを調査中'],
+    executing: ['実行中：お見逃しなく', 'タスクを小さく分けて順に突破', '結果がすべてを物語る'],
+    syncing: ['同期中：今日の成果をクラウドに保存', '書き込み中です…電源を切らないでください', 'クラウド同期：完了'],
+    error: ['警報です：まず落ち着いて', 'まず再現し、その後に修正', '大丈夫、これは見慣れているよ'],
+    cat: ['ニャー~', 'ゴロゴロ…', 'しっぽをふりふり']
+  },
+  en: {
+    idle: ['Idle mode: ears up and ready', 'Standing by to start anytime', 'Cleaning up the desk first'],
+    writing: ['Deep focus mode engaged', 'Clear the critical path first', 'Reducing complexity to simple steps'],
+    researching: ['Following the chain of evidence', 'Distilling information into conclusions', 'Investigating why this happens'],
+    executing: ['Executing now: stay tuned', 'Breaking tasks into small wins', 'Results will speak for themselves'],
+    syncing: ['Syncing today\'s progress to cloud', 'Writing in progress... do not power off', 'Cloud sync complete'],
+    error: ['Alert: stay calm first', 'Reproduce first, then fix', 'No worries, seen this before'],
+    cat: ['Meow~', 'Purr...', 'Tail swish swish']
+  },
+  zh: {
+    idle: ['待机中：耳朵竖起来了', '我在这，随时可以开始', '先把桌面整理一下'],
+    writing: ['进入专注模式', '先打通关键路径', '把复杂问题变简单'],
+    researching: ['正在追踪证据链', '把信息提炼成结论', '正在调查原因'],
+    executing: ['执行中：请稍候', '任务拆小逐个突破', '结果会说明一切'],
+    syncing: ['同步中：保存今日成果', '正在写入，请勿断电', '云端同步完成'],
+    error: ['警报：先冷静', '先复现，再修复', '别担心，这很常见'],
+    cat: ['喵~', '呼噜...', '甩甩尾巴']
+  }
+};
+
+function resolveLang() {
+  try {
+    const saved = localStorage.getItem(LANG_STORAGE_KEY) || localStorage.getItem(LEGACY_LANG_STORAGE_KEY);
+    if (saved && I18N[saved]) return saved;
+  } catch (e) {}
+  return 'ja';
+}
+
+let currentLang = resolveLang();
+
+function t(key, vars = {}) {
+  const base = (I18N[currentLang] && I18N[currentLang][key]) || I18N.ja[key] || key;
+  return base.replace(/\{(\w+)\}/g, (_, k) => (vars[k] !== undefined ? vars[k] : `{${k}}`));
+}
+
+function buildStates() {
+  const names = LOCALIZED_STATES[currentLang] || LOCALIZED_STATES.ja;
+  return {
+    idle: { name: names.idle, area: 'breakroom' },
+    writing: { name: names.writing, area: 'writing' },
+    researching: { name: names.researching, area: 'researching' },
+    executing: { name: names.executing, area: 'writing' },
+    syncing: { name: names.syncing, area: 'writing' },
+    error: { name: names.error, area: 'error' }
+  };
+}
+
+function buildBubbleTexts() {
+  return LOCALIZED_BUBBLES[currentLang] || LOCALIZED_BUBBLES.ja;
+}
+
+function setLang(lang, persist = true) {
+  if (!I18N[lang]) return;
+  currentLang = lang;
+  if (persist) {
+    try {
+      localStorage.setItem(LANG_STORAGE_KEY, lang);
+      localStorage.removeItem(LEGACY_LANG_STORAGE_KEY);
+    } catch (e) {}
+  }
+  STATES = buildStates();
+  BUBBLE_TEXTS = buildBubbleTexts();
+  applyRuntimeI18n();
+}
+
+function applyRuntimeI18n() {
+  document.documentElement.lang = currentLang;
+  if (loadingText) {
+    loadingText.textContent = t('loadingBase');
+  }
+  if (coordsToggle) {
+    coordsToggle.textContent = showCoords ? t('coordsHide') : t('coordsShow');
+  }
+  if (window.officePlaqueText) {
+    window.officePlaqueText.setText(t('plaque'));
+  }
+}
+
+window.addEventListener('app:lang-changed', (event) => {
+  const lang = event && event.detail && event.detail.lang;
+  if (lang) setLang(lang, false);
+});
+window.addEventListener('starOfficeLanguageChanged', (event) => {
+  const lang = event && event.detail && event.detail.lang;
+  if (lang) setLang(lang, false);
+});
+window.addEventListener('storage', (event) => {
+  if ((event.key === LANG_STORAGE_KEY || event.key === LEGACY_LANG_STORAGE_KEY) && event.newValue && I18N[event.newValue]) {
+    setLang(event.newValue, false);
+  }
+});
 
 const config = {
   type: Phaser.AUTO,
@@ -53,7 +220,7 @@ let totalAssets = 0;
 let loadedAssets = 0;
 let loadingProgressBar, loadingProgressContainer, loadingOverlay, loadingText;
 
-// Memo 相关函数
+// コメント
 async function loadMemo() {
   const memoDate = document.getElementById('memo-date');
   const memoContent = document.getElementById('memo-content');
@@ -66,15 +233,15 @@ async function loadMemo() {
       memoDate.textContent = data.date || '';
       memoContent.innerHTML = data.memo.replace(/\n/g, '<br>');
     } else {
-      memoContent.innerHTML = '<div id="memo-placeholder">暂无昨日日记</div>';
+      memoContent.innerHTML = '<div id="memo-placeholder">' + t('memoEmpty') + '</div>';
     }
   } catch (e) {
-    console.error('加载 memo 失败:', e);
-    memoContent.innerHTML = '<div id="memo-placeholder">加载失败</div>';
+    console.error('memo読み込みエラー:', e);
+    memoContent.innerHTML = '<div id="memo-placeholder">' + t('memoError') + '</div>';
   }
 }
 
-// 更新加载进度
+// コメント
 function updateLoadingProgress() {
   loadedAssets++;
   const percent = Math.min(100, Math.round((loadedAssets / totalAssets) * 100));
@@ -82,11 +249,11 @@ function updateLoadingProgress() {
     loadingProgressBar.style.width = percent + '%';
   }
   if (loadingText) {
-    loadingText.textContent = `正在加载 Star 的像素办公室... ${percent}%`;
+    loadingText.textContent = t('loadingProgress', { percent });
   }
 }
 
-// 隐藏加载界面
+// コメント
 function hideLoadingOverlay() {
   setTimeout(() => {
     if (loadingOverlay) {
@@ -99,93 +266,8 @@ function hideLoadingOverlay() {
   }, 300);
 }
 
-const STATES = {
-  idle: { name: '待命', area: 'breakroom' },
-  writing: { name: '整理文档', area: 'writing' },
-  researching: { name: '搜索信息', area: 'researching' },
-  executing: { name: '执行任务', area: 'writing' },
-  syncing: { name: '同步备份', area: 'writing' },
-  error: { name: '出错了', area: 'error' }
-};
-
-const BUBBLE_TEXTS = {
-  idle: [
-    '待命中：耳朵竖起来了',
-    '我在这儿，随时可以开工',
-    '先把桌面收拾干净再说',
-    '呼——给大脑放个风',
-    '今天也要优雅地高效',
-    '等待，是为了更准确的一击',
-    '咖啡还热，灵感也还在',
-    '我在后台给你加 Buff',
-    '状态：静心 / 充电',
-    '小猫说：慢一点也没关系'
-  ],
-  writing: [
-    '进入专注模式：勿扰',
-    '先把关键路径跑通',
-    '我来把复杂变简单',
-    '把 bug 关进笼子里',
-    '写到一半，先保存',
-    '把每一步都做成可回滚',
-    '今天的进度，明天的底气',
-    '先收敛，再发散',
-    '让系统变得更可解释',
-    '稳住，我们能赢'
-  ],
-  researching: [
-    '我在挖证据链',
-    '让我把信息熬成结论',
-    '找到了：关键在这里',
-    '先把变量控制住',
-    '我在查：它为什么会这样',
-    '把直觉写成验证',
-    '先定位，再优化',
-    '别急，先画因果图'
-  ],
-  executing: [
-    '执行中：不要眨眼',
-    '把任务切成小块逐个击破',
-    '开始跑 pipeline',
-    '一键推进：走你',
-    '让结果自己说话',
-    '先做最小可行，再做最美版本'
-  ],
-  syncing: [
-    '同步中：把今天锁进云里',
-    '备份不是仪式，是安全感',
-    '写入中…别断电',
-    '把变更交给时间戳',
-    '云端对齐：咔哒',
-    '同步完成前先别乱动',
-    '把未来的自己从灾难里救出来',
-    '多一份备份，少一份后悔'
-  ],
-  error: [
-    '警报响了：先别慌',
-    '我闻到 bug 的味道了',
-    '先复现，再谈修复',
-    '把日志给我，我会说人话',
-    '错误不是敌人，是线索',
-    '把影响面圈起来',
-    '先止血，再手术',
-    '我在：马上定位根因',
-    '别怕，这种我见多了',
-    '报警中：让问题自己现形'
-  ],
-  cat: [
-    '喵~',
-    '咕噜咕噜…',
-    '尾巴摇一摇',
-    '晒太阳最开心',
-    '有人来看我啦',
-    '我是这个办公室的吉祥物',
-    '伸个懒腰',
-    '今天的罐罐准备好了吗',
-    '呼噜呼噜',
-    '这个位置视野最好'
-  ]
-};
+let STATES = buildStates();
+let BUBBLE_TEXTS = buildBubbleTexts();
 
 let game, star, sofa, serverroom, areas = {}, currentState = 'idle', pendingDesiredState = null, statusText, lastFetch = 0, lastBlink = 0, lastBubble = 0, targetX = 660, targetY = 170, bubble = null, typewriterText = '', typewriterTarget = '', typewriterIndex = 0, lastTypewriter = 0, syncAnimSprite = null, catBubble = null;
 let isMoving = false;
@@ -199,11 +281,11 @@ const BUBBLE_INTERVAL = 8000;
 const CAT_BUBBLE_INTERVAL = 18000;
 let lastCatBubble = 0;
 const TYPEWRITER_DELAY = 50;
-let agents = {}; // agentId -> sprite/container
+let agents = {}; // コメント
 let lastAgentsFetch = 0;
 const AGENTS_FETCH_INTERVAL = 2500;
 
-// agent 颜色配置
+// コメント
 const AGENT_COLORS = {
   star: 0xffd700,
   npc1: 0x00aaff,
@@ -211,7 +293,7 @@ const AGENT_COLORS = {
   default: 0x94a3b8
 };
 
-// agent 名字颜色
+// コメント
 const NAME_TAG_COLORS = {
   approved: 0x22c55e,
   pending: 0xf59e0b,
@@ -220,7 +302,7 @@ const NAME_TAG_COLORS = {
   default: 0x1f2937
 };
 
-// breakroom / writing / error 区域的 agent 分布位置（多 agent 时错开）
+// コメント
 const AREA_POSITIONS = {
   breakroom: [
     { x: 620, y: 180 },
@@ -242,7 +324,7 @@ const AREA_POSITIONS = {
 let areaPositionCounters = { breakroom: 0, writing: 0, error: 0 };
 
 
-// 状态控制栏函数（用于测试）
+// コメント
 function setState(state, detail) {
   fetch('/set_state', {
     method: 'POST',
@@ -251,7 +333,7 @@ function setState(state, detail) {
   }).then(() => fetchStatus());
 }
 
-// 初始化：先检测 WebP 支持，再启动游戏
+// コメント
 async function initGame() {
   try {
     supportsWebP = await checkWebPSupport();
@@ -263,7 +345,7 @@ async function initGame() {
     }
   }
 
-  console.log('WebP 支持:', supportsWebP);
+  console.log('WebP support:', supportsWebP);
   new Phaser.Game(config);
 }
 
@@ -272,8 +354,9 @@ function preload() {
   loadingProgressBar = document.getElementById('loading-progress-bar');
   loadingText = document.getElementById('loading-text');
   loadingProgressContainer = document.getElementById('loading-progress-container');
+  applyRuntimeI18n();
 
-  // 从 LAYOUT 读取总资源数量（避免 magic number）
+  // コメント
   totalAssets = LAYOUT.totalAssets || 15;
   loadedAssets = 0;
 
@@ -304,7 +387,7 @@ function preload() {
   this.load.spritesheet('sync_anim', '/static/sync-animation-spritesheet-grid' + (supportsWebP ? '.webp' : '.png'), { frameWidth: 256, frameHeight: 256 });
   this.load.image('memo_bg', '/static/memo-bg' + (supportsWebP ? '.webp' : '.png'));
 
-  // 新办公桌：强制 PNG（透明）
+  // コメント
   this.load.image('desk_v2', '/static/desk-v2.png');
   this.load.spritesheet('flowers', '/static/flowers-spritesheet' + (supportsWebP ? '.webp' : '.png'), { frameWidth: 65, frameHeight: 65 });
 }
@@ -313,7 +396,7 @@ function create() {
   game = this;
   this.add.image(640, 360, 'office_bg');
 
-  // === 沙发（来自 LAYOUT）===
+  // コメント
   sofa = this.add.sprite(
     LAYOUT.furniture.sofa.x,
     LAYOUT.furniture.sofa.y,
@@ -356,12 +439,12 @@ function create() {
     sofa.anims.play('sofa_busy', true);
   }
 
-  // === 牌匾（来自 LAYOUT）===
+  // コメント
   const plaqueX = LAYOUT.plaque.x;
   const plaqueY = LAYOUT.plaque.y;
   const plaqueBg = game.add.rectangle(plaqueX, plaqueY, LAYOUT.plaque.width, LAYOUT.plaque.height, 0x5d4037);
   plaqueBg.setStrokeStyle(3, 0x3e2723);
-  const plaqueText = game.add.text(plaqueX, plaqueY, '海辛小龙虾的办公室', {
+  const plaqueText = game.add.text(plaqueX, plaqueY, t('plaque'), {
     fontFamily: 'ArkPixel, monospace',
     fontSize: '18px',
     fill: '#ffd700',
@@ -369,10 +452,11 @@ function create() {
     stroke: '#000',
     strokeThickness: 2
   }).setOrigin(0.5);
+  window.officePlaqueText = plaqueText;
   game.add.text(plaqueX - 190, plaqueY, '⭐', { fontFamily: 'ArkPixel, monospace', fontSize: '20px' }).setOrigin(0.5);
   game.add.text(plaqueX + 190, plaqueY, '⭐', { fontFamily: 'ArkPixel, monospace', fontSize: '20px' }).setOrigin(0.5);
 
-  // === 植物们（来自 LAYOUT）===
+  // コメント
   const plantFrameCount = 16;
   for (let i = 0; i < LAYOUT.furniture.plants.length; i++) {
     const p = LAYOUT.furniture.plants[i];
@@ -387,7 +471,7 @@ function create() {
     }));
   }
 
-  // === 海报（来自 LAYOUT）===
+  // コメント
   const postersFrameCount = 32;
   const randomPosterFrame = Math.floor(Math.random() * postersFrameCount);
   const poster = game.add.sprite(LAYOUT.furniture.poster.x, LAYOUT.furniture.poster.y, 'posters', randomPosterFrame).setOrigin(0.5);
@@ -400,7 +484,7 @@ function create() {
     window.posterSprite.setFrame(next);
   });
 
-  // === 小猫（来自 LAYOUT）===
+  // コメント
   const catsFrameCount = 16;
   const randomCatFrame = Math.floor(Math.random() * catsFrameCount);
   const cat = game.add.sprite(LAYOUT.furniture.cat.x, LAYOUT.furniture.cat.y, 'cats', randomCatFrame).setOrigin(LAYOUT.furniture.cat.origin.x, LAYOUT.furniture.cat.origin.y);
@@ -413,7 +497,7 @@ function create() {
     window.catSprite.setFrame(next);
   });
 
-  // === 咖啡机（来自 LAYOUT）===
+  // コメント
   this.anims.create({
     key: 'coffee_machine',
     frames: this.anims.generateFrameNumbers('coffee_machine', { start: 0, end: 95 }),
@@ -428,7 +512,7 @@ function create() {
   coffeeMachine.setDepth(LAYOUT.furniture.coffeeMachine.depth);
   coffeeMachine.anims.play('coffee_machine', true);
 
-  // === 服务器区（来自 LAYOUT）===
+  // コメント
   this.anims.create({
     key: 'serverroom_on',
     frames: this.anims.generateFrameNumbers('serverroom', { start: 0, end: 39 }),
@@ -445,7 +529,7 @@ function create() {
   serverroom.anims.stop();
   serverroom.setFrame(0);
 
-  // === 新办公桌（来自 LAYOUT，强制透明 PNG）===
+  // コメント
   const desk = this.add.image(
     LAYOUT.furniture.desk.x,
     LAYOUT.furniture.desk.y,
@@ -453,7 +537,7 @@ function create() {
   ).setOrigin(LAYOUT.furniture.desk.origin.x, LAYOUT.furniture.desk.origin.y);
   desk.setDepth(LAYOUT.furniture.desk.depth);
 
-  // === 花盆（来自 LAYOUT）===
+  // コメント
   const flowerFrameCount = 16;
   const randomFlowerFrame = Math.floor(Math.random() * flowerFrameCount);
   const flower = this.add.sprite(
@@ -471,7 +555,7 @@ function create() {
     window.flowerSprite.setFrame(next);
   });
 
-  // === Star 在桌前工作（来自 LAYOUT）===
+  // コメント
   this.anims.create({
     key: 'star_working',
     frames: this.anims.generateFrameNumbers('star_working', { start: 0, end: 191 }),
@@ -485,7 +569,7 @@ function create() {
     repeat: -1
   });
 
-  // === 错误 bug（来自 LAYOUT）===
+  // コメント
   const errorBug = this.add.sprite(
     LAYOUT.furniture.errorBug.x,
     LAYOUT.furniture.errorBug.y,
@@ -510,7 +594,7 @@ function create() {
   starWorking.setDepth(LAYOUT.furniture.starWorking.depth);
   window.starWorking = starWorking;
 
-  // === 同步动画（来自 LAYOUT）===
+  // コメント
   this.anims.create({
     key: 'sync_anim',
     frames: this.anims.generateFrameNumbers('sync_anim', { start: 1, end: 52 }),
@@ -537,9 +621,10 @@ function create() {
   coordsToggle.addEventListener('click', () => {
     showCoords = !showCoords;
     coordsOverlay.style.display = showCoords ? 'block' : 'none';
-    coordsToggle.textContent = showCoords ? '隐藏坐标' : '显示坐标';
+    coordsToggle.textContent = showCoords ? t('coordsHide') : t('coordsShow');
     coordsToggle.style.background = showCoords ? '#e94560' : '#333';
   });
+  applyRuntimeI18n();
 
   game.input.on('pointermove', (pointer) => {
     if (!showCoords) return;
@@ -552,13 +637,13 @@ function create() {
 
   loadMemo();
   fetchStatus();
-  // 先强制加一个测试用的尼卡 agent 渲染
+  // コメント
   const testNika = {
     agentId: 'agent_nika',
-    name: '尼卡',
+    name: 'ニカ',
     isMain: false,
     state: 'writing',
-    detail: '在画像素画...',
+    detail: t('demoDetail'),
     area: 'writing',
     authStatus: 'approved',
     updated_at: new Date().toISOString()
@@ -566,7 +651,7 @@ function create() {
   renderAgent(testNika);
   fetchAgents();
 
-  // 测试用：让尼卡模拟走来走去
+  // コメント
   window.testNikaState = 'writing';
   window.testNikaTimer = setInterval(() => {
     const states = ['idle', 'writing', 'researching', 'executing'];
@@ -574,10 +659,10 @@ function create() {
     window.testNikaState = states[Math.floor(Math.random() * states.length)];
     const testAgent = {
       agentId: 'agent_nika',
-      name: '尼卡',
+      name: 'ニカ',
       isMain: false,
       state: window.testNikaState,
-      detail: '在画像素画...',
+      detail: t('demoDetail'),
       area: areas[window.testNikaState],
       authStatus: 'approved',
       updated_at: new Date().toISOString()
@@ -752,7 +837,7 @@ function fetchStatus() {
       }
     })
     .catch(error => {
-      typewriterTarget = '连接失败，正在重试...';
+      typewriterTarget = t('connectionRetry');
       typewriterText = '';
       typewriterIndex = 0;
     });
@@ -867,7 +952,7 @@ function showBubble() {
 function showCatBubble() {
   if (!window.catSprite) return;
   if (window.catBubble) { window.catBubble.destroy(); window.catBubble = null; }
-  const texts = BUBBLE_TEXTS.cat || ['喵~', '咕噜咕噜…'];
+  const texts = BUBBLE_TEXTS.cat || LOCALIZED_BUBBLES.ja.cat;
   const text = texts[Math.floor(Math.random() * texts.length)];
   const anchorX = window.catSprite.x;
   const anchorY = window.catSprite.y - 60;
@@ -884,13 +969,13 @@ function fetchAgents() {
     .then(response => response.json())
     .then(data => {
       if (!Array.isArray(data)) return;
-      // 重置位置计数器
+      // コメント
       areaPositionCounters = { breakroom: 0, writing: 0, error: 0 };
-      // 处理每个 agent
+      // コメント
       for (let agent of data) {
         renderAgent(agent);
       }
-      // 移除不再存在的 agent
+      // コメント
       const currentIds = new Set(data.map(a => a.agentId));
       for (let id in agents) {
         if (!currentIds.has(id)) {
@@ -902,7 +987,7 @@ function fetchAgents() {
       }
     })
     .catch(error => {
-      console.error('拉取 agents 失败:', error);
+      console.error('エージェント一覧の取得に失敗:', error);
     });
 }
 
@@ -920,34 +1005,34 @@ function renderAgent(agent) {
   const authStatus = agent.authStatus || 'pending';
   const isMain = !!agent.isMain;
 
-  // 获取这个 agent 在区域里的位置
+  // コメント
   const pos = getAreaPosition(area);
   const baseX = pos.x;
   const baseY = pos.y;
 
-  // 颜色
+  // コメント
   const bodyColor = AGENT_COLORS[agentId] || AGENT_COLORS.default;
   const nameColor = NAME_TAG_COLORS[authStatus] || NAME_TAG_COLORS.default;
 
-  // 透明度（离线/待批准/拒绝时变半透明）
+  // コメント
   let alpha = 1;
   if (authStatus === 'pending') alpha = 0.7;
   if (authStatus === 'rejected') alpha = 0.4;
   if (authStatus === 'offline') alpha = 0.5;
 
   if (!agents[agentId]) {
-    // 新建 agent
+    // コメント
     const container = game.add.container(baseX, baseY);
-    container.setDepth(1200 + (isMain ? 100 : 0)); // 放到最顶层！
+    container.setDepth(1200 + (isMain ? 100 : 0)); // コメント
 
-    // 像素小人：用星星图标，更明显
+    // コメント
     const starIcon = game.add.text(0, 0, '⭐', {
       fontFamily: 'ArkPixel, monospace',
       fontSize: '32px'
     }).setOrigin(0.5);
     starIcon.name = 'starIcon';
 
-    // 名字标签（漂浮）
+    // コメント
     const nameTag = game.add.text(0, -36, name, {
       fontFamily: 'ArkPixel, monospace',
       fontSize: '14px',
@@ -958,7 +1043,7 @@ function renderAgent(agent) {
     }).setOrigin(0.5);
     nameTag.name = 'nameTag';
 
-    // 状态小点（绿色/黄色/红色）
+    // コメント
     let dotColor = 0x64748b;
     if (authStatus === 'approved') dotColor = 0x22c55e;
     if (authStatus === 'pending') dotColor = 0xf59e0b;
@@ -971,19 +1056,19 @@ function renderAgent(agent) {
     container.add([starIcon, statusDot, nameTag]);
     agents[agentId] = container;
   } else {
-    // 更新 agent
+    // コメント
     const container = agents[agentId];
     container.setPosition(baseX, baseY);
     container.setAlpha(alpha);
     container.setDepth(1200 + (isMain ? 100 : 0));
 
-    // 更新名字和颜色（如果变化）
+    // コメント
     const nameTag = container.getAt(2);
     if (nameTag && nameTag.name === 'nameTag') {
       nameTag.setText(name);
       nameTag.setFill('#' + (NAME_TAG_COLORS[authStatus] || NAME_TAG_COLORS.default).toString(16).padStart(6, '0'));
     }
-    // 更新状态点颜色
+    // コメント
     const statusDot = container.getAt(1);
     if (statusDot && statusDot.name === 'statusDot') {
       let dotColor = 0x64748b;
@@ -996,5 +1081,5 @@ function renderAgent(agent) {
   }
 }
 
-// 启动游戏
+// コメント
 initGame();
