@@ -28,11 +28,12 @@
         #main-stage {
             position: relative;
             width: 1280px;
-            transition: transform .25s ease;
-            will-change: transform;
+            transition: margin-left .25s ease;
+            will-change: margin-left;
         }
         body.drawer-open #main-stage {
-            transform: translateX(calc(-1 * min(420px, 92vw)));
+            /* 右侧紧贴侧边栏左缘，避免出现大空隙 */
+            margin-left: max(0px, calc(100vw - min(420px, 92vw) - 1280px));
         }
         #bottom-panels {
             display: flex;
@@ -536,7 +537,7 @@
             }
 
             body.drawer-open #main-stage {
-                transform: translateX(calc(-1 * min(92vw, 420px)));
+                margin-left: max(0px, calc(100vw - min(92vw, 420px) - 1280px));
             }
 
             #memo-panel,
