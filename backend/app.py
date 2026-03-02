@@ -31,7 +31,11 @@ ASSET_TEMPLATE_ZIP = os.path.join(ROOT_DIR, "assets-replace-template.zip")
 WORKSPACE_DIR = os.path.dirname(ROOT_DIR)
 GEMINI_SCRIPT = os.path.join(WORKSPACE_DIR, "skills", "gemini-image-generate", "scripts", "gemini_image_generate.py")
 GEMINI_PYTHON = os.path.join(WORKSPACE_DIR, "skills", "gemini-image-generate", ".venv", "bin", "python")
-ROOM_REFERENCE_IMAGE = os.path.join(ROOT_DIR, "assets", "room-reference.png")
+ROOM_REFERENCE_IMAGE = (
+    os.path.join(ROOT_DIR, "assets", "room-reference.webp")
+    if os.path.exists(os.path.join(ROOT_DIR, "assets", "room-reference.webp"))
+    else os.path.join(ROOT_DIR, "assets", "room-reference.png")
+)
 BG_HISTORY_DIR = os.path.join(ROOT_DIR, "assets", "bg-history")
 ASSET_POSITIONS_FILE = os.path.join(ROOT_DIR, "asset-positions.json")
 ASSET_DEFAULTS_FILE = os.path.join(ROOT_DIR, "asset-defaults.json")
@@ -1187,12 +1191,25 @@ def assets_restore_reference_background():
         bak = target.with_suffix(target.suffix + ".bak")
         shutil.copy2(target, bak)
 
-        if Image is None:
-            return jsonify({"ok": False, "msg": "Pillow 不可用"}), 500
+        # 快速路径：若参考图已是 1280x720 的 webp，直接拷贝（秒级）
+        ref_ext = os.path.splitext(ROOM_REFERENCE_IMAGE)[1].lower()
+        fast_copied = False
+        if ref_ext == '.webp':
+            try:
+                with Image.open(ROOM_REFERENCE_IMAGE) as rim:
+                    if rim.size == (1280, 720):
+                        shutil.copy2(ROOM_REFERENCE_IMAGE, target)
+                        fast_copied = True
+            except Exception:
+                fast_copied = False
 
-        with Image.open(ROOM_REFERENCE_IMAGE) as im:
-            im = im.convert("RGBA").resize((1280, 720), Image.Resampling.LANCZOS)
-            im.save(target, "WEBP", quality=92, method=6)
+        # 慢路径：仅在必要时重编码
+        if not fast_copied:
+            if Image is None:
+                return jsonify({"ok": False, "msg": "Pillow 不可用"}), 500
+            with Image.open(ROOM_REFERENCE_IMAGE) as im:
+                im = im.convert("RGBA").resize((1280, 720), Image.Resampling.LANCZOS)
+                im.save(target, "WEBP", quality=92, method=6)
 
         st = target.stat()
         return jsonify({

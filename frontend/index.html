@@ -2283,7 +2283,7 @@ function toggleBrokerPanel() {
                     out.textContent = `❌ 恢复失败：${data.msg || res.status}`;
                     return;
                 }
-                out.textContent = '✅ 已恢复初始底图，正在刷新房间...';
+                out.textContent = '✅ 已恢复初始底图';
                 const ok = await refreshOfficeBackgroundOnly();
                 if (!ok) out.textContent = '✅ 已恢复初始底图（局部刷新失败，可手动刷新页面）';
             } catch (e) {
