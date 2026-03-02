@@ -1589,12 +1589,59 @@
             // 先看命名是否属于精灵表
             const inferred = inferSpritesheetFrameMetaByPath(item?.path || '');
             if (!inferred) return null;
-            // 尺寸未知时返回 null 尺寸，调用侧需兜底
-            if (item && Number(item.width) > 0 && Number(item.height) > 0) {
-                // 宽高是整图尺寸，不等于单帧；这里只用于“这是精灵表资源”的判断
-                return { w: Number(item.width), h: Number(item.height), isSheet: true };
-            }
+            // 仅返回“是精灵表”的信号，单帧尺寸后续自动推断
             return { w: null, h: null, isSheet: true };
+        }
+
+        function guessThumbFrameSize(fullW, fullH, path = '') {
+            const p = (path || '').toLowerCase();
+            // 常见核心资产优先用显式提示（避免误判）
+            const hints = [
+                [/star-working-spritesheet-grid\.webp$/, 300, 300],
+                [/star-idle-spritesheet\.webp$/, 256, 256],
+                [/star-researching-spritesheet\.webp$/, 256, 256],
+                [/sync-animation-spritesheet-grid\.webp$/, 256, 256],
+                [/error-bug-spritesheet-grid\.webp$/, 220, 220],
+                [/sofa-busy-spritesheet\.webp$/, 240, 240],
+                [/flowers-spritesheet\.webp$/, 128, 128],
+                [/plants-spritesheet\.webp$/, 160, 160]
+            ];
+            for (const [re, fw, fh] of hints) {
+                if (re.test(p) && fullW % fw === 0 && fullH % fh === 0) return { fw, fh };
+            }
+
+            // 通用推断：枚举可整除候选，偏好 cols≈8、帧尺寸适中、近似方形
+            const divisors = (n) => {
+                const arr = [];
+                for (let i = 1; i * i <= n; i++) {
+                    if (n % i === 0) {
+                        arr.push(i);
+                        if (i * i !== n) arr.push(n / i);
+                    }
+                }
+                return arr.sort((a, b) => a - b);
+            };
+            const fwCand = divisors(fullW).filter(v => v >= 48 && v <= 512);
+            const fhCand = divisors(fullH).filter(v => v >= 48 && v <= 512);
+            let best = null;
+            for (const fw of fwCand) {
+                for (const fh of fhCand) {
+                    const cols = fullW / fw;
+                    const rows = fullH / fh;
+                    if (!Number.isInteger(cols) || !Number.isInteger(rows)) continue;
+                    const frames = cols * rows;
+                    if (frames <= 1 || cols < 2 || rows < 1) continue;
+                    let score = 0;
+                    if (cols === 8) score += 120;
+                    else if (cols >= 4 && cols <= 10) score += 45;
+                    if (rows >= 1 && rows <= 10) score += 25;
+                    score += Math.min(frames, 120) * 0.8;
+                    score -= Math.abs(fw - fh) * 0.12;
+                    if (fw === fullW || fh === fullH) score -= 80;
+                    if (!best || score > best.score) best = { fw, fh, score };
+                }
+            }
+            return best ? { fw: best.fw, fh: best.fh } : null;
         }
 
         function tryAnimateAssetThumb(item) {
@@ -1610,8 +1657,10 @@
                 const fullH = img.naturalHeight || img.height;
                 const meta = getSpritesheetFrameMeta(item);
                 if (!meta) return;
-                const fw = meta.w;
-                const fh = meta.h;
+                const guessed = guessThumbFrameSize(fullW, fullH, item?.path || '');
+                if (!guessed) return;
+                const fw = guessed.fw;
+                const fh = guessed.fh;
 
                 // 判断是否可能是精灵表：整图宽高至少是单帧的整数倍，且总帧数>1
                 const cols = Math.floor(fullW / fw);
