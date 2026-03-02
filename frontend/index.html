@@ -2836,7 +2836,7 @@ function toggleBrokerPanel() {
             this.load.spritesheet('star_working', '/static/star-working-spritesheet-grid.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 300, frameHeight: 300 });
 
             // Sync state animation (256x256, 53 frames)
-            this.load.spritesheet('sync_anim', '/static/sync-animation-spritesheet-grid.webp?v={{VERSION_TIMESTAMP}}', { frameWidth: 256, frameHeight: 256 });
+            this.load.spritesheet('sync_anim', '/static/sync-animation-spritesheet-grid.webp?v={VERSION_TIMESTAMP}', { frameWidth: 256, frameHeight: 256 });
 
             // Memo background image
             // memo 底图固定走 png，避免某些端 webp 透明通道异常导致“底图丢失”
@@ -3080,7 +3080,7 @@ function toggleBrokerPanel() {
             // Sync animation sprite at (1157,592)
             this.anims.create({
                 key: 'sync_anim',
-                frames: this.anims.generateFrameNumbers('sync_anim', { start: 0, end: 49 }),
+                frames: this.anims.generateFrameNumbers('sync_anim', { start: 0, end: 47 }),
                 frameRate: 12,
                 repeat: -1
             });
