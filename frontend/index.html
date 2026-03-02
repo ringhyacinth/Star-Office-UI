@@ -2806,6 +2806,15 @@
             const stateInfo = STATES[effectiveState] || STATES.idle;
             const baseTarget = areas[stateInfo.area] || areas.breakroom;
 
+            // idle 时锁定位置（不走任何移动路径）
+            if (effectiveState === 'idle') {
+                if (star && star.visible) {
+                    star.setPosition(IDLE_SOFA_ANCHOR.x, IDLE_SOFA_ANCHOR.y);
+                }
+                isMoving = false;
+                return;
+            }
+
             const dx = targetX - star.x;
             const dy = targetY - star.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
