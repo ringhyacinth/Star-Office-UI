@@ -1,0 +1,11 @@
+services:
+  star-office-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: star-office-ui
+    ports:
+      - "18888:18888"
+    volumes:
+      - ../../memory:/memory:ro
+    restart: unless-stopped
