@@ -1,16 +1,23 @@
 #!/usr/bin/env python3
 """Star Office UI - Backend State Service"""
 
-from flask import Flask, jsonify, send_from_directory, make_response, request
+from flask import Flask, jsonify, send_from_directory, make_response, request, session
 from datetime import datetime, timedelta
-from urllib.parse import urlparse
-import hmac
-import html as html_mod
 import json
 import os
+import random
+import math
 import re
+import shutil
+import subprocess
+import tempfile
 import threading
-import uuid
+from pathlib import Path
+
+try:
+    from PIL import Image
+except Exception:
+    Image = None
 
 # Paths (project-relative, no hardcoded absolute paths)
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -19,12 +26,21 @@ FRONTEND_DIR = os.path.join(ROOT_DIR, "frontend")
 STATE_FILE = os.path.join(ROOT_DIR, "state.json")
 AGENTS_STATE_FILE = os.path.join(ROOT_DIR, "agents-state.json")
 JOIN_KEYS_FILE = os.path.join(ROOT_DIR, "join-keys.json")
-
-# Security/validation knobs
-OFFICE_SET_STATE_TOKEN = (os.environ.get("OFFICE_SET_STATE_TOKEN") or os.environ.get("OFFICE_STATUS_SYNC_TOKEN") or "").strip()
-MAX_DETAIL_LEN = int(os.environ.get("OFFICE_MAX_DETAIL_LEN", "200"))
-MAX_NAME_LEN = int(os.environ.get("OFFICE_MAX_NAME_LEN", "50"))
-CONTROL_CHAR_RE = re.compile(r"[\x00-\x1f\x7f]")
+FRONTEND_PATH = Path(FRONTEND_DIR)
+ASSET_ALLOWED_EXTS = {".png", ".webp", ".jpg", ".jpeg", ".gif", ".svg", ".avif"}
+ASSET_TEMPLATE_ZIP = os.path.join(ROOT_DIR, "assets-replace-template.zip")
+WORKSPACE_DIR = os.path.dirname(ROOT_DIR)
+GEMINI_SCRIPT = os.path.join(WORKSPACE_DIR, "skills", "gemini-image-generate", "scripts", "gemini_image_generate.py")
+GEMINI_PYTHON = os.path.join(WORKSPACE_DIR, "skills", "gemini-image-generate", ".venv", "bin", "python")
+ROOM_REFERENCE_IMAGE = (
+    os.path.join(ROOT_DIR, "assets", "room-reference.webp")
+    if os.path.exists(os.path.join(ROOT_DIR, "assets", "room-reference.webp"))
+    else os.path.join(ROOT_DIR, "assets", "room-reference.png")
+)
+BG_HISTORY_DIR = os.path.join(ROOT_DIR, "assets", "bg-history")
+ASSET_POSITIONS_FILE = os.path.join(ROOT_DIR, "asset-positions.json")
+ASSET_DEFAULTS_FILE = os.path.join(ROOT_DIR, "asset-defaults.json")
+RUNTIME_CONFIG_FILE = os.path.join(ROOT_DIR, "runtime-config.json")
 
 
 def get_yesterday_date_str():
@@ -33,92 +49,25 @@ def get_yesterday_date_str():
     return yesterday.strftime("%Y-%m-%d")
 
 
-def clean_text(value, max_len=200):
-    """输入清洗：去控制字符、去首尾空格、限长、转义HTML实体。"""
-    if value is None:
-        return ""
-    text = str(value)
-    text = CONTROL_CHAR_RE.sub("", text).strip()
-    text = html_mod.escape(text)
-    if len(text) > max_len:
-        text = text[:max_len]
-    return text
-
-
-def get_trace_id():
-    return (request.headers.get("X-Trace-Id") or "").strip() or f"office-{uuid.uuid4().hex[:10]}"
-
-
-def log_event(level, message, **fields):
-    payload = {
-        "ts": datetime.now().isoformat(),
-        "level": level,
-        "message": message,
-    }
-    payload.update(fields)
-    try:
-        print(json.dumps(payload, ensure_ascii=False), flush=True)
-    except Exception:
-        print(f"[{level}] {message} {fields}", flush=True)
-
-
-def is_same_origin_request():
-    """Allow browser same-origin requests (e.g. local control panel buttons)."""
-    req_host = (request.host or "").lower()
-    origin = request.headers.get("Origin") or request.headers.get("Referer")
-    if not origin:
-        return False
-    try:
-        parsed = urlparse(origin)
-        return (parsed.netloc or "").lower() == req_host
-    except Exception:
-        return False
-
-
-def is_loopback_remote():
-    addr = (request.remote_addr or "").strip()
-    return addr in {"127.0.0.1", "::1", "localhost"}
-
-
-def is_set_state_authorized():
-    """Authorize set_state: same-origin browser OR token OR local loopback fallback."""
-    if is_same_origin_request():
-        return True, "same-origin"
-
-    token = (request.headers.get("X-Office-Token") or "").strip()
-    if OFFICE_SET_STATE_TOKEN and token and hmac.compare_digest(token, OFFICE_SET_STATE_TOKEN):
-        return True, "token"
-
-    # Backward compatibility: keep local loopback calls working even if token is unset.
-    if not OFFICE_SET_STATE_TOKEN and is_loopback_remote():
-        return True, "loopback-no-token"
-
-    return False, "unauthorized"
-
-
 def sanitize_content(text):
     """清理内容，保护隐私"""
     import re
-
+    
     # 移除 OpenID、User ID 等
     text = re.sub(r'ou_[a-f0-9]+', '[用户]', text)
     text = re.sub(r'user_id="[^"]+"', 'user_id="[隐藏]"', text)
-
+    
+    # 移除具体的人名（如果有的话）
+    # 这里可以根据需要添加更多规则
+    
     # 移除 IP 地址、路径等敏感信息
     text = re.sub(r'/root/[^"\s]+', '[路径]', text)
     text = re.sub(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', '[IP]', text)
-
-    # 移除邮箱
+    
+    # 移除电话号码、邮箱等
     text = re.sub(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', '[邮箱]', text)
-
-    # 补充敏感信息类型（身份证 / 银行卡 / JWT）
-    text = re.sub(r'\b\d{17}[\dXx]\b', '[身份证]', text)
-    text = re.sub(r'\b\d{16,19}\b', '[银行卡]', text)
-    text = re.sub(r'eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9._-]+\.[A-Za-z0-9._-]+', '[JWT]', text)
-
-    # 最后处理手机号，避免误伤身份证串
-    text = re.sub(r'\b1[3-9]\d{9}\b', '[手机号]', text)
-
+    text = re.sub(r'1[3-9]\d{9}', '[手机号]', text)
+    
     return text
 
 
@@ -164,10 +113,8 @@ def extract_memo_from_file(file_path):
             "「纸上得来终觉浅，绝知此事要躬行。」"
         ]
         
-        # Use date-based index so the same quote shows all day (no jitter on poll)
-        today = datetime.now().strftime("%Y%m%d")
-        quote_index = int(today) % len(wisdom_quotes)
-        quote = wisdom_quotes[quote_index]
+        import random
+        quote = random.choice(wisdom_quotes)
         
         # 组合内容
         result = []
@@ -211,20 +158,41 @@ def extract_memo_from_file(file_path):
         return "「昨日记录加载失败」\n\n「往者不可谏，来者犹可追。」"
 
 app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path="/static")
+app.secret_key = os.getenv("FLASK_SECRET_KEY") or os.getenv("STAR_OFFICE_SECRET") or "star-office-dev-secret-change-me"
 
 # Guard join-agent critical section to enforce per-key concurrency under parallel requests
 join_lock = threading.Lock()
 
 # Generate a version timestamp once at server startup for cache busting
 VERSION_TIMESTAMP = datetime.now().strftime("%Y%m%d_%H%M%S")
+ASSET_DRAWER_PASS_DEFAULT = os.getenv("ASSET_DRAWER_PASS", "1234")
+
+
+def _is_asset_editor_authed() -> bool:
+    return bool(session.get("asset_editor_authed"))
+
+
+def _require_asset_editor_auth():
+    if _is_asset_editor_authed():
+        return None
+    return jsonify({"ok": False, "code": "UNAUTHORIZED", "msg": "Asset editor auth required"}), 401
 
 
 @app.after_request
 def add_no_cache_headers(response):
-    """Aggressively prevent caching for all responses"""
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
+    """Apply cache policy by path:
+    - HTML/API/state: no-cache (always fresh)
+    - /static assets: long cache (filenames are versioned with ?v=VERSION_TIMESTAMP)
+    """
+    path = (request.path or "")
+    if path.startswith('/static/'):
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        response.headers.pop("Pragma", None)
+        response.headers.pop("Expires", None)
+    else:
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
     return response
 
 # Default state
@@ -288,27 +256,9 @@ def load_state():
 
 
 def save_state(state: dict):
-    """Save state to file and sync main agent in agents-state.json"""
+    """Save state to file"""
     with open(STATE_FILE, "w", encoding="utf-8") as f:
         json.dump(state, f, ensure_ascii=False, indent=2)
-    # Keep agents-state.json in sync for the main agent
-    _sync_main_agent_state(state)
-
-
-def _sync_main_agent_state(state: dict):
-    """Update the isMain=true entry in agents-state.json to match state.json"""
-    try:
-        agents = load_agents_state()
-        for a in agents:
-            if a.get("isMain"):
-                a["state"] = state.get("state", "idle")
-                a["detail"] = state.get("detail", "")
-                a["updated_at"] = state.get("updated_at", datetime.now().isoformat())
-                a["area"] = state_to_area(a["state"])
-                break
-        save_agents_state(agents)
-    except Exception:
-        pass
 
 
 # Initialize state
@@ -361,20 +311,6 @@ DEFAULT_AGENTS = [
         "authStatus": "approved",
         "authExpiresAt": None,
         "lastPushAt": None
-    },
-    {
-        "agentId": "npc1",
-        "name": "NPC 1",
-        "isMain": False,
-        "state": "writing",
-        "detail": "在整理热点日报...",
-        "updated_at": datetime.now().isoformat(),
-        "area": "writing",
-        "source": "demo",
-        "joinKey": None,
-        "authStatus": "approved",
-        "authExpiresAt": None,
-        "lastPushAt": None
     }
 ]
 
@@ -396,6 +332,63 @@ def save_agents_state(agents):
         json.dump(agents, f, ensure_ascii=False, indent=2)
 
 
+def load_asset_positions():
+    if os.path.exists(ASSET_POSITIONS_FILE):
+        try:
+            with open(ASSET_POSITIONS_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    return data
+        except Exception:
+            pass
+    return {}
+
+
+def save_asset_positions(data):
+    with open(ASSET_POSITIONS_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def load_asset_defaults():
+    if os.path.exists(ASSET_DEFAULTS_FILE):
+        try:
+            with open(ASSET_DEFAULTS_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    return data
+        except Exception:
+            pass
+    return {}
+
+
+def save_asset_defaults(data):
+    with open(ASSET_DEFAULTS_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def load_runtime_config():
+    base = {
+        "gemini_api_key": os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or "",
+        "gemini_model": os.getenv("GEMINI_MODEL") or "gemini-3.1-flash-image-preview"
+    }
+    if os.path.exists(RUNTIME_CONFIG_FILE):
+        try:
+            with open(RUNTIME_CONFIG_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    base.update({k: data.get(k, base.get(k)) for k in ["gemini_api_key", "gemini_model"]})
+        except Exception:
+            pass
+    return base
+
+
+def save_runtime_config(data):
+    cfg = load_runtime_config()
+    cfg.update(data or {})
+    with open(RUNTIME_CONFIG_FILE, "w", encoding="utf-8") as f:
+        json.dump(cfg, f, ensure_ascii=False, indent=2)
+
+
 def load_join_keys():
     if os.path.exists(JOIN_KEYS_FILE):
         try:
@@ -411,6 +404,141 @@ def load_join_keys():
 def save_join_keys(data):
     with open(JOIN_KEYS_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def _ensure_magick_or_ffmpeg_available():
+    if shutil.which("magick"):
+        return "magick"
+    if shutil.which("ffmpeg"):
+        return "ffmpeg"
+    return None
+
+
+def _probe_animated_frame_size(upload_path: str):
+    """Return (w,h) from first frame if possible."""
+    if Image is not None:
+        try:
+            with Image.open(upload_path) as im:
+                w, h = im.size
+                return int(w), int(h)
+        except Exception:
+            pass
+    # ffprobe fallback
+    if shutil.which("ffprobe"):
+        try:
+            cmd = [
+                "ffprobe", "-v", "error",
+                "-select_streams", "v:0",
+                "-show_entries", "stream=width,height",
+                "-of", "csv=p=0:s=x",
+                upload_path,
+            ]
+            out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, timeout=5).decode().strip()
+            if "x" in out:
+                w, h = out.split("x", 1)
+                return int(w), int(h)
+        except Exception:
+            pass
+    return None, None
+
+
+def _animated_to_spritesheet(
+    upload_path: str,
+    frame_w: int,
+    frame_h: int,
+    out_ext: str = ".webp",
+    preserve_original: bool = True,
+    pixel_art: bool = True,
+    cols: int | None = None,
+    rows: int | None = None,
+):
+    """Convert animated GIF/WEBP to spritesheet, return (out_path, columns, rows, frames, out_frame_w, out_frame_h)."""
+    backend = _ensure_magick_or_ffmpeg_available()
+    if not backend:
+        raise RuntimeError("未检测到 ImageMagick/ffmpeg，无法自动转换动图")
+
+    ext = (out_ext or ".webp").lower()
+    if ext not in {".webp", ".png"}:
+        ext = ".webp"
+
+    out_fd, out_path = tempfile.mkstemp(suffix=ext)
+    os.close(out_fd)
+
+    with tempfile.TemporaryDirectory() as td:
+        frames = 0
+        out_fw, out_fh = int(frame_w), int(frame_h)
+        if Image is not None:
+            try:
+                with Image.open(upload_path) as im:
+                    n = getattr(im, "n_frames", 1)
+                    # 默认保留用户原始帧尺寸（避免先压缩再放大导致像素糊）
+                    if preserve_original:
+                        out_fw, out_fh = im.size
+                    for i in range(n):
+                        im.seek(i)
+                        fr = im.convert("RGBA")
+                        if not preserve_original and (fr.size != (out_fw, out_fh)):
+                            resample = Image.Resampling.NEAREST if pixel_art else Image.Resampling.LANCZOS
+                            fr = fr.resize((out_fw, out_fh), resample)
+                        fr.save(os.path.join(td, f"f_{i:04d}.png"), "PNG")
+                    frames = n
+            except Exception:
+                frames = 0
+
+        if frames <= 0:
+            cmd1 = f"ffmpeg -y -i '{upload_path}' '{td}/f_%04d.png' >/dev/null 2>&1"
+            if os.system(cmd1) != 0:
+                raise RuntimeError("动图抽帧失败（Pillow/ffmpeg 都失败）")
+            files = sorted([x for x in os.listdir(td) if x.startswith("f_") and x.endswith(".png")])
+            frames = len(files)
+            if frames <= 0:
+                raise RuntimeError("动图无有效帧")
+
+        if backend == "magick":
+            # 像素风动图转精灵表默认无损，避免颜色/边缘被压缩糊掉
+            quality_flag = "-define webp:lossless=true -define webp:method=6 -quality 100" if ext == ".webp" else ""
+            # 允许按 cols/rows 排布；默认单行
+            if cols is None or cols <= 0:
+                cols_eff = frames
+            else:
+                cols_eff = max(1, int(cols))
+            rows_eff = max(1, int(rows)) if (rows is not None and rows > 0) else max(1, math.ceil(frames / cols_eff))
+
+            # 先规范单帧尺寸
+            prep = ""
+            if not preserve_original:
+                magick_filter = "-filter point" if pixel_art else ""
+                prep = f" {magick_filter} -resize {out_fw}x{out_fh}^ -gravity center -background none -extent {out_fw}x{out_fh}"
+
+            cmd = (
+                f"magick '{td}/f_*.png'{prep} "
+                f"-tile {cols_eff}x{rows_eff} -background none -geometry +0+0 {quality_flag} '{out_path}'"
+            )
+            rc = os.system(cmd)
+            if rc != 0:
+                raise RuntimeError("ImageMagick 拼图失败")
+            return out_path, cols_eff, rows_eff, frames, out_fw, out_fh
+
+        ffmpeg_quality = "-lossless 1 -compression_level 6 -q:v 100" if ext == ".webp" else ""
+        cols_eff = max(1, int(cols)) if (cols is not None and cols > 0) else frames
+        rows_eff = max(1, int(rows)) if (rows is not None and rows > 0) else max(1, math.ceil(frames / cols_eff))
+        if preserve_original:
+            vf = f"tile={cols_eff}x{rows_eff}"
+        else:
+            scale_algo = "neighbor" if pixel_art else "lanczos"
+            vf = (
+                f"scale={out_fw}:{out_fh}:force_original_aspect_ratio=decrease:flags={scale_algo},"
+                f"pad={out_fw}:{out_fh}:(ow-iw)/2:(oh-ih)/2:color=0x00000000,"
+                f"tile={cols_eff}x{rows_eff}"
+            )
+        cmd2 = (
+            f"ffmpeg -y -pattern_type glob -i '{td}/f_*.png' "
+            f"-vf '{vf}' "
+            f"{ffmpeg_quality} '{out_path}' >/dev/null 2>&1"
+        )
+        if os.system(cmd2) != 0:
+            raise RuntimeError("ffmpeg 拼图失败")
+        return out_path, frames, 1, frames, out_fw, out_fh
 
 
 def normalize_agent_state(s):
@@ -433,6 +561,155 @@ def normalize_agent_state(s):
         return s_lower
     # 默认 fallback
     return 'idle'
+
+
+def _generate_rpg_background_to_webp(out_webp_path: str, width: int = 1280, height: int = 720, custom_prompt: str = "", speed_mode: str = "fast"):
+    """Generate RPG-style room background and save as webp.
+
+    speed_mode:
+      - fast: use nanobanana-2 + 1024x576 intermediate + downscaled reference (faster)
+      - quality: use configured model (fallback nanobanana-pro) + full 1280x720 path
+    """
+    runtime_cfg = load_runtime_config()
+    api_key = (runtime_cfg.get("gemini_api_key") or "").strip()
+    if not api_key:
+        raise RuntimeError("MISSING_API_KEY")
+    themes = [
+        "8-bit dungeon guild room",
+        "8-bit stardew-valley inspired cozy farm tavern",
+        "8-bit nordic fantasy tavern",
+        "8-bit magitech workshop",
+        "8-bit elven forest inn",
+        "8-bit pixel cyber tavern",
+        "8-bit desert caravan inn",
+        "8-bit snow mountain lodge",
+    ]
+    theme = random.choice(themes)
+
+    if not (os.path.exists(GEMINI_PYTHON) and os.path.exists(GEMINI_SCRIPT)):
+        raise RuntimeError("生图脚本环境缺失：gemini-image-generate 未安装")
+
+    style_hint = (custom_prompt or "").strip()
+    if not style_hint:
+        style_hint = theme
+
+    # 默认使用更稳妥的 quality 档，避免 fast 模型在部分 API 通道不可用
+    mode = (speed_mode or "quality").strip().lower()
+    if mode not in {"fast", "quality"}:
+        mode = "fast"
+
+    configured_model = (runtime_cfg.get("gemini_model") or "").strip() or "gemini-3.1-flash-image-preview"
+    if mode == "fast":
+        selected_model = "nanobanana-2"
+        # fast 也提高基础清晰度：从 1024x576 提升到 1152x648（牺牲少量速度）
+        gen_width, gen_height = 1152, 648
+        ref_width, ref_height = 1152, 648
+    else:
+        selected_model = configured_model
+        gen_width, gen_height = width, height
+        ref_width, ref_height = width, height
+
+    if mode == "fast" and selected_model not in {"nanobanana-2", "nanobanana-pro"}:
+        selected_model = "nanobanana-2"
+
+    prompt = (
+        "Use a top-down pixel room composition compatible with an office game scene. "
+        "STRICTLY preserve the same room geometry, camera angle, wall/floor boundaries and major object placement as the provided reference image. "
+        "Keep region layout stable (left work area, center lounge, right error area). "
+        "Only change visual style/theme/material/lighting according to: " + style_hint + ". "
+        "Do not add text or watermark. Retro 8-bit RPG style."
+    )
+
+    tmp_dir = tempfile.mkdtemp(prefix="rpg-bg-")
+    cmd = [
+        GEMINI_PYTHON,
+        GEMINI_SCRIPT,
+        "--prompt", prompt,
+        "--aspect-ratio", "16:9",
+        "--model", selected_model,
+        "--out-dir", tmp_dir,
+        "--cleanup",
+    ]
+
+    # 强约束：每次都带固定参考图，保持房间区域布局不漂移
+    ref_for_call = None
+    if os.path.exists(ROOM_REFERENCE_IMAGE):
+        ref_for_call = ROOM_REFERENCE_IMAGE
+        if mode == "fast" and Image is not None:
+            try:
+                ref_fast = os.path.join(tmp_dir, "room-reference-fast.webp")
+                with Image.open(ROOM_REFERENCE_IMAGE) as rim:
+                    rim = rim.convert("RGBA").resize((ref_width, ref_height), Image.Resampling.LANCZOS)
+                    rim.save(ref_fast, "WEBP", quality=85, method=4)
+                ref_for_call = ref_fast
+            except Exception:
+                ref_for_call = ROOM_REFERENCE_IMAGE
+
+    if ref_for_call:
+        cmd.extend(["--reference-image", ref_for_call])
+
+    env = os.environ.copy()
+    # 运行时配置优先：只保留 GEMINI_API_KEY，避免脚本因双 key 报错
+    env.pop("GOOGLE_API_KEY", None)
+    env["GEMINI_API_KEY"] = api_key
+    env["GEMINI_MODEL"] = selected_model
+
+    def _run_cmd(cmd_args):
+        return subprocess.run(cmd_args, capture_output=True, text=True, env=env, timeout=240)
+
+    proc = _run_cmd(cmd)
+    if proc.returncode != 0 and mode == "fast":
+        err_text = (proc.stderr or proc.stdout or "").strip().lower()
+        if ("not found" in err_text and "models/" in err_text) or ("model_not_available" in err_text):
+            # fast 模型不可用时自动回退到稳定模型
+            fallback_model = configured_model or "gemini-3.1-flash-image-preview"
+            cmd_fallback = cmd[:]
+            if "--model" in cmd_fallback:
+                idx = cmd_fallback.index("--model")
+                if idx + 1 < len(cmd_fallback):
+                    cmd_fallback[idx + 1] = fallback_model
+            env["GEMINI_MODEL"] = fallback_model
+            proc = _run_cmd(cmd_fallback)
+
+    if proc.returncode != 0:
+        err_text = (proc.stderr or proc.stdout or "").strip()
+        low = err_text.lower()
+        if "your api key was reported as leaked" in low or "permission_denied" in low:
+            raise RuntimeError("API_KEY_REVOKED_OR_LEAKED")
+        if "not found" in low and "models/" in low:
+            raise RuntimeError("MODEL_NOT_AVAILABLE")
+        raise RuntimeError(f"生图失败: {err_text}")
+
+    try:
+        result = json.loads(proc.stdout.strip().splitlines()[-1])
+    except Exception:
+        raise RuntimeError("生图结果解析失败")
+
+    files = result.get("files") or []
+    if not files:
+        raise RuntimeError("生图未返回文件")
+
+    gen_path = files[0]
+    if not os.path.exists(gen_path):
+        raise RuntimeError("生图文件不存在")
+
+    if Image is None:
+        raise RuntimeError("Pillow 不可用，无法做尺寸标准化")
+
+    with Image.open(gen_path) as im:
+        im = im.convert("RGBA")
+        # 质量模式优先保细节；快速模式优先速度
+        if mode == "fast":
+            im = im.resize((gen_width, gen_height), Image.Resampling.LANCZOS)
+            if (gen_width, gen_height) != (width, height):
+                # fast 的放大改为 LANCZOS，牺牲少量速度换更高细节
+                im = im.resize((width, height), Image.Resampling.LANCZOS)
+            im.save(out_webp_path, "WEBP", quality=96, method=6)
+        else:
+            # quality：确保输出标准尺寸，同时使用无损 webp，减少压缩损失
+            if im.size != (width, height):
+                im = im.resize((width, height), Image.Resampling.LANCZOS)
+            im.save(out_webp_path, "WEBP", lossless=True, quality=100, method=6)
 
 
 def state_to_area(state):
@@ -462,7 +739,6 @@ def get_agents():
 
     cleaned_agents = []
     keys_data = load_join_keys()
-    dirty = False  # only write to disk if something actually changed
 
     for a in agents:
         if a.get("isMain"):
@@ -485,7 +761,6 @@ def get_agents():
                             key_item["usedBy"] = None
                             key_item["usedByAgentId"] = None
                             key_item["usedAt"] = None
-                    dirty = True
                     continue
             except Exception:
                 pass
@@ -498,15 +773,13 @@ def get_agents():
                 age = (now - last_push_at).total_seconds()
                 if age > 300:  # 5分钟无推送自动离线
                     a["authStatus"] = "offline"
-                    dirty = True
             except Exception:
                 pass
 
         cleaned_agents.append(a)
 
-    if dirty:
-        save_agents_state(cleaned_agents)
-        save_join_keys(keys_data)
+    save_agents_state(cleaned_agents)
+    save_join_keys(keys_data)
 
     return jsonify(cleaned_agents)
 
@@ -581,10 +854,10 @@ def join_agent():
         if not isinstance(data, dict) or not data.get("name"):
             return jsonify({"ok": False, "msg": "请提供名字"}), 400
 
-        name = clean_text(data["name"], MAX_NAME_LEN)
+        name = data["name"].strip()
         state = data.get("state", "idle")
-        detail = clean_text(data.get("detail", ""), MAX_DETAIL_LEN)
-        join_key = clean_text(data.get("joinKey", ""), 128)
+        detail = data.get("detail", "")
+        join_key = data.get("joinKey", "").strip()
 
         # Normalize state early for compatibility
         state = normalize_agent_state(state)
@@ -780,16 +1053,16 @@ def agent_push():
         if not isinstance(data, dict):
             return jsonify({"ok": False, "msg": "invalid json"}), 400
 
-        trace_id = get_trace_id()
-        agent_id = clean_text(data.get("agentId"), 128)
-        join_key = clean_text(data.get("joinKey"), 128)
-        state = clean_text(data.get("state"), 32)
-        detail = clean_text(data.get("detail"), MAX_DETAIL_LEN)
-        name = clean_text(data.get("name"), MAX_NAME_LEN)
+        agent_id = (data.get("agentId") or "").strip()
+        join_key = (data.get("joinKey") or "").strip()
+        state = (data.get("state") or "").strip()
+        detail = (data.get("detail") or "").strip()
+        name = (data.get("name") or "").strip()
 
         if not agent_id or not join_key or not state:
             return jsonify({"ok": False, "msg": "缺少 agentId/joinKey/state"}), 400
 
+        valid_states = {"idle", "writing", "researching", "executing", "syncing", "error"}
         state = normalize_agent_state(state)
 
         keys_data = load_join_keys()
@@ -828,17 +1101,8 @@ def agent_push():
         target["lastPushAt"] = datetime.now().isoformat()
 
         save_agents_state(agents)
-        log_event(
-            "info",
-            "agent_push_ok",
-            traceId=trace_id,
-            agentId=agent_id,
-            state=state,
-            source="remote-openclaw",
-        )
         return jsonify({"ok": True, "agentId": agent_id, "area": target.get("area")})
     except Exception as e:
-        log_event("error", "agent_push_failed", error=str(e))
         return jsonify({"ok": False, "msg": str(e)}), 500
 
 
@@ -897,50 +1161,447 @@ def get_yesterday_memo():
 @app.route("/set_state", methods=["POST"])
 def set_state_endpoint():
     """Set state via POST (for UI control panel)"""
-    trace_id = get_trace_id()
     try:
-        ok, reason = is_set_state_authorized()
-        if not ok:
-            log_event("warn", "set_state_denied", traceId=trace_id, reason=reason, remote=request.remote_addr)
-            return jsonify({"status": "error", "msg": "unauthorized"}), 401
-
         data = request.get_json()
         if not isinstance(data, dict):
             return jsonify({"status": "error", "msg": "invalid json"}), 400
-
         state = load_state()
         if "state" in data:
-            s = normalize_agent_state(data["state"])
+            s = data["state"]
             valid_states = {"idle", "writing", "researching", "executing", "syncing", "error"}
             if s in valid_states:
                 state["state"] = s
         if "detail" in data:
-            state["detail"] = clean_text(data["detail"], MAX_DETAIL_LEN)
-
+            state["detail"] = data["detail"]
         state["updated_at"] = datetime.now().isoformat()
         save_state(state)
-
-        log_event(
-            "info",
-            "set_state_ok",
-            traceId=trace_id,
-            auth=reason,
-            state=state.get("state"),
-            remote=request.remote_addr,
-        )
         return jsonify({"status": "ok"})
     except Exception as e:
-        log_event("error", "set_state_failed", traceId=trace_id, error=str(e))
         return jsonify({"status": "error", "msg": str(e)}), 500
+
+
+@app.route("/assets/template.zip", methods=["GET"])
+def assets_template_download():
+    if not os.path.exists(ASSET_TEMPLATE_ZIP):
+        return jsonify({"ok": False, "msg": "模板包不存在，请先生成"}), 404
+    return send_from_directory(ROOT_DIR, "assets-replace-template.zip", as_attachment=True)
+
+
+@app.route("/assets/list", methods=["GET"])
+def assets_list():
+    items = []
+    for p in FRONTEND_PATH.rglob("*"):
+        if not p.is_file():
+            continue
+        rel = p.relative_to(FRONTEND_PATH).as_posix()
+        if rel.startswith("fonts/"):
+            continue
+        if p.suffix.lower() not in ASSET_ALLOWED_EXTS:
+            continue
+        st = p.stat()
+        width = None
+        height = None
+        if Image is not None:
+            try:
+                with Image.open(p) as im:
+                    width, height = im.size
+            except Exception:
+                pass
+        items.append({
+            "path": rel,
+            "size": st.st_size,
+            "ext": p.suffix.lower(),
+            "width": width,
+            "height": height,
+            "mtime": datetime.fromtimestamp(st.st_mtime).isoformat(),
+        })
+    items.sort(key=lambda x: x["path"])
+    return jsonify({"ok": True, "count": len(items), "items": items})
+
+
+@app.route("/assets/generate-rpg-background", methods=["POST"])
+def assets_generate_rpg_background():
+    """Generate a new RPG-themed background and replace office_bg_small.webp."""
+    guard = _require_asset_editor_auth()
+    if guard:
+        return guard
+    try:
+        req = request.get_json(silent=True) or {}
+        custom_prompt = (req.get("prompt") or "").strip() if isinstance(req, dict) else ""
+        speed_mode = (req.get("speed_mode") or "quality").strip().lower() if isinstance(req, dict) else "quality"
+        if speed_mode not in {"fast", "quality"}:
+            speed_mode = "fast"
+
+        target = FRONTEND_PATH / "office_bg_small.webp"
+        if not target.exists():
+            return jsonify({"ok": False, "msg": "office_bg_small.webp 不存在"}), 404
+
+        # 覆盖前保留最近一次备份
+        bak = target.with_suffix(target.suffix + ".bak")
+        shutil.copy2(target, bak)
+
+        _generate_rpg_background_to_webp(
+            str(target),
+            width=1280,
+            height=720,
+            custom_prompt=custom_prompt,
+            speed_mode=speed_mode,
+        )
+
+        # 每次生成都归档一份历史底图（可回溯风格演化）
+        os.makedirs(BG_HISTORY_DIR, exist_ok=True)
+        ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+        hist_file = os.path.join(BG_HISTORY_DIR, f"office_bg_small-{ts}.webp")
+        shutil.copy2(target, hist_file)
+
+        st = target.stat()
+        return jsonify({
+            "ok": True,
+            "path": "office_bg_small.webp",
+            "size": st.st_size,
+            "history": os.path.relpath(hist_file, ROOT_DIR),
+            "speed_mode": speed_mode,
+            "msg": "已生成并替换 RPG 房间底图（已自动归档）",
+        })
+    except Exception as e:
+        msg = str(e)
+        if msg == "MISSING_API_KEY":
+            return jsonify({"ok": False, "code": "MISSING_API_KEY", "msg": "Missing GEMINI_API_KEY or GOOGLE_API_KEY"}), 400
+        if msg == "API_KEY_REVOKED_OR_LEAKED":
+            return jsonify({"ok": False, "code": "API_KEY_REVOKED_OR_LEAKED", "msg": "API key is revoked or flagged as leaked. Please rotate to a new key."}), 400
+        if msg == "MODEL_NOT_AVAILABLE":
+            return jsonify({"ok": False, "code": "MODEL_NOT_AVAILABLE", "msg": "Configured model is not available for this API key/channel."}), 400
+        return jsonify({"ok": False, "msg": msg}), 500
+
+
+@app.route("/assets/restore-reference-background", methods=["POST"])
+def assets_restore_reference_background():
+    """Restore office_bg_small.webp from fixed reference image."""
+    guard = _require_asset_editor_auth()
+    if guard:
+        return guard
+    try:
+        target = FRONTEND_PATH / "office_bg_small.webp"
+        if not target.exists():
+            return jsonify({"ok": False, "msg": "office_bg_small.webp 不存在"}), 404
+        if not os.path.exists(ROOM_REFERENCE_IMAGE):
+            return jsonify({"ok": False, "msg": "参考图不存在"}), 404
+
+        # 备份当前底图
+        bak = target.with_suffix(target.suffix + ".bak")
+        shutil.copy2(target, bak)
+
+        # 快速路径：若参考图已是 1280x720 的 webp，直接拷贝（秒级）
+        ref_ext = os.path.splitext(ROOM_REFERENCE_IMAGE)[1].lower()
+        fast_copied = False
+        if ref_ext == '.webp':
+            try:
+                with Image.open(ROOM_REFERENCE_IMAGE) as rim:
+                    if rim.size == (1280, 720):
+                        shutil.copy2(ROOM_REFERENCE_IMAGE, target)
+                        fast_copied = True
+            except Exception:
+                fast_copied = False
+
+        # 慢路径：仅在必要时重编码
+        if not fast_copied:
+            if Image is None:
+                return jsonify({"ok": False, "msg": "Pillow 不可用"}), 500
+            with Image.open(ROOM_REFERENCE_IMAGE) as im:
+                im = im.convert("RGBA").resize((1280, 720), Image.Resampling.LANCZOS)
+                im.save(target, "WEBP", quality=92, method=6)
+
+        st = target.stat()
+        return jsonify({
+            "ok": True,
+            "path": "office_bg_small.webp",
+            "size": st.st_size,
+            "msg": "已恢复初始底图",
+        })
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/assets/auth", methods=["POST"])
+def assets_auth():
+    try:
+        data = request.get_json(silent=True) or {}
+        pwd = (data.get("password") or "").strip()
+        if pwd and pwd == ASSET_DRAWER_PASS_DEFAULT:
+            session["asset_editor_authed"] = True
+            return jsonify({"ok": True, "msg": "认证成功"})
+        return jsonify({"ok": False, "msg": "验证码错误"}), 401
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/assets/auth/status", methods=["GET"])
+def assets_auth_status():
+    return jsonify({"ok": True, "authed": _is_asset_editor_authed()})
+
+
+@app.route("/assets/positions", methods=["GET"])
+def assets_positions_get():
+    guard = _require_asset_editor_auth()
+    if guard:
+        return guard
+    try:
+        return jsonify({"ok": True, "items": load_asset_positions()})
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/assets/positions", methods=["POST"])
+def assets_positions_set():
+    guard = _require_asset_editor_auth()
+    if guard:
+        return guard
+    try:
+        data = request.get_json(silent=True) or {}
+        key = (data.get("key") or "").strip()
+        x = data.get("x")
+        y = data.get("y")
+        scale = data.get("scale")
+        if not key:
+            return jsonify({"ok": False, "msg": "缺少 key"}), 400
+        if x is None or y is None:
+            return jsonify({"ok": False, "msg": "缺少 x/y"}), 400
+        x = float(x)
+        y = float(y)
+        if scale is None:
+            scale = 1.0
+        scale = float(scale)
+
+        all_pos = load_asset_positions()
+        all_pos[key] = {"x": x, "y": y, "scale": scale, "updated_at": datetime.now().isoformat()}
+        save_asset_positions(all_pos)
+        return jsonify({"ok": True, "key": key, "x": x, "y": y, "scale": scale})
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/assets/defaults", methods=["GET"])
+def assets_defaults_get():
+    guard = _require_asset_editor_auth()
+    if guard:
+        return guard
+    try:
+        return jsonify({"ok": True, "items": load_asset_defaults()})
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/assets/defaults", methods=["POST"])
+def assets_defaults_set():
+    guard = _require_asset_editor_auth()
+    if guard:
+        return guard
+    try:
+        data = request.get_json(silent=True) or {}
+        key = (data.get("key") or "").strip()
+        x = data.get("x")
+        y = data.get("y")
+        scale = data.get("scale")
+        if not key:
+            return jsonify({"ok": False, "msg": "缺少 key"}), 400
+        if x is None or y is None:
+            return jsonify({"ok": False, "msg": "缺少 x/y"}), 400
+        x = float(x)
+        y = float(y)
+        if scale is None:
+            scale = 1.0
+        scale = float(scale)
+
+        all_defaults = load_asset_defaults()
+        all_defaults[key] = {"x": x, "y": y, "scale": scale, "updated_at": datetime.now().isoformat()}
+        save_asset_defaults(all_defaults)
+        return jsonify({"ok": True, "key": key, "x": x, "y": y, "scale": scale})
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/config/gemini", methods=["GET"])
+def gemini_config_get():
+    guard = _require_asset_editor_auth()
+    if guard:
+        return guard
+    try:
+        cfg = load_runtime_config()
+        key = (cfg.get("gemini_api_key") or "").strip()
+        masked = ("*" * max(0, len(key) - 4)) + key[-4:] if key else ""
+        return jsonify({
+            "ok": True,
+            "has_api_key": bool(key),
+            "api_key_masked": masked,
+            "gemini_model": cfg.get("gemini_model") or "gemini-3.1-flash-image-preview",
+        })
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/config/gemini", methods=["POST"])
+def gemini_config_set():
+    guard = _require_asset_editor_auth()
+    if guard:
+        return guard
+    try:
+        data = request.get_json(silent=True) or {}
+        api_key = (data.get("api_key") or "").strip()
+        model = (data.get("model") or "").strip() or "gemini-3.1-flash-image-preview"
+        payload = {"gemini_model": model}
+        if api_key:
+            payload["gemini_api_key"] = api_key
+        save_runtime_config(payload)
+        return jsonify({"ok": True, "msg": "Gemini 配置已保存"})
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/assets/upload", methods=["POST"])
+def assets_upload():
+    guard = _require_asset_editor_auth()
+    if guard:
+        return guard
+    try:
+        rel_path = (request.form.get("path") or "").strip().lstrip("/")
+        backup = (request.form.get("backup") or "1").strip() != "0"
+        f = request.files.get("file")
+
+        if not rel_path or f is None:
+            return jsonify({"ok": False, "msg": "缺少 path 或 file"}), 400
+
+        target = (FRONTEND_PATH / rel_path).resolve()
+        try:
+            target.relative_to(FRONTEND_PATH.resolve())
+        except Exception:
+            return jsonify({"ok": False, "msg": "非法 path"}), 400
+
+        if target.suffix.lower() not in ASSET_ALLOWED_EXTS:
+            return jsonify({"ok": False, "msg": "仅允许上传图片/美术资源类型"}), 400
+
+        if not target.exists():
+            return jsonify({"ok": False, "msg": "目标文件不存在，请先从 /assets/list 选择 path"}), 404
+
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if backup:
+            bak = target.with_suffix(target.suffix + ".bak")
+            shutil.copy2(target, bak)
+
+        auto_sheet = (request.form.get("auto_spritesheet") or "0").strip() == "1"
+        ext_name = (f.filename or "").lower()
+
+        if auto_sheet and target.suffix.lower() in {".webp", ".png"}:
+            with tempfile.NamedTemporaryFile(suffix=os.path.splitext(ext_name)[1] or ".gif", delete=False) as tf:
+                src_path = tf.name
+                f.save(src_path)
+            try:
+                in_w, in_h = _probe_animated_frame_size(src_path)
+                frame_w = int(request.form.get("frame_w") or (in_w or 64))
+                frame_h = int(request.form.get("frame_h") or (in_h or 64))
+
+                # 如果是静态图上传到精灵表目标，按网格切片而不是整图覆盖
+                if not (ext_name.endswith(".gif") or ext_name.endswith(".webp")) and Image is not None:
+                    try:
+                        with Image.open(src_path) as sim:
+                            sim = sim.convert("RGBA")
+                            sw, sh = sim.size
+                            if frame_w <= 0 or frame_h <= 0:
+                                frame_w, frame_h = sw, sh
+                            cols = max(1, sw // frame_w)
+                            rows = max(1, sh // frame_h)
+                            sheet_w = cols * frame_w
+                            sheet_h = rows * frame_h
+                            if sheet_w <= 0 or sheet_h <= 0:
+                                raise RuntimeError("静态图尺寸与帧规格不匹配")
+
+                            cropped = sim.crop((0, 0, sheet_w, sheet_h))
+                            # 目标是 webp 仍按无损保存，避免像素损失
+                            if target.suffix.lower() == ".webp":
+                                cropped.save(str(target), "WEBP", lossless=True, quality=100, method=6)
+                            else:
+                                cropped.save(str(target), "PNG")
+
+                            st = target.stat()
+                            return jsonify({
+                                "ok": True,
+                                "path": rel_path,
+                                "size": st.st_size,
+                                "backup": backup,
+                                "converted": {
+                                    "from": ext_name.split(".")[-1] if "." in ext_name else "image",
+                                    "to": "webp_spritesheet" if target.suffix.lower() == ".webp" else "png_spritesheet",
+                                    "frame_w": frame_w,
+                                    "frame_h": frame_h,
+                                    "columns": cols,
+                                    "rows": rows,
+                                    "frames": cols * rows,
+                                    "preserve_original": False,
+                                    "pixel_art": True,
+                                }
+                            })
+                    finally:
+                        pass
+
+                # 默认：优先保留输入帧尺寸；若前端传了强制值则按前端。
+                preserve_original_val = request.form.get("preserve_original")
+                if preserve_original_val is None:
+                    preserve_original = True
+                else:
+                    preserve_original = preserve_original_val.strip() == "1"
+
+                pixel_art = (request.form.get("pixel_art") or "1").strip() == "1"
+                req_cols = int(request.form.get("cols") or 0)
+                req_rows = int(request.form.get("rows") or 0)
+                sheet_path, cols, rows, frames, out_fw, out_fh = _animated_to_spritesheet(
+                    src_path,
+                    frame_w,
+                    frame_h,
+                    out_ext=target.suffix.lower(),
+                    preserve_original=preserve_original,
+                    pixel_art=pixel_art,
+                    cols=(req_cols if req_cols > 0 else None),
+                    rows=(req_rows if req_rows > 0 else None),
+                )
+                shutil.move(sheet_path, str(target))
+                st = target.stat()
+                from_type = "gif" if ext_name.endswith(".gif") else "webp"
+                to_type = "webp_spritesheet" if target.suffix.lower() == ".webp" else "png_spritesheet"
+                return jsonify({
+                    "ok": True,
+                    "path": rel_path,
+                    "size": st.st_size,
+                    "backup": backup,
+                    "converted": {
+                        "from": from_type,
+                        "to": to_type,
+                        "frame_w": out_fw,
+                        "frame_h": out_fh,
+                        "columns": cols,
+                        "rows": rows,
+                        "frames": frames,
+                        "preserve_original": preserve_original,
+                        "pixel_art": pixel_art,
+                    }
+                })
+            finally:
+                try:
+                    os.remove(src_path)
+                except Exception:
+                    pass
+
+        f.save(str(target))
+        st = target.stat()
+        return jsonify({"ok": True, "path": rel_path, "size": st.st_size, "backup": backup})
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
 
 
 if __name__ == "__main__":
     print("=" * 50)
     print("Star Office UI - Backend State Service")
     print("=" * 50)
-    OFFICE_PORT = int(os.environ.get("OFFICE_PORT", "19000"))
     print(f"State file: {STATE_FILE}")
-    print(f"Listening on: http://0.0.0.0:{OFFICE_PORT}")
+    print("Listening on: http://0.0.0.0:18791")
     print("=" * 50)
     
-    app.run(host="0.0.0.0", port=OFFICE_PORT, debug=False)
+    app.run(host="0.0.0.0", port=18791, debug=False)
