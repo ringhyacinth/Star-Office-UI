@@ -552,8 +552,13 @@ def normalize_agent_state(s):
     return 'idle'
 
 
-def _generate_rpg_background_to_webp(out_webp_path: str, width: int = 1280, height: int = 720, custom_prompt: str = ""):
-    """Generate RPG-style room background and save as 1280x720 webp."""
+def _generate_rpg_background_to_webp(out_webp_path: str, width: int = 1280, height: int = 720, custom_prompt: str = "", speed_mode: str = "fast"):
+    """Generate RPG-style room background and save as webp.
+
+    speed_mode:
+      - fast: use nanobanana-2 + 1024x576 intermediate + downscaled reference (faster)
+      - quality: use configured model (fallback nanobanana-pro) + full 1280x720 path
+    """
     runtime_cfg = load_runtime_config()
     api_key = (runtime_cfg.get("gemini_api_key") or "").strip()
     if not api_key:
@@ -577,6 +582,20 @@ def _generate_rpg_background_to_webp(out_webp_path: str, width: int = 1280, heig
     if not style_hint:
         style_hint = theme
 
+    mode = (speed_mode or "fast").strip().lower()
+    if mode not in {"fast", "quality"}:
+        mode = "fast"
+
+    configured_model = (runtime_cfg.get("gemini_model") or "").strip() or "nanobanana-pro"
+    if mode == "fast":
+        selected_model = "nanobanana-2"
+        gen_width, gen_height = 1024, 576
+        ref_width, ref_height = 1024, 576
+    else:
+        selected_model = configured_model
+        gen_width, gen_height = width, height
+        ref_width, ref_height = width, height
+
     prompt = (
         "Use a top-down pixel room composition compatible with an office game scene. "
         "STRICTLY preserve the same room geometry, camera angle, wall/floor boundaries and major object placement as the provided reference image. "
@@ -591,21 +610,33 @@ def _generate_rpg_background_to_webp(out_webp_path: str, width: int = 1280, heig
         GEMINI_SCRIPT,
         "--prompt", prompt,
         "--aspect-ratio", "16:9",
+        "--model", selected_model,
         "--out-dir", tmp_dir,
         "--cleanup",
     ]
 
     # 强约束：每次都带固定参考图，保持房间区域布局不漂移
+    ref_for_call = None
     if os.path.exists(ROOM_REFERENCE_IMAGE):
-        cmd.extend(["--reference-image", ROOM_REFERENCE_IMAGE])
+        ref_for_call = ROOM_REFERENCE_IMAGE
+        if mode == "fast" and Image is not None:
+            try:
+                ref_fast = os.path.join(tmp_dir, "room-reference-fast.webp")
+                with Image.open(ROOM_REFERENCE_IMAGE) as rim:
+                    rim = rim.convert("RGBA").resize((ref_width, ref_height), Image.Resampling.LANCZOS)
+                    rim.save(ref_fast, "WEBP", quality=85, method=4)
+                ref_for_call = ref_fast
+            except Exception:
+                ref_for_call = ROOM_REFERENCE_IMAGE
+
+    if ref_for_call:
+        cmd.extend(["--reference-image", ref_for_call])
 
     env = os.environ.copy()
     # 运行时配置优先
     env["GEMINI_API_KEY"] = api_key
     env.setdefault("GOOGLE_API_KEY", api_key)
-    model = (runtime_cfg.get("gemini_model") or "").strip()
-    if model:
-        env["GEMINI_MODEL"] = model
+    env["GEMINI_MODEL"] = selected_model
 
     proc = subprocess.run(cmd, capture_output=True, text=True, env=env, timeout=240)
     if proc.returncode != 0:
@@ -628,7 +659,11 @@ def _generate_rpg_background_to_webp(out_webp_path: str, width: int = 1280, heig
         raise RuntimeError("Pillow 不可用，无法做尺寸标准化")
 
     with Image.open(gen_path) as im:
-        im = im.convert("RGBA").resize((width, height), Image.Resampling.LANCZOS)
+        im = im.convert("RGBA")
+        # fast 模式先做 1024x576 标准化，再放大到 1280x720
+        im = im.resize((gen_width, gen_height), Image.Resampling.LANCZOS)
+        if (gen_width, gen_height) != (width, height):
+            im = im.resize((width, height), Image.Resampling.LANCZOS)
         im.save(out_webp_path, "WEBP", quality=92, method=6)
 
 
@@ -1145,6 +1180,9 @@ def assets_generate_rpg_background():
     try:
         req = request.get_json(silent=True) or {}
         custom_prompt = (req.get("prompt") or "").strip() if isinstance(req, dict) else ""
+        speed_mode = (req.get("speed_mode") or "fast").strip().lower() if isinstance(req, dict) else "fast"
+        if speed_mode not in {"fast", "quality"}:
+            speed_mode = "fast"
 
         target = FRONTEND_PATH / "office_bg_small.webp"
         if not target.exists():
@@ -1154,7 +1192,13 @@ def assets_generate_rpg_background():
         bak = target.with_suffix(target.suffix + ".bak")
         shutil.copy2(target, bak)
 
-        _generate_rpg_background_to_webp(str(target), width=1280, height=720, custom_prompt=custom_prompt)
+        _generate_rpg_background_to_webp(
+            str(target),
+            width=1280,
+            height=720,
+            custom_prompt=custom_prompt,
+            speed_mode=speed_mode,
+        )
 
         # 每次生成都归档一份历史底图（可回溯风格演化）
         os.makedirs(BG_HISTORY_DIR, exist_ok=True)
@@ -1168,6 +1212,7 @@ def assets_generate_rpg_background():
             "path": "office_bg_small.webp",
             "size": st.st_size,
             "history": os.path.relpath(hist_file, ROOT_DIR),
+            "speed_mode": speed_mode,
             "msg": "已生成并替换 RPG 房间底图（已自动归档）",
         })
     except Exception as e:

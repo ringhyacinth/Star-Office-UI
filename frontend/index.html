@@ -743,6 +743,11 @@
                     <div id="asset-broker-panel">
                         <div class="asset-sub" style="margin-bottom:6px;">写你的风格主题（严格保持原始房间结构，只改变视觉风格）</div>
                         <textarea id="asset-broker-prompt" placeholder="例如：像素风赛博东京夜景，霓虹灯、雨夜地面反光、蓝紫主色"></textarea>
+                        <div class="asset-toolbar" style="margin-top:6px; gap:8px; align-items:center; justify-content:flex-start;">
+                            <span id="speed-mode-label" class="asset-sub" style="min-width:62px;">生成模式</span>
+                            <button id="speed-fast-btn" type="button" onclick="setSpeedMode('fast')" style="background:#22c55e;color:#052e16;border-color:#16a34a;">⚡ 快速</button>
+                            <button id="speed-quality-btn" type="button" onclick="setSpeedMode('quality')" style="background:#334155;color:#e5e7eb;border-color:#475569;">✨ 高质量</button>
+                        </div>
                         <div id="asset-gemini-config" style="display:none; margin-top:6px;">
                             <div class="asset-sub" style="margin-bottom:4px;">生图 API Key 缺失，请填写后再试：</div>
                             <div class="asset-toolbar" style="gap:6px; flex-wrap:wrap;">
@@ -815,6 +820,7 @@
                 brokerGenerating: '🏘️ 正在按中介方案生成底图，请稍候（约20-90秒）...',
                 brokerDone: '✅ 已按中介方案生成并替换底图，正在刷新房间...',
                 brokerMissingKey: '❌ 生图失败：缺少 GEMINI API Key，请在下方填写并保存后重试',
+                speedModeLabel: '生成模式', speedFast: '⚡ 快速', speedQuality: '✨ 高质量',
                 searchPlaceholder: '搜索资产名（如 desk / sofa / star）', loaded: '已加载', allAssets: '全部资产',
                 chooseImage: '上传替换素材', setDefault: '设为默认', confirmUpload: '确认并刷新',
                 frameW: '单帧宽', frameH: '单帧高', cols: '列', rows: '行', scalePct: '缩放%',
@@ -834,6 +840,7 @@
                 brokerGenerating: '🏘️ Generating room background from broker plan, please wait (20-90s)...',
                 brokerDone: '✅ Broker plan applied and background replaced, refreshing room...',
                 brokerMissingKey: '❌ Generation failed: missing GEMINI API key. Fill it below and retry.',
+                speedModeLabel: 'Render Mode', speedFast: '⚡ Fast', speedQuality: '✨ Quality',
                 searchPlaceholder: 'Search assets (desk / sofa / star)', loaded: 'Loaded', allAssets: 'All Assets',
                 chooseImage: 'Upload Replacement Asset', setDefault: 'Set Default', confirmUpload: 'Confirm & Refresh',
                 frameW: 'Frame W', frameH: 'Frame H', cols: 'Cols', rows: 'Rows', scalePct: 'Scale%',
@@ -853,6 +860,7 @@
                 brokerGenerating: '🏘️ 仲介プランで背景を生成中（20〜90秒）...',
                 brokerDone: '✅ 仲介プランを適用して背景を更新しました。部屋を更新中...',
                 brokerMissingKey: '❌ 生成失敗：GEMINI APIキーが未設定です。下で入力して保存してください。',
+                speedModeLabel: '生成モード', speedFast: '⚡ 高速', speedQuality: '✨ 高品質',
                 searchPlaceholder: 'アセット検索（desk / sofa / star）', loaded: '読み込み済み', allAssets: '全アセット',
                 chooseImage: '差し替え素材をアップロード', setDefault: 'デフォルト化', confirmUpload: '確定して更新',
                 frameW: 'フレーム幅', frameH: 'フレーム高', cols: '列', rows: '行', scalePct: '拡大率%',
@@ -919,6 +927,9 @@
             const brokerHint = document.querySelector('#asset-broker-panel .asset-sub'); if (brokerHint) brokerHint.textContent = t('brokerHint');
             const brokerPrompt = document.getElementById('asset-broker-prompt'); if (brokerPrompt) brokerPrompt.placeholder = t('brokerPromptPh');
             const brokerGoBtn = document.querySelector('#asset-broker-actions button'); if (brokerGoBtn) brokerGoBtn.textContent = t('btnBrokerGo');
+            const speedLbl = document.getElementById('speed-mode-label'); if (speedLbl) speedLbl.textContent = t('speedModeLabel');
+            const speedFastBtn = document.getElementById('speed-fast-btn'); if (speedFastBtn) speedFastBtn.textContent = t('speedFast');
+            const speedQualityBtn = document.getElementById('speed-quality-btn'); if (speedQualityBtn) speedQualityBtn.textContent = t('speedQuality');
 
             setPh('asset-search', 'searchPlaceholder');
 
@@ -955,6 +966,7 @@
             uiLang = lang;
             localStorage.setItem('uiLang', uiLang);
             applyLanguage();
+            updateSpeedModeUI();
             // 语言切换时，当前正在显示的 loading 文案也实时切换
             const overlay = document.getElementById('room-loading-overlay');
             if (overlay && overlay.style.display === 'flex') {
@@ -1130,6 +1142,25 @@
         let roomLoadingTimer = null;
         let roomLoadingIndex = 0;
         let roomLoadingEmojiIndex = 0;
+
+        let speedMode = localStorage.getItem('speedMode') || 'fast';
+        function setSpeedMode(mode) {
+            speedMode = (mode === 'quality') ? 'quality' : 'fast';
+            try { localStorage.setItem('speedMode', speedMode); } catch(e) {}
+            updateSpeedModeUI();
+        }
+        function updateSpeedModeUI() {
+            const fastBtn = document.getElementById('speed-fast-btn');
+            const qBtn = document.getElementById('speed-quality-btn');
+            if (!fastBtn || !qBtn) return;
+            const fastOn = speedMode === 'fast';
+            fastBtn.style.background = fastOn ? '#22c55e' : '#334155';
+            fastBtn.style.color = fastOn ? '#052e16' : '#e5e7eb';
+            fastBtn.style.borderColor = fastOn ? '#16a34a' : '#475569';
+            qBtn.style.background = fastOn ? '#334155' : '#22c55e';
+            qBtn.style.color = fastOn ? '#e5e7eb' : '#052e16';
+            qBtn.style.borderColor = fastOn ? '#475569' : '#16a34a';
+        }
         try { localStorage.removeItem('assetPositionOverrides'); } catch (e) {}
         let isMoving = false;
         let waypoints = []; // list of (x,y) to walk through in order
@@ -2220,7 +2251,7 @@ function toggleBrokerPanel() {
                 const res = await fetch('/assets/generate-rpg-background', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt })
+                    body: JSON.stringify({ prompt, speed_mode: speedMode })
                 });
                 const data = await res.json();
                 if (!data.ok) {
@@ -2249,7 +2280,11 @@ function toggleBrokerPanel() {
             showRoomLoadingOverlay();
             out.textContent = '🎨 正在生成 RPG 房间底图，请稍候（约20-90秒）...';
             try {
-                const res = await fetch('/assets/generate-rpg-background', { method: 'POST' });
+                const res = await fetch('/assets/generate-rpg-background', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ speed_mode: speedMode })
+                });
                 const data = await res.json();
                 if (!data.ok) {
                     if (data.code === 'MISSING_API_KEY') {
@@ -2896,6 +2931,7 @@ function toggleBrokerPanel() {
             
             console.log('WebP 支持:', supportsWebP);
             applyLanguage();
+            updateSpeedModeUI();
 
             // 动态探测 flowers 精灵表帧规格（避免写死 65x65 导致显示比例异常）
             try {
