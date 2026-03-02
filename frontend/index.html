@@ -720,8 +720,12 @@
                 authTitle: '请输入装修验证码', authPlaceholder: '输入验证码', authVerify: '验证',
                 btnMove: '🏠搬新家', btnHome: '🐚回老家', btnBroker: '找中介', btnBrokerGo: '听中介的',
                 brokerHint: '写你的风格主题（严格保持原始房间结构，只改变视觉风格）',
+                brokerPromptPh: '例如：像素风赛博东京夜景，霓虹灯、雨夜地面反光、蓝紫主色',
+                brokerNeedPrompt: '请先输入中介方案描述',
+                brokerGenerating: '🏘️ 正在按中介方案生成底图，请稍候（约20-90秒）...',
+                brokerDone: '✅ 已按中介方案生成并替换底图，正在刷新房间...',
                 searchPlaceholder: '搜索资产名（如 desk / sofa / star）', loaded: '已加载', allAssets: '全部资产',
-                chooseImage: '选择图片', confirmUpload: '确认并刷新',
+                chooseImage: '上传替换素材', confirmUpload: '确认并刷新',
                 frameW: '单帧宽', frameH: '单帧高', cols: '列', rows: '行', scalePct: '缩放%',
                 showCoords: '显示坐标', hideCoords: '隐藏坐标', moveView: '移动视野', lockView: '锁定视野',
                 memoTitle: '— 昨 日 小 记 —', guestTitle: '— 访 客 列 表 —', officeTitle: '海辛小龙虾的办公室',
@@ -734,8 +738,12 @@
                 authTitle: 'Enter Decor Passcode', authPlaceholder: 'Enter passcode', authVerify: 'Verify',
                 btnMove: '🏠 New Home', btnHome: '🐚 Go Home', btnBroker: 'Broker', btnBrokerGo: 'Follow Broker',
                 brokerHint: 'Describe your visual style (keep room structure unchanged, only change visual style)',
+                brokerPromptPh: 'e.g. pixel cyber Tokyo night, neon, rainy reflections, blue-purple palette',
+                brokerNeedPrompt: 'Please enter broker style prompt first',
+                brokerGenerating: '🏘️ Generating room background from broker plan, please wait (20-90s)...',
+                brokerDone: '✅ Broker plan applied and background replaced, refreshing room...',
                 searchPlaceholder: 'Search assets (desk / sofa / star)', loaded: 'Loaded', allAssets: 'All Assets',
-                chooseImage: 'Choose Image', confirmUpload: 'Confirm & Refresh',
+                chooseImage: 'Upload Replacement Asset', confirmUpload: 'Confirm & Refresh',
                 frameW: 'Frame W', frameH: 'Frame H', cols: 'Cols', rows: 'Rows', scalePct: 'Scale%',
                 showCoords: 'Show Coords', hideCoords: 'Hide Coords', moveView: 'Pan View', lockView: 'Lock View',
                 memoTitle: '— YESTERDAY NOTES —', guestTitle: '— VISITOR LIST —', officeTitle: 'Haixin Lobster Office',
@@ -748,8 +756,12 @@
                 authTitle: '編集パスコードを入力', authPlaceholder: 'パスコード入力', authVerify: '認証',
                 btnMove: '🏠引っ越し', btnHome: '🐚実家に戻る', btnBroker: '仲介', btnBrokerGo: '仲介に任せる',
                 brokerHint: '部屋構造は維持し、見た目スタイルのみ指定してください',
+                brokerPromptPh: '例：ピクセル調サイバー東京の夜、ネオン、雨の反射、青紫トーン',
+                brokerNeedPrompt: '先に仲介プランの説明を入力してください',
+                brokerGenerating: '🏘️ 仲介プランで背景を生成中（20〜90秒）...',
+                brokerDone: '✅ 仲介プランを適用して背景を更新しました。部屋を更新中...',
                 searchPlaceholder: 'アセット検索（desk / sofa / star）', loaded: '読み込み済み', allAssets: '全アセット',
-                chooseImage: '画像を選択', confirmUpload: '確定して更新',
+                chooseImage: '差し替え素材をアップロード', confirmUpload: '確定して更新',
                 frameW: 'フレーム幅', frameH: 'フレーム高', cols: '列', rows: '行', scalePct: '拡大率%',
                 showCoords: '座標表示', hideCoords: '座標非表示', moveView: '視点移動', lockView: '視点固定',
                 memoTitle: '— 昨日のメモ —', guestTitle: '— 訪問者リスト —', officeTitle: 'ハイシン・ロブスターのオフィス',
@@ -794,6 +806,7 @@
             setText('btn-back-home', 'btnHome');
             const brokerBtn = document.querySelector('#asset-broker-row .btn-broker'); if (brokerBtn) brokerBtn.textContent = t('btnBroker');
             const brokerHint = document.querySelector('#asset-broker-panel .asset-sub'); if (brokerHint) brokerHint.textContent = t('brokerHint');
+            const brokerPrompt = document.getElementById('asset-broker-prompt'); if (brokerPrompt) brokerPrompt.placeholder = t('brokerPromptPh');
             const brokerGoBtn = document.querySelector('#asset-broker-actions button'); if (brokerGoBtn) brokerGoBtn.textContent = t('btnBrokerGo');
 
             setPh('asset-search', 'searchPlaceholder');
@@ -1820,10 +1833,10 @@ function toggleBrokerPanel() {
             const out = document.getElementById('asset-upload-result');
             const prompt = (document.getElementById('asset-broker-prompt')?.value || '').trim();
             if (!prompt) {
-                out.textContent = '请先输入中介方案描述';
+                out.textContent = t('brokerNeedPrompt');
                 return;
             }
-            out.textContent = '🏘️ 正在按中介方案生成底图，请稍候（约20-90秒）...';
+            out.textContent = t('brokerGenerating');
             try {
                 const res = await fetch('/assets/generate-rpg-background', {
                     method: 'POST',
@@ -1835,7 +1848,7 @@ function toggleBrokerPanel() {
                     out.textContent = `❌ 生成失败：${data.msg || res.status}`;
                     return;
                 }
-                out.textContent = '✅ 已按中介方案生成并替换底图，正在刷新房间...';
+                out.textContent = t('brokerDone');
                 const ok = await refreshOfficeBackgroundOnly();
                 if (!ok) out.textContent = '✅ 已生成并替换底图（局部刷新失败，可手动刷新页面）';
             } catch (e) {
