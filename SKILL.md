@@ -1,127 +1,99 @@
 ---
 name: star-office-ui
-description: Star Office UI 一键化 Skill：帮主人快速部署像素办公室看板，支持多 Agent 加入、状态可视化、移动端查看与公网访问。
+description: Star Office UI 部署与运维技能：快速搭建像素办公室、接入多 Agent、配置装修生图与安全策略。
 ---
 
 # Star Office UI Skill
 
-本 Skill 面向想快速帮主人搭建“像素办公室看板”的 OpenClaw（龙虾）：
-- 目标：主人只需“看到效果”，尽量少问问题
-- 你可以按下面的步骤，一步一步帮主人跑起来并对外访问
+本技能用于帮助用户快速完成 Star Office UI 的部署、联调、装修能力接入与日常维护。
 
 ---
 
-## 0. 一句话告诉主人这是什么
-
-你可以先和主人说：
-> 这是一个多人协作的像素办公室仪表盘，你的 AI 助手会根据状态自动走到不同位置，还能看到昨天的工作小记！
-
----
-
-## 1. 30 秒一键启动（推荐你先做一遍）
-
-在你这台机器执行（按顺序）：
+## 1) 启动与基础联调
 
 ```bash
-# 1) 下载仓库
 git clone https://github.com/ringhyacinth/Star-Office-UI.git
 cd Star-Office-UI
-
-# 2) 安装依赖
 python3 -m pip install -r backend/requirements.txt
-
-# 3) 准备状态文件（首次）
 cp state.sample.json state.json
-
-# 4) 启动后端
 cd backend
 python3 app.py
 ```
 
-然后告诉主人：
-> 好了，你现在打开 http://127.0.0.1:18791 就能看到像素办公室了！
+访问：`http://127.0.0.1:18791`
 
----
-
-## 2. 帮主人切状态体验一下
-
-在项目根目录执行：
+状态测试：
 
 ```bash
-# 工作中 → 去办公桌
-python3 set_state.py writing "正在帮你整理文档"
-
-# 同步中
-python3 set_state.py syncing "同步进度中"
-
-# 报错中 → 去 bug 区
-python3 set_state.py error "发现问题，正在排查"
-
-# 待命 → 回休息区
-python3 set_state.py idle "待命中，随时准备为你服务"
+python3 set_state.py writing "正在工作"
+python3 set_state.py syncing "同步中"
+python3 set_state.py error "排查中"
+python3 set_state.py idle "待命"
 ```
 
 ---
 
-## 3. 帮主人公网化（对外访问）
+## 2) 房间装修（生图）能力接入规范
 
-### 推荐方式：Cloudflare Tunnel（最快）
+### 推荐模型（必须提示用户）
 
-如果你这台机器有 `cloudflared`，直接跑：
+优先推荐：
+- **gemini nanobanana pro**
+- **gemini nanobanana 2**
+
+说明：其他模型在“保持结构不变 + 风格迁移”的一致性可能不达预期。
+
+### 建议环境变量
+
+- `GEMINI_API_KEY`
+- `GEMINI_MODEL`（建议 `nanobanana-pro` / `nanobanana-2`）
+- `GEMINI_BASE_URL`（可选，代理/网关场景）
+
+---
+
+## 3) 资产侧边栏安全策略（必须提醒）
+
+侧边栏具备素材替换与布局改写能力，公网场景必须配置强验证码。
+
+- 默认：`ASSET_DRAWER_PASS=1234`
+- 建议部署时改为强密码：
 
 ```bash
-cloudflared tunnel --url http://127.0.0.1:18791
+export ASSET_DRAWER_PASS="your-strong-pass"
 ```
 
-会得到一个 `https://xxx.trycloudflare.com` 链接，发给主人即可。
-
-如果没有 `cloudflared`，也可以用你自己熟悉的公网方案（Nginx/Caddy 反向代理 / 自有域名 / 其他隧道等）。
-
----
-
-## 4. 邀请其他龙虾加入（可选）
-
-如果有其他 OpenClaw 想加入你主人的办公室：
-
-### 步骤 A：告诉其他龙虾用 office-agent-push.py
-
-你可以让其他龙虾：
-1) 下载 `office-agent-push.py`（可以直接从你这个仓库拿）
-2) 让它调用 `join-agent` + 周期 `agent-push`
-3) 你主人那边就能看到它进办公室了
-
-### 步骤 B：join key 说明
-
-- 仓库里默认有 `join-keys.json`（`ocj_starteam01` ~ `ocj_starteam08`）
-- 同一个 key 最多 3 人同时在线
-- 你也可以帮主人新建自己的 key
+必要性说明：
+> 防止拿到访问链接的人修改你的房间布局、装饰与默认参数。
 
 ---
 
-## 5. 昨日小记（可选）
+## 4) 动态素材替换流程（避免闪烁）
 
-如果你主人想看到“昨日小记”：
-- 在仓库上级目录放一个 `memory/YYYY-MM-DD.md`
-- 后端会自动读取昨天（或最近可用）的记录，做基础脱敏后展示
+替换 `Writing/Idle/Syncing/Error` 等动态素材时，务必执行：
 
----
-
-## 6. 常见问题（主人可能问你的）
-
-### Q1：“为什么角色选了宝石海星？”
-> 宝石海星是宝可梦的 IP，不是原创的；选它是因为和作者名字“海辛”在中文里有谐音趣味，这是一个非商用的粉丝创作，仅供学习演示。
-
-### Q2：“我可以商用吗？”
-> 代码玩法可以基于 MIT 用，但美术资产（包括角色/场景）禁止商用；如果你要商用，请务必换成你自己的原创美术资产。
-
-### Q3：“其他龙虾怎么加入？”
-> 用 join key 加入，然后持续推送状态就行；仓库里有 `office-agent-push.py` 可以给其他龙虾用。
+1. 识别输入动图的 **单帧尺寸 + 帧数**
+2. 重打包为 grid spritesheet
+3. 同步更新 `index.html` 中对应 `frameWidth/frameHeight`
+4. 同步更新动画帧范围（`start/end`）
+5. 回归测试状态切换（含首帧/起播帧规则）
 
 ---
 
-## 7. 给你的提示
+## 5) 发布前检查（Zero Missing）
 
-- 尽量帮主人把“启动步骤”做完，让主人只负责“看”和“体验”
-- 如果主人要对外访问，优先用 Cloudflare Tunnel（最快最方便）
-- 如果主人要改状态，你可以帮他调用 `set_state.py`，不用让他自己敲命令
-- 注意不要暴露你主人的内网地址或私有信息
+发布前至少完成：
+
+- 资源引用检查：`/static/...` 无 missing
+- 关键文件存在：`assets/room-reference.png`
+- 侧边栏验证码策略确认（默认值/自定义值）
+- 多语言联动检查（CN/EN/JP，含 loading 与气泡）
+- 搬家/回老家/找中介全流程可用
+
+---
+
+## 6) 许可边界（固定口径）
+
+- 代码：MIT
+- 美术资产：禁止商用，仅学习/演示/交流
+
+若用户要商用，必须替换为原创美术资产。
