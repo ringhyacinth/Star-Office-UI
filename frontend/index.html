@@ -1105,6 +1105,12 @@
             if (n >= 1024 * 1024) return (n / 1024 / 1024).toFixed(2) + ' MB';
             return (n / 1024).toFixed(1) + ' KB';
         }
+        function toAssetStem(v) {
+            const s = (v || '').toLowerCase();
+            const file = s.split('/').pop() || s;
+            return file.replace(/\.[^.]+$/, '');
+        }
+
 
         function pathToTextureCandidates(path) {
             const file = (path || '').split('/').pop() || '';
@@ -1269,10 +1275,6 @@
                 return;
             }
             const sprite = mapAssetPathToSprite(path);
-            if (!sprite) {
-                if (out) out.textContent = '当前场景未找到该资产对象';
-                return;
-            }
             const x = Number(document.getElementById('asset-pos-x')?.value || NaN);
             const y = Number(document.getElementById('asset-pos-y')?.value || NaN);
             if (!Number.isFinite(x) || !Number.isFinite(y)) {
@@ -1280,11 +1282,14 @@
                 return;
             }
 
-            sprite.x = x;
-            sprite.y = y;
+            if (sprite) {
+                sprite.x = x;
+                sprite.y = y;
+                drawSelectionBoxOnScene(path);
+                highlightSpriteByAssetPath(path);
+            }
 
             const texKey = sprite?.texture?.key;
-            // 持久化用“资产路径”作为主键，避免 live 热更新纹理 key（xxx_live_时间戳）导致刷新后失效
             const persistKey = path;
             if (persistKey) {
                 assetPositionOverrides[persistKey] = { x, y };
@@ -1292,16 +1297,16 @@
                     await fetch('/assets/positions', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ key: persistKey, x, y, textureKey: texKey || null })
+                        body: JSON.stringify({ key: persistKey, x, y, textureKey: texKey || null, stem: toAssetStem(persistKey) })
                     });
                 } catch (e) {
                     console.warn('坐标写入后端失败，已保留本地', e);
                 }
             }
 
-            drawSelectionBoxOnScene(path);
-            highlightSpriteByAssetPath(path);
-            if (out) out.textContent = `✅ 已应用并写入后端：(${Math.round(x)}, ${Math.round(y)})`;
+            if (out) out.textContent = sprite
+                ? `✅ 已应用并写入后端：(${Math.round(x)}, ${Math.round(y)})`
+                : `✅ 已写入后端（当前画面无该对象，刷新或切换场景后生效）：(${Math.round(x)}, ${Math.round(y)})`;
         }
 
         async function applySavedPositionOverrides() {
@@ -1323,9 +1328,17 @@
                     let ov = serverPositions[texKey] || assetPositionOverrides[texKey];
 
                     // 再尝试资产路径命中（推荐持久化键）
+                    const assetPath = resolveAssetPathByTextureKey(texKey);
+                    if (!ov && assetPath) {
+                        ov = serverPositions[assetPath] || assetPositionOverrides[assetPath];
+                    }
+
+                    // 最后按 stem 模糊匹配（处理 webp/png 或 live key 差异）
                     if (!ov) {
-                        const assetPath = resolveAssetPathByTextureKey(texKey);
-                        if (assetPath) ov = serverPositions[assetPath] || assetPositionOverrides[assetPath];
+                        const stem = toAssetStem(assetPath || texKey);
+                        const hitKey = Object.keys(serverPositions).find(k => toAssetStem(k) === stem)
+                            || Object.keys(assetPositionOverrides).find(k => toAssetStem(k) === stem);
+                        if (hitKey) ov = serverPositions[hitKey] || assetPositionOverrides[hitKey];
                     }
 
                     if (!ov) continue;
@@ -1405,7 +1418,7 @@
             fillAssetUploadParamsFromSelection(path);
             refreshAssetPositionInputs(path);
             const out = document.getElementById('asset-upload-result');
-            if (out) out.textContent = ok ? `已选中：${path}` : `已选中：${path}（当前场景未定位到对象）`;
+            if (out) out.textContent = ok ? `已选中：${path}` : `已选中：${path}（当前画面里没有这个对象；可仅保存参数，或切到“已加载”再选）`;
             updateAssetConfirmButtonState();
         }
 
