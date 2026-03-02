@@ -866,7 +866,7 @@
 
         let game, star, sofa, serverroom, officeBgSprite, areas = {}, currentState = 'idle', pendingDesiredState = null, statusText, lastFetch = 0, lastBlink = 0, lastBubble = 0, targetX = 660, targetY = 170, bubble = null, typewriterText = '', typewriterTarget = '', typewriterIndex = 0, lastTypewriter = 0, syncAnimSprite = null, catBubble = null, selectionBoxGraphics = null;
         const IDLE_SOFA_ANCHOR = { x: 798, y: 272 }; // 统一中心锚点（原 sofa 左上 670,144 的中心）
-        const IDLE_STAR_SCALE = 2.0; // star 单帧128，需要x2与sofa 256完全重合
+        const IDLE_STAR_SCALE = 1.0; // star idle 改为256帧原生显示，不再放大
         let currentOfficeBgTextureKey = 'office_bg';
         let assetDrawerOpen = false;
         let assetDrawerAuthed = (localStorage.getItem('assetDrawerAuthed') === '1');
@@ -1120,7 +1120,7 @@
             const path = (item && item.path) ? item.path : '';
             const stem = (path.split('/').pop() || '').replace(/\.[^.]+$/, '');
             const frameMap = {
-                'star-idle-spritesheet': { w: 128, h: 128 },
+                'star-idle-spritesheet': { w: 256, h: 256 },
                 'star-researching-spritesheet': { w: 128, h: 105 },
                 'sofa-busy-spritesheet': { w: 256, h: 256 },
                 'plants-spritesheet': { w: 160, h: 160 },
@@ -1375,9 +1375,10 @@
                 fd.append('auto_spritesheet', '1');
                 fd.append('frame_w', String(fw));
                 fd.append('frame_h', String(fh));
-                // 精灵表必须匹配项目帧规格（否则 Phaser 切帧会错乱闪烁）
-                // 使用像素风缩放（nearest）避免模糊
-                fd.append('preserve_original', '0');
+                // star-idle 已升级为 256x256 原生帧：保留原始尺寸，避免糊化
+                // 其他精灵表仍按目标帧规格转换，防止切帧错乱
+                const isStarIdle = path.toLowerCase().includes('star-idle-spritesheet');
+                fd.append('preserve_original', isStarIdle ? '1' : '0');
                 fd.append('pixel_art', '1');
             }
 
@@ -2139,7 +2140,7 @@
             // cache-busting to avoid stale background on client/CDN
             // use smaller/new map version provided by user
             this.load.image('office_bg', '/static/office_bg_small' + getExt('office_bg_small.png') + '?v={{VERSION_TIMESTAMP}}');
-            this.load.spritesheet('star_idle', '/static/star-idle-spritesheet' + getExt('star-idle-spritesheet.png') + '?v={{VERSION_TIMESTAMP}}', { frameWidth: 128, frameHeight: 128 });
+            this.load.spritesheet('star_idle', '/static/star-idle-spritesheet' + getExt('star-idle-spritesheet.png') + '?v={{VERSION_TIMESTAMP}}', { frameWidth: 256, frameHeight: 256 });
             this.load.spritesheet('star_researching', '/static/star-researching-spritesheet' + getExt('star-researching-spritesheet.png'), { frameWidth: 128, frameHeight: 105 });
 
             // Furniture
