@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>海辛办公室 - 加入邀请</title>
+    <title>Star Office - 招待案内</title>
     <style>
         body {
             margin: 0;
@@ -12,6 +12,7 @@
             background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
             min-height: 100vh;
             box-sizing: border-box;
+            position: relative;
         }
         .card {
             max-width: 800px;
@@ -68,15 +69,6 @@
         .step-text strong {
             color: #111827;
         }
-        .join-link {
-            background: #f3f4f6;
-            padding: 16px;
-            border-radius: 8px;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-            font-size: 14px;
-            word-break: break-all;
-            margin-top: 8px;
-        }
         .note {
             margin-top: 24px;
             padding: 16px;
@@ -107,53 +99,215 @@
         .back-btn:hover {
             background: #2563eb;
         }
+        #lang-switcher {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            z-index: 1000;
+            background: rgba(15, 23, 42, 0.88);
+            border: 2px solid #3b82f6;
+            border-radius: 999px;
+            padding: 4px;
+            display: flex;
+            gap: 4px;
+        }
+        #lang-switcher button {
+            border: 1px solid #475569;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 12px;
+            background: #334155;
+            color: #fff;
+            cursor: pointer;
+        }
+        #lang-switcher button.active {
+            background: #3b82f6;
+            border-color: #93c5fd;
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>✨ 海辛办公室 · 加入邀请</h1>
-        <p>欢迎加入海辛的像素办公室看板！</p>
+    <div id="lang-switcher">
+        <button type="button" data-lang="en">EN</button>
+        <button type="button" data-lang="ja">JA</button>
+        <button type="button" data-lang="zh">ZH</button>
+    </div>
 
-        <h2>加入步骤（一共 3 步）</h2>
+    <div class="card">
+        <h1 id="page-title">✨ Star Office・参加招待</h1>
+        <p id="intro-text">Star のピクセルオフィスボードへようこそ！</p>
+
+        <h2 id="steps-title">参加手順（全3ステップ）</h2>
         <div class="steps">
             <div class="step">
                 <div class="step-num">1</div>
                 <div class="step-text">
-                    <strong>确认信息</strong><br>
-                    你应该已经收到两样东西：
+                    <strong id="step1-title">情報を確認</strong><br>
+                    <span id="step1-desc">受け取るものは次の2点です：</span>
                     <ul>
-                        <li>邀请链接：<code>https://office.example.com/join</code></li>
-                        <li>一次性接入密钥（join key）：<code>ocj_xxx</code></li>
+                        <li id="step1-link">招待リンク：<code>https://office.example.com/join</code></li>
+                        <li id="step1-key">1回限りの接続キー（join key）：<code>ocj_xxx</code></li>
                     </ul>
                 </div>
             </div>
             <div class="step">
                 <div class="step-num">2</div>
                 <div class="step-text">
-                    <strong>把邀请信息丢给你的 OpenClaw</strong><br>
-                    把邀请链接 + join key 一起发给你的 OpenClaw，并说“帮我加入海辛办公室”。
+                    <strong id="step2-title">招待情報をあなたの OpenClaw に渡す</strong><br>
+                    <span id="step2-desc">招待リンクと join key をまとめて OpenClaw に送り「Star Officeに参加させて」と伝えてください。</span>
                 </div>
             </div>
             <div class="step">
                 <div class="step-num">3</div>
                 <div class="step-text">
-                    <strong>在你这边授权</strong><br>
-                    你的 OpenClaw 会在对话里向你要授权；同意后，它就会开始自动把工作状态推送到海辛办公室看板啦！
+                    <strong id="step3-title">あなた側で承認</strong><br>
+                    <span id="step3-desc">OpenClaw が会話で承認を求めます。承認後、作業ステータスが Star Office ボードへ自動送信されます。</span>
                 </div>
             </div>
         </div>
 
         <div class="note">
-            <strong>⚠️  隐私说明</strong><br>
-            只推送状态（idle/writing/researching/executing/syncing/error），不含任何具体内容/隐私；随时可停。
+            <strong id="privacy-title">⚠️ プライバシーについて</strong><br>
+            <span id="privacy-desc">ステータス（idle/writing/researching/executing/syncing/error）のみ送信し、具体内容や個人情報は送信しません。いつでも停止できます。</span>
         </div>
 
-        <a href="/" class="back-btn">← 回到海辛办公室</a>
+        <a href="/" class="back-btn" id="back-btn">← Star Office に戻る</a>
 
-        <div class="footer">
-            海辛工作室 · 像素办公室看板<br>
-            有问题找海辛 😊
+        <div class="footer" id="footer-text">
+            Star Office UI<br>
+            問題があれば管理者まで
         </div>
     </div>
+
+    <script>
+        const LANG_KEY = 'starOfficeLang';
+        const LEGACY_LANG_KEY = 'starOfficeUILang';
+        const I18N = {
+            en: {
+                title: 'Star Office - Invite Guide',
+                pageTitle: '✨ Star Office Invite',
+                intro: 'Welcome to the Star Pixel Office board!',
+                stepsTitle: 'How to Join (3 steps)',
+                step1Title: 'Check what you received',
+                step1Desc: 'You need these two items:',
+                step1Link: 'Invite link: ',
+                step1Key: 'One-time join key: ',
+                step2Title: 'Send invite info to your OpenClaw',
+                step2Desc: 'Send the invite link and join key together, then tell it "Join Star Office".',
+                step3Title: 'Approve on your side',
+                step3Desc: 'OpenClaw will ask for confirmation. After approval, work status is synced to the Star Office board automatically.',
+                privacyTitle: '⚠️ About privacy',
+                privacyDesc: 'Only status values (idle/writing/researching/executing/syncing/error) are sent. No detailed content or personal data is sent. You can stop anytime.',
+                backBtn: '← Back to Star Office',
+                footer: 'Star Office UI\nContact admin if you have issues'
+            },
+            ja: {
+                title: 'Star Office - 招待案内',
+                pageTitle: '✨ Star Office・参加招待',
+                intro: 'Star のピクセルオフィスボードへようこそ！',
+                stepsTitle: '参加手順（全3ステップ）',
+                step1Title: '情報を確認',
+                step1Desc: '受け取るものは次の2点です：',
+                step1Link: '招待リンク：',
+                step1Key: '1回限りの接続キー（join key）：',
+                step2Title: '招待情報をあなたの OpenClaw に渡す',
+                step2Desc: '招待リンクと join key をまとめて OpenClaw に送り「Star Officeに参加させて」と伝えてください。',
+                step3Title: 'あなた側で承認',
+                step3Desc: 'OpenClaw が会話で承認を求めます。承認後、作業ステータスが Star Office ボードへ自動送信されます。',
+                privacyTitle: '⚠️ プライバシーについて',
+                privacyDesc: 'ステータス（idle/writing/researching/executing/syncing/error）のみ送信し、具体内容や個人情報は送信しません。いつでも停止できます。',
+                backBtn: '← Star Office に戻る',
+                footer: 'Star Office UI\n問題があれば管理者まで'
+            },
+            zh: {
+                title: 'Star Office - 邀请说明',
+                pageTitle: '✨ Star Office 参与邀请',
+                intro: '欢迎来到 Star 像素办公室看板！',
+                stepsTitle: '加入步骤（共3步）',
+                step1Title: '确认收到的信息',
+                step1Desc: '你需要下面两项：',
+                step1Link: '邀请链接：',
+                step1Key: '一次性连接密钥（join key）：',
+                step2Title: '把邀请信息发给你的 OpenClaw',
+                step2Desc: '把邀请链接和 join key 一并发送，并告诉它“加入 Star Office”。',
+                step3Title: '在你这边确认授权',
+                step3Desc: 'OpenClaw 会在对话中请求确认。授权后，工作状态会自动同步到 Star Office 看板。',
+                privacyTitle: '⚠️ 关于隐私',
+                privacyDesc: '仅会发送状态值（idle/writing/researching/executing/syncing/error），不会发送具体内容或个人信息。可随时停止。',
+                backBtn: '← 返回 Star Office',
+                footer: 'Star Office UI\n如有问题请联系管理员'
+            }
+        };
+
+        const switcherButtons = Array.from(document.querySelectorAll('#lang-switcher button[data-lang]'));
+        let currentLang = resolveLang(readSavedLang() || navigator.language || 'ja');
+
+        function readSavedLang() {
+            try {
+                return localStorage.getItem(LANG_KEY) || localStorage.getItem(LEGACY_LANG_KEY);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function saveLang(lang) {
+            try {
+                localStorage.setItem(LANG_KEY, lang);
+                localStorage.removeItem(LEGACY_LANG_KEY);
+            } catch (e) {}
+        }
+
+        function resolveLang(raw) {
+            const v = String(raw || '').toLowerCase();
+            if (v.startsWith('ja')) return 'ja';
+            if (v.startsWith('zh')) return 'zh';
+            if (v.startsWith('en')) return 'en';
+            return 'ja';
+        }
+
+        function t(key) {
+            return (I18N[currentLang] && I18N[currentLang][key]) || I18N.ja[key] || key;
+        }
+
+        function applyLanguage() {
+            document.documentElement.lang = currentLang;
+            document.title = t('title');
+            document.getElementById('page-title').textContent = t('pageTitle');
+            document.getElementById('intro-text').textContent = t('intro');
+            document.getElementById('steps-title').textContent = t('stepsTitle');
+            document.getElementById('step1-title').textContent = t('step1Title');
+            document.getElementById('step1-desc').textContent = t('step1Desc');
+            document.getElementById('step1-link').innerHTML = t('step1Link') + '<code>https://office.example.com/join</code>';
+            document.getElementById('step1-key').innerHTML = t('step1Key') + '<code>ocj_xxx</code>';
+            document.getElementById('step2-title').textContent = t('step2Title');
+            document.getElementById('step2-desc').textContent = t('step2Desc');
+            document.getElementById('step3-title').textContent = t('step3Title');
+            document.getElementById('step3-desc').textContent = t('step3Desc');
+            document.getElementById('privacy-title').textContent = t('privacyTitle');
+            document.getElementById('privacy-desc').textContent = t('privacyDesc');
+            document.getElementById('back-btn').textContent = t('backBtn');
+            document.getElementById('footer-text').innerHTML = t('footer').replace('\n', '<br>');
+            switcherButtons.forEach((btn) => {
+                btn.classList.toggle('active', btn.getAttribute('data-lang') === currentLang);
+            });
+        }
+
+        function setLanguage(lang) {
+            currentLang = resolveLang(lang);
+            saveLang(currentLang);
+            applyLanguage();
+        }
+
+        switcherButtons.forEach((btn) => {
+            btn.addEventListener('click', () => setLanguage(btn.getAttribute('data-lang')));
+        });
+        window.addEventListener('storage', (event) => {
+            if ((event.key === LANG_KEY || event.key === LEGACY_LANG_KEY) && event.newValue) {
+                currentLang = resolveLang(event.newValue);
+                applyLanguage();
+            }
+        });
+        applyLanguage();
+    </script>
 </body>
 </html>

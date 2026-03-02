@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>加入 Star 的像素办公室</title>
+    <title>Star のピクセルオフィスに参加</title>
     <style>
         @font-face {
             font-family: 'ArkPixel';
@@ -23,6 +23,7 @@
             padding: 40px 20px;
             gap: 30px;
             color: #fff;
+            position: relative;
         }
         h1 {
             color: #ffd700;
@@ -47,7 +48,7 @@
             font-size: 14px;
             color: #ddd;
         }
-        input, select {
+        input {
             width: 100%;
             padding: 10px 12px;
             font-family: 'ArkPixel', monospace;
@@ -96,55 +97,226 @@
             text-align: center;
             line-height: 1.8;
         }
-        .note a { word-break: break-all; }
+        .note a { word-break: break-all; color: #ffd700; text-decoration: underline; }
+        #lang-switcher {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            z-index: 1000;
+            background: rgba(15, 23, 42, 0.88);
+            border: 2px solid #e94560;
+            border-radius: 999px;
+            padding: 4px;
+            display: flex;
+            gap: 4px;
+        }
+        #lang-switcher button {
+            width: auto;
+            border: 1px solid #475569;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 11px;
+            background: #334155;
+        }
+        #lang-switcher button.active {
+            background: #e94560;
+            border-color: #ffd700;
+        }
     </style>
 </head>
 <body>
-    <h1>⭐ 加入 Star 的像素办公室</h1>
+    <div id="lang-switcher">
+        <button type="button" data-lang="en">EN</button>
+        <button type="button" data-lang="ja">JA</button>
+        <button type="button" data-lang="zh">ZH</button>
+    </div>
+
+    <h1 id="page-title">⭐ Star のピクセルオフィスに参加</h1>
     <div class="container">
         <div class="form-group">
-            <label>你的名字（会显示在办公室）</label>
-            <input type="text" id="agentName" placeholder="例如：小龙虾助手" maxlength="20">
+            <label id="label-agent-name" for="agentName">あなたの名前（オフィスに表示されます）</label>
+            <input type="text" id="agentName" placeholder="例：ザリガニアシスタント" maxlength="20">
         </div>
-        <!-- 状态与细节改为自动同步，不在 join 页面填写 -->
         <div class="form-group">
-            <label>Agent 接入密钥（一次性）</label>
-            <input type="text" id="joinKey" placeholder="请输入你拿到的 join key" maxlength="64">
+            <label id="label-join-key" for="joinKey">Agent 接続キー（使い切り）</label>
+            <input type="text" id="joinKey" placeholder="受け取った join key を入力してください" maxlength="64">
         </div>
-        <button id="joinBtn">加入办公室</button>
-        <button id="leaveBtn" style="margin-top:10px; background:#555; border-color:#555;">离开办公室</button>
+        <button id="joinBtn">オフィスに参加</button>
+        <button id="leaveBtn" style="margin-top:10px; background:#555; border-color:#555;">オフィスから退出</button>
         <div id="status" class="status" style="display:none;"></div>
     </div>
+
     <div class="note">
-        ⚠️ 注意：join 页面仅需要名字 + 一次性 join key<br>
-        状态与状态细节会由 agent 后续自动推送同步
+        <span id="note-line-1">⚠️ 注意：joinページで必要なのは名前 + 使い切りjoin keyのみ</span><br>
+        <span id="note-line-2">ステータスと詳細は後続でagentが自動送信して同期します</span>
         <br><br>
-        📌 邀请说明：
-        <a href="/invite" style="color:#ffd700; text-decoration: underline;">https://office.example.com/invite</a>
+        <span id="note-line-3">📌 招待の案内：</span>
+        <a href="/invite">https://office.example.com/invite</a>
     </div>
 
     <script>
+        const LANG_KEY = 'starOfficeLang';
+        const LEGACY_LANG_KEY = 'starOfficeUILang';
+        const I18N = {
+            en: {
+                title: 'Join Star Pixel Office',
+                pageTitle: '⭐ Join Star Pixel Office',
+                labelAgentName: 'Your name (shown in office)',
+                labelJoinKey: 'Agent Join Key (one-time)',
+                placeholderAgentName: 'e.g. Lobster Assistant',
+                placeholderJoinKey: 'Enter the join key you received',
+                joinBtn: 'Join Office',
+                leaveBtn: 'Leave Office',
+                note1: '⚠️ Required on this page: name + one-time join key',
+                note2: 'Status/detail will be auto-synced by the agent afterward.',
+                note3: '📌 Invite guide:',
+                statusNameRequired: 'Please enter your name first',
+                statusJoinKeyRequired: 'Please enter your agent join key first',
+                statusJoinSuccess: 'Joined successfully! Refresh office to see it ✨',
+                statusJoinFail: 'Failed to join',
+                statusNetworkError: 'Network error. Please retry.',
+                statusLeaveNameRequired: 'Enter the name to leave first',
+                statusLeaveSuccess: 'Left the office 👋',
+                statusLeaveFail: 'Failed to leave'
+            },
+            ja: {
+                title: 'Star のピクセルオフィスに参加',
+                pageTitle: '⭐ Star のピクセルオフィスに参加',
+                labelAgentName: 'あなたの名前（オフィスに表示されます）',
+                labelJoinKey: 'Agent 接続キー（使い切り）',
+                placeholderAgentName: '例：ザリガニアシスタント',
+                placeholderJoinKey: '受け取った join key を入力してください',
+                joinBtn: 'オフィスに参加',
+                leaveBtn: 'オフィスから退出',
+                note1: '⚠️ 注意：joinページで必要なのは名前 + 使い切りjoin keyのみ',
+                note2: 'ステータスと詳細は後続でagentが自動送信して同期します',
+                note3: '📌 招待の案内：',
+                statusNameRequired: '先に名前を入力してください',
+                statusJoinKeyRequired: '先にAgent接続キーを入力してください',
+                statusJoinSuccess: '参加完了！オフィスを更新すると表示されます ✨',
+                statusJoinFail: '参加に失敗しました',
+                statusNetworkError: 'ネットワークエラーです。再試行してください',
+                statusLeaveNameRequired: '先に退出する名前を入力してください',
+                statusLeaveSuccess: 'オフィスから退出しました 👋',
+                statusLeaveFail: '退室失敗'
+            },
+            zh: {
+                title: '加入 Star 像素办公室',
+                pageTitle: '⭐ 加入 Star 像素办公室',
+                labelAgentName: '你的名字（会显示在办公室）',
+                labelJoinKey: 'Agent 连接密钥（一次性）',
+                placeholderAgentName: '例如：龙虾助手',
+                placeholderJoinKey: '输入你收到的 join key',
+                joinBtn: '加入办公室',
+                leaveBtn: '离开办公室',
+                note1: '⚠️ 本页只需要：名字 + 一次性 join key',
+                note2: '状态与详情会由 agent 后续自动推送并同步。',
+                note3: '📌 邀请说明：',
+                statusNameRequired: '请先输入名字',
+                statusJoinKeyRequired: '请先输入 Agent 连接密钥',
+                statusJoinSuccess: '加入成功！刷新办公室即可看到 ✨',
+                statusJoinFail: '加入失败',
+                statusNetworkError: '网络错误，请重试',
+                statusLeaveNameRequired: '请先输入要离开的名字',
+                statusLeaveSuccess: '已离开办公室 👋',
+                statusLeaveFail: '离开失败'
+            }
+        };
+
         const joinBtn = document.getElementById('joinBtn');
         const leaveBtn = document.getElementById('leaveBtn');
         const statusDiv = document.getElementById('status');
         const agentNameInput = document.getElementById('agentName');
         const joinKeyInput = document.getElementById('joinKey');
+        const switcherButtons = Array.from(document.querySelectorAll('#lang-switcher button[data-lang]'));
+        let currentLang = resolveLang(readSavedLang() || navigator.language || 'ja');
+        let lastStatusState = null;
 
-        function showStatus(text, ok) {
+        function readSavedLang() {
+            try {
+                return localStorage.getItem(LANG_KEY) || localStorage.getItem(LEGACY_LANG_KEY);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function saveLang(lang) {
+            try {
+                localStorage.setItem(LANG_KEY, lang);
+                localStorage.removeItem(LEGACY_LANG_KEY);
+            } catch (e) {}
+        }
+
+        function resolveLang(raw) {
+            const v = String(raw || '').toLowerCase();
+            if (v.startsWith('ja')) return 'ja';
+            if (v.startsWith('zh')) return 'zh';
+            if (v.startsWith('en')) return 'en';
+            return 'ja';
+        }
+
+        function t(key) {
+            return (I18N[currentLang] && I18N[currentLang][key]) || I18N.ja[key] || key;
+        }
+
+        function applyLanguage() {
+            document.documentElement.lang = currentLang;
+            document.title = t('title');
+            document.getElementById('page-title').textContent = t('pageTitle');
+            document.getElementById('label-agent-name').textContent = t('labelAgentName');
+            document.getElementById('label-join-key').textContent = t('labelJoinKey');
+            agentNameInput.placeholder = t('placeholderAgentName');
+            joinKeyInput.placeholder = t('placeholderJoinKey');
+            joinBtn.textContent = t('joinBtn');
+            leaveBtn.textContent = t('leaveBtn');
+            document.getElementById('note-line-1').textContent = t('note1');
+            document.getElementById('note-line-2').textContent = t('note2');
+            document.getElementById('note-line-3').textContent = t('note3');
+            switcherButtons.forEach((btn) => {
+                btn.classList.toggle('active', btn.getAttribute('data-lang') === currentLang);
+            });
+            if (lastStatusState) {
+                renderStatus();
+            }
+        }
+
+        function setLanguage(lang) {
+            const next = resolveLang(lang);
+            currentLang = next;
+            saveLang(next);
+            applyLanguage();
+        }
+
+        function renderStatus() {
+            if (!lastStatusState) return;
             statusDiv.style.display = 'block';
-            statusDiv.textContent = text;
-            statusDiv.className = 'status ' + (ok ? 'ok' : 'error');
+            statusDiv.className = 'status ' + (lastStatusState.ok ? 'ok' : 'error');
+            if (lastStatusState.raw) {
+                statusDiv.textContent = lastStatusState.raw;
+            } else {
+                statusDiv.textContent = t(lastStatusState.key);
+            }
+        }
+
+        function showStatusKey(key, ok) {
+            lastStatusState = { key, ok };
+            renderStatus();
+        }
+
+        function showStatusRaw(text, ok) {
+            lastStatusState = { raw: text, ok };
+            renderStatus();
         }
 
         async function join() {
             const name = agentNameInput.value.trim();
             const joinKey = joinKeyInput.value.trim();
             if (!name) {
-                showStatus('请先输入你的名字～', false);
+                showStatusKey('statusNameRequired', false);
                 return;
             }
             if (!joinKey) {
-                showStatus('请先输入 Agent 接入密钥～', false);
+                showStatusKey('statusJoinKeyRequired', false);
                 return;
             }
             try {
@@ -155,19 +327,19 @@
                 });
                 const data = await response.json();
                 if (data.ok) {
-                    showStatus('加入成功！刷新办公室就能看到你啦 ✨', true);
+                    showStatusKey('statusJoinSuccess', true);
                 } else {
-                    showStatus(data.msg || '加入失败', false);
+                    showStatusRaw(data.msg || t('statusJoinFail'), false);
                 }
             } catch (e) {
-                showStatus('网络出错，请重试', false);
+                showStatusKey('statusNetworkError', false);
             }
         }
 
         async function leave() {
             const name = agentNameInput.value.trim();
             if (!name) {
-                showStatus('请先输入你要离开的名字～', false);
+                showStatusKey('statusLeaveNameRequired', false);
                 return;
             }
             try {
@@ -178,17 +350,28 @@
                 });
                 const data = await response.json();
                 if (data.ok) {
-                    showStatus('已离开办公室 👋', true);
+                    showStatusKey('statusLeaveSuccess', true);
                 } else {
-                    showStatus(data.msg || '离开失败', false);
+                    showStatusRaw(data.msg || t('statusLeaveFail'), false);
                 }
             } catch (e) {
-                showStatus('网络出错，请重试', false);
+                showStatusKey('statusNetworkError', false);
             }
         }
 
+        switcherButtons.forEach((btn) => {
+            btn.addEventListener('click', () => setLanguage(btn.getAttribute('data-lang')));
+        });
         joinBtn.addEventListener('click', join);
         leaveBtn.addEventListener('click', leave);
+        window.addEventListener('storage', (event) => {
+            if ((event.key === LANG_KEY || event.key === LEGACY_LANG_KEY) && event.newValue) {
+                currentLang = resolveLang(event.newValue);
+                applyLanguage();
+            }
+        });
+
+        applyLanguage();
     </script>
 </body>
 </html>
