@@ -92,13 +92,17 @@
             color: #eee;
             font-size: 14px;
             background: rgba(0,0,0,0.7);
-            padding: 10px 14px;
+            padding: 8px 12px;
             border-radius: 4px;
             max-width: 520px;
             text-align: left;
             font-family: 'ArkPixel', 'Courier New', monospace;
             z-index: 1000002;
             pointer-events: none;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.2;
         }
         /* 状态控制栏 */
         #control-bar {
@@ -184,6 +188,10 @@
             border-radius: 8px;
             padding: 8px;
             z-index: 2;
+            display: none;
+        }
+        #asset-upload-panel.active {
+            display: block;
         }
         .asset-item {
             border: 1px solid #374151;
@@ -1015,83 +1023,33 @@
         };
 
         const BUBBLE_TEXTS = {
-            idle: [
-                '待命中：耳朵竖起来了',
-                '我在这儿，随时可以开工',
-                '先把桌面收拾干净再说',
-                '呼——给大脑放个风',
-                '今天也要优雅地高效',
-                '等待，是为了更准确的一击',
-                '咖啡还热，灵感也还在',
-                '我在后台给你加 Buff',
-                '状态：静心 / 充电',
-                '小猫说：慢一点也没关系'
-            ],
-            // writing / researching / executing 都视为“工作”
-            writing: [
-                '进入专注模式：勿扰',
-                '先把关键路径跑通',
-                '我来把复杂变简单',
-                '把 bug 关进笼子里',
-                '写到一半，先保存',
-                '把每一步都做成可回滚',
-                '今天的进度，明天的底气',
-                '先收敛，再发散',
-                '让系统变得更可解释',
-                '稳住，我们能赢'
-            ],
-            researching: [
-                '我在挖证据链',
-                '让我把信息熬成结论',
-                '找到了：关键在这里',
-                '先把变量控制住',
-                '我在查：它为什么会这样',
-                '把直觉写成验证',
-                '先定位，再优化',
-                '别急，先画因果图'
-            ],
-            executing: [
-                '执行中：不要眨眼',
-                '把任务切成小块逐个击破',
-                '开始跑 pipeline',
-                '一键推进：走你',
-                '让结果自己说话',
-                '先做最小可行，再做最美版本'
-            ],
-            syncing: [
-                '同步中：把今天锁进云里',
-                '备份不是仪式，是安全感',
-                '写入中…别断电',
-                '把变更交给时间戳',
-                '云端对齐：咔哒',
-                '同步完成前先别乱动',
-                '把未来的自己从灾难里救出来',
-                '多一份备份，少一份后悔'
-            ],
-            error: [
-                '警报响了：先别慌',
-                '我闻到 bug 的味道了',
-                '先复现，再谈修复',
-                '把日志给我，我会说人话',
-                '错误不是敌人，是线索',
-                '把影响面圈起来',
-                '先止血，再手术',
-                '我在：马上定位根因',
-                '别怕，这种我见多了',
-                '报警中：让问题自己现形'
-            ],
-            cat: [
-                '喵~',
-                '咕噜咕噜…',
-                '尾巴摇一摇',
-                '晒太阳最开心',
-                '有人来看我啦',
-                '我是这个办公室的吉祥物',
-                '伸个懒腰',
-                '今天的罐罐准备好了吗',
-                '呼噜呼噜',
-                '这个位置视野最好'
-            ]
+            zh: {
+                idle: ['待命中：耳朵竖起来了','我在这儿，随时可以开工','先把桌面收拾干净再说','呼——给大脑放个风','今天也要优雅地高效','等待，是为了更准确的一击','咖啡还热，灵感也还在','我在后台给你加 Buff','状态：静心 / 充电','小猫说：慢一点也没关系'],
+                writing: ['进入专注模式：勿扰','先把关键路径跑通','我来把复杂变简单','把 bug 关进笼子里','写到一半，先保存','把每一步都做成可回滚','今天的进度，明天的底气','先收敛，再发散','让系统变得更可解释','稳住，我们能赢'],
+                researching: ['我在挖证据链','让我把信息熬成结论','找到了：关键在这里','先把变量控制住','我在查：它为什么会这样','把直觉写成验证','先定位，再优化','别急，先画因果图'],
+                executing: ['执行中：不要眨眼','把任务切成小块逐个击破','开始跑 pipeline','一键推进：走你','让结果自己说话','先做最小可行，再做最美版本'],
+                syncing: ['同步中：把今天锁进云里','备份不是仪式，是安全感','写入中…别断电','把变更交给时间戳','云端对齐：咔哒','同步完成前先别乱动','把未来的自己从灾难里救出来','多一份备份，少一份后悔'],
+                error: ['警报响了：先别慌','我闻到 bug 的味道了','先复现，再谈修复','把日志给我，我会说人话','错误不是敌人，是线索','把影响面圈起来','先止血，再手术','我在：马上定位根因','别怕，这种我见多了','报警中：让问题自己现形'],
+                cat: ['喵~','咕噜咕噜…','尾巴摇一摇','晒太阳最开心','有人来看我啦','我是这个办公室的吉祥物','伸个懒腰','今天的罐罐准备好了吗','呼噜呼噜','这个位置视野最好']
+            },
+            en: {
+                idle: ['On standby: ears up.','I’m here, ready to roll.','Let’s tidy the desk first.','Taking a quick brain breeze.','Efficient and elegant, as always.','Waiting for a more precise strike.','Coffee is warm, ideas too.','Giving you a quiet backstage buff.','Status: calm / charging.','Cat says: no rush, we’re good.'],
+                writing: ['Focus mode on: do not disturb.','Let’s clear the critical path first.','I’ll make the complex simple.','Putting bugs in a cage.','Save first, then continue.','Every step should be rollback-safe.','Today’s progress is tomorrow’s confidence.','Converge first, then diverge.','Making the system more explainable.','Steady—this is winnable.'],
+                researching: ['Digging the evidence chain.','Let me boil info into conclusions.','Found it: key clue here.','Control variables first.','Checking why this happens.','Turn intuition into verification.','Locate first, optimize next.','No rush—draw the causality map first.'],
+                executing: ['Executing—don’t blink.','Split tasks, conquer one by one.','Pipeline is running.','One-click push: go go.','Let the results speak.','Build MVP first, then craft beauty.'],
+                syncing: ['Syncing: lock today into the cloud.','Backup is safety, not ceremony.','Writing… don’t cut power.','Handing changes to timestamps.','Cloud alignment: click.','Don’t shake it before sync finishes.','Saving future-us from disasters.','One more backup, one less regret.'],
+                error: ['Alarm on—stay calm.','I can smell a bug.','Reproduce first, then fix.','Give me logs; I’ll translate.','Errors are clues, not enemies.','Circle the impact area first.','Stop the bleeding, then surgery.','On it: tracing root cause now.','Don’t worry, seen this many times.','Alert mode: make the issue reveal itself.'],
+                cat: ['Meow~','Purr purr…','Tail wiggle activated.','Sunbathing is the best.','Someone came to see me!','I’m the office mascot.','Big stretch~','Is today’s snack ready yet?','Rrrrr purr…','Best view spot secured.']
+            },
+            ja: {
+                idle: ['待機中：耳はピン。','ここにいるよ、いつでも開始OK。','まず机を整えよう。','ふー、頭に風を通す。','今日も上品に高効率で。','待つのは、より正確な一撃のため。','コーヒーも発想もまだ温かい。','裏側でそっとバフ中。','状態：静心 / 充電。','猫より：ゆっくりでも大丈夫。'],
+                writing: ['集中モード：お静かに。','まずはクリティカルパスを通す。','複雑をシンプルにする。','バグはケージへ。','途中でもまず保存。','すべてをロールバック可能に。','今日の進捗は明日の自信。','まず収束、次に発散。','システムをより説明可能に。','落ち着いて、勝てる。'],
+                researching: ['証拠チェーンを掘っています。','情報を結論まで煮詰めます。','見つけた：鍵はここ。','まず変数を制御。','なぜこうなるか調査中。','直感を検証へ。','先に特定、次に最適化。','急がず因果マップから。'],
+                executing: ['実行中：まばたき厳禁。','タスクを分割して各個撃破。','パイプライン起動。','ワンクリック前進：いくぞ。','結果に語らせる。','まず最小実用、次に美しさ。'],
+                syncing: ['同期中：今日をクラウドに封印。','バックアップは儀式じゃなく安心。','書き込み中…電源オフ厳禁。','変更はタイムスタンプへ。','クラウド整列：カチッ。','同期完了まで触らないで。','未来の自分を災害から救う。','バックアップ一つ、後悔一つ減る。'],
+                error: ['警報：まず落ち着いて。','バグの気配を感じる。','再現してから修正へ。','ログをください、人語にします。','エラーは敵ではなく手がかり。','まず影響範囲を囲う。','止血してから手術。','今すぐ根因を追跡中。','大丈夫、よくある案件。','警戒モード：問題を可視化する。'],
+                cat: ['ニャー','ゴロゴロ…','しっぽフリフリ。','ひなたぼっこ最高。','見に来てくれた！','このオフィスのマスコットです。','ぐーっと伸び。','今日のおやつ、準備できた？','ゴロゴロ。','ここ、いちばん見晴らしがいい。']
+            }
         };
 
         let game, star, sofa, serverroom, officeBgSprite, areas = {}, currentState = 'idle', pendingDesiredState = null, statusText, lastFetch = 0, lastBlink = 0, lastBubble = 0, targetX = 660, targetY = 170, bubble = null, typewriterText = '', typewriterTarget = '', typewriterIndex = 0, lastTypewriter = 0, syncAnimSprite = null, catBubble = null, selectionBoxGraphics = null;
@@ -1483,8 +1441,10 @@
         function updateAssetConfirmButtonState() {
             const btn = document.getElementById('asset-commit-refresh-btn');
             const btnDefault = document.getElementById('asset-set-default-btn');
+            const panel = document.getElementById('asset-upload-panel');
             // 只要选中了资产就允许确认并刷新（可仅做坐标写入）
             const can = !!(selectedAssetInfo && selectedAssetInfo.path);
+            if (panel) panel.classList.toggle('active', can);
             if (btn) {
                 btn.disabled = !can;
                 btn.style.opacity = can ? '1' : '.55';
@@ -2596,14 +2556,33 @@ function toggleBrokerPanel() {
             window.__demoNextAt = now + 8000;
 
             const states = ['idle', 'writing', 'researching', 'executing', 'syncing', 'error'];
-            const bubbleTextMap = {
-                idle: '我去休息区躺一下',
-                writing: '我在工作中',
-                researching: '我在调研中',
-                executing: '我在执行任务',
-                syncing: '我在同步状态',
-                error: '出错了！我去报警区'
+            const bubbleTextMapByLang = {
+                zh: {
+                    idle: '我去休息区躺一下',
+                    writing: '我在工作中',
+                    researching: '我在调研中',
+                    executing: '我在执行任务',
+                    syncing: '我在同步状态',
+                    error: '出错了！我去报警区'
+                },
+                en: {
+                    idle: 'Taking a break in the lounge.',
+                    writing: 'I am working now.',
+                    researching: 'I am researching now.',
+                    executing: 'I am executing tasks.',
+                    syncing: 'I am syncing status.',
+                    error: 'Something broke! Heading to alert zone.'
+                },
+                ja: {
+                    idle: '休憩エリアでひと休み。',
+                    writing: '作業中です。',
+                    researching: '調査中です。',
+                    executing: 'タスクを実行中です。',
+                    syncing: '状態を同期中です。',
+                    error: 'エラー発生！アラートエリアへ。'
+                }
             };
+            const bubbleTextMap = bubbleTextMapByLang[uiLang] || bubbleTextMapByLang.zh;
 
             // 确保两位 demo 角色不会总是同一个状态（增加可观测性）
             const pickJs = (exclude) => {
@@ -2707,15 +2686,18 @@ function toggleBrokerPanel() {
                                     const oldState = currentState;
                                     currentState = 'writing';
                                     // 临时更换 bubble 文案
-                                    const oldTexts = BUBBLE_TEXTS.writing;
-                                    BUBBLE_TEXTS.writing = [
-                                        `欢迎 ${newAgent.name} 来到办公室～`,
-                                        `Hi ${newAgent.name}，一起开工吧`,
-                                        `${newAgent.name} 已加入，欢迎！`
-                                    ];
+                                    const lang = uiLang;
+                                    const welcomeTexts = {
+                                        zh: [`欢迎 ${newAgent.name} 来到办公室～`,`Hi ${newAgent.name}，一起开工吧`,`${newAgent.name} 已加入，欢迎！`],
+                                        en: [`Welcome ${newAgent.name} to the office!`,`Hi ${newAgent.name}, let’s build something.`,`${newAgent.name} just joined — welcome!`],
+                                        ja: [`${newAgent.name} さん、オフィスへようこそ！`,`Hi ${newAgent.name}、一緒に進めよう。`,`${newAgent.name} さんが参加しました、歓迎！`]
+                                    };
+                                    const langPack = BUBBLE_TEXTS[lang] || BUBBLE_TEXTS.zh;
+                                    const oldTexts = Array.isArray(langPack.writing) ? [...langPack.writing] : [];
+                                    langPack.writing = welcomeTexts[lang] || welcomeTexts.zh;
                                     showBubble();
                                     // 还原
-                                    BUBBLE_TEXTS.writing = oldTexts;
+                                    langPack.writing = oldTexts;
                                     currentState = oldState;
                                 }
                             }
@@ -3607,9 +3589,14 @@ function toggleBrokerPanel() {
             */
         }
 
+        function getBubbleTextsByState(stateKey) {
+            const langPack = BUBBLE_TEXTS[uiLang] || BUBBLE_TEXTS.zh;
+            return langPack[stateKey] || langPack.idle || [];
+        }
+
         function showBubble() {
             if (bubble) { bubble.destroy(); bubble = null; }
-            const texts = BUBBLE_TEXTS[currentState] || BUBBLE_TEXTS.idle;
+            const texts = getBubbleTextsByState(currentState);
             if (currentState === 'idle') return; // idle 不显示气泡（可按需开启）
 
             // Bubble anchor should follow current visible character:
@@ -3647,7 +3634,7 @@ function toggleBrokerPanel() {
         function showCatBubble() {
             if (!window.catSprite) return;
             if (window.catBubble) { window.catBubble.destroy(); window.catBubble = null; }
-            const texts = BUBBLE_TEXTS.cat || ['喵~', '咕噜咕噜…'];
+            const texts = getBubbleTextsByState('cat');
             const text = texts[Math.floor(Math.random() * texts.length)];
             const anchorX = window.catSprite.x;
             const anchorY = window.catSprite.y - 60;
