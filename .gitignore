@@ -25,3 +25,4 @@ cloudflared.out
 healthcheck.log
 backend.log
 frontend/office_bg.png
+runtime-config.json
