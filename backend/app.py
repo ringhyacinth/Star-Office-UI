@@ -5,8 +5,18 @@ from flask import Flask, jsonify, send_from_directory, make_response, request
 from datetime import datetime, timedelta
 import json
 import os
+import random
 import re
+import shutil
+import subprocess
+import tempfile
 import threading
+from pathlib import Path
+
+try:
+    from PIL import Image
+except Exception:
+    Image = None
 
 # Paths (project-relative, no hardcoded absolute paths)
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -15,6 +25,14 @@ FRONTEND_DIR = os.path.join(ROOT_DIR, "frontend")
 STATE_FILE = os.path.join(ROOT_DIR, "state.json")
 AGENTS_STATE_FILE = os.path.join(ROOT_DIR, "agents-state.json")
 JOIN_KEYS_FILE = os.path.join(ROOT_DIR, "join-keys.json")
+FRONTEND_PATH = Path(FRONTEND_DIR)
+ASSET_ALLOWED_EXTS = {".png", ".webp", ".jpg", ".jpeg", ".gif", ".svg", ".avif"}
+ASSET_TEMPLATE_ZIP = os.path.join(ROOT_DIR, "assets-replace-template.zip")
+WORKSPACE_DIR = os.path.dirname(ROOT_DIR)
+GEMINI_SCRIPT = os.path.join(WORKSPACE_DIR, "skills", "gemini-image-generate", "scripts", "gemini_image_generate.py")
+GEMINI_PYTHON = os.path.join(WORKSPACE_DIR, "skills", "gemini-image-generate", ".venv", "bin", "python")
+ROOM_REFERENCE_IMAGE = os.path.join(ROOT_DIR, "assets", "room-reference.png")
+BG_HISTORY_DIR = os.path.join(ROOT_DIR, "assets", "bg-history")
 
 
 def get_yesterday_date_str():
@@ -264,20 +282,6 @@ DEFAULT_AGENTS = [
         "authStatus": "approved",
         "authExpiresAt": None,
         "lastPushAt": None
-    },
-    {
-        "agentId": "npc1",
-        "name": "NPC 1",
-        "isMain": False,
-        "state": "writing",
-        "detail": "在整理热点日报...",
-        "updated_at": datetime.now().isoformat(),
-        "area": "writing",
-        "source": "demo",
-        "joinKey": None,
-        "authStatus": "approved",
-        "authExpiresAt": None,
-        "lastPushAt": None
     }
 ]
 
@@ -316,6 +320,74 @@ def save_join_keys(data):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
+def _ensure_magick_or_ffmpeg_available():
+    if shutil.which("magick"):
+        return "magick"
+    if shutil.which("ffmpeg"):
+        return "ffmpeg"
+    return None
+
+
+def _animated_to_spritesheet(upload_path: str, frame_w: int, frame_h: int, out_ext: str = ".webp"):
+    """Convert animated GIF/WEBP to spritesheet, return (out_path, columns, rows, frames)."""
+    backend = _ensure_magick_or_ffmpeg_available()
+    if not backend:
+        raise RuntimeError("未检测到 ImageMagick/ffmpeg，无法自动转换动图")
+
+    ext = (out_ext or ".webp").lower()
+    if ext not in {".webp", ".png"}:
+        ext = ".webp"
+
+    out_fd, out_path = tempfile.mkstemp(suffix=ext)
+    os.close(out_fd)
+
+    with tempfile.TemporaryDirectory() as td:
+        frames = 0
+        if Image is not None:
+            try:
+                with Image.open(upload_path) as im:
+                    n = getattr(im, "n_frames", 1)
+                    for i in range(n):
+                        im.seek(i)
+                        fr = im.convert("RGBA")
+                        fr = fr.resize((frame_w, frame_h), Image.Resampling.LANCZOS)
+                        fr.save(os.path.join(td, f"f_{i:04d}.png"), "PNG")
+                    frames = n
+            except Exception:
+                frames = 0
+
+        if frames <= 0:
+            cmd1 = f"ffmpeg -y -i '{upload_path}' '{td}/f_%04d.png' >/dev/null 2>&1"
+            if os.system(cmd1) != 0:
+                raise RuntimeError("动图抽帧失败（Pillow/ffmpeg 都失败）")
+            files = sorted([x for x in os.listdir(td) if x.startswith("f_") and x.endswith(".png")])
+            frames = len(files)
+            if frames <= 0:
+                raise RuntimeError("动图无有效帧")
+
+        if backend == "magick":
+            quality_flag = "-quality 90" if ext == ".webp" else ""
+            cmd = (
+                f"magick '{td}/f_*.png' "
+                f"-resize {frame_w}x{frame_h}^ -gravity center -background none -extent {frame_w}x{frame_h} "
+                f"+append {quality_flag} '{out_path}'"
+            )
+            rc = os.system(cmd)
+            if rc != 0:
+                raise RuntimeError("ImageMagick 拼图失败")
+            return out_path, frames, 1, frames
+
+        ffmpeg_quality = "-q:v 4" if ext == ".webp" else ""
+        cmd2 = (
+            f"ffmpeg -y -pattern_type glob -i '{td}/f_*.png' "
+            f"-vf 'scale={frame_w}:{frame_h}:force_original_aspect_ratio=decrease,pad={frame_w}:{frame_h}:(ow-iw)/2:(oh-ih)/2:color=0x00000000,tile={frames}x1' "
+            f"{ffmpeg_quality} '{out_path}' >/dev/null 2>&1"
+        )
+        if os.system(cmd2) != 0:
+            raise RuntimeError("ffmpeg 拼图失败")
+        return out_path, frames, 1, frames
+
+
 def normalize_agent_state(s):
     """归一化状态，提高兼容性。
     兼容输入：working/busy → writing; run/running → executing; sync → syncing; research → researching.
@@ -336,6 +408,74 @@ def normalize_agent_state(s):
         return s_lower
     # 默认 fallback
     return 'idle'
+
+
+def _generate_rpg_background_to_webp(out_webp_path: str, width: int = 1280, height: int = 720, custom_prompt: str = ""):
+    """Generate RPG-style room background and save as 1280x720 webp."""
+    themes = [
+        "8-bit dungeon guild room",
+        "8-bit stardew-valley inspired cozy farm tavern",
+        "8-bit nordic fantasy tavern",
+        "8-bit magitech workshop",
+        "8-bit elven forest inn",
+        "8-bit pixel cyber tavern",
+        "8-bit desert caravan inn",
+        "8-bit snow mountain lodge",
+    ]
+    theme = random.choice(themes)
+
+    if not (os.path.exists(GEMINI_PYTHON) and os.path.exists(GEMINI_SCRIPT)):
+        raise RuntimeError("生图脚本环境缺失：gemini-image-generate 未安装")
+
+    style_hint = (custom_prompt or "").strip()
+    if not style_hint:
+        style_hint = theme
+
+    prompt = (
+        "Use a top-down pixel room composition compatible with an office game scene. "
+        "STRICTLY preserve the same room geometry, camera angle, wall/floor boundaries and major object placement as the provided reference image. "
+        "Keep region layout stable (left work area, center lounge, right error area). "
+        "Only change visual style/theme/material/lighting according to: " + style_hint + ". "
+        "Do not add text or watermark. Retro 8-bit RPG style."
+    )
+
+    tmp_dir = tempfile.mkdtemp(prefix="rpg-bg-")
+    cmd = [
+        GEMINI_PYTHON,
+        GEMINI_SCRIPT,
+        "--prompt", prompt,
+        "--aspect-ratio", "16:9",
+        "--out-dir", tmp_dir,
+        "--cleanup",
+    ]
+
+    # 强约束：每次都带固定参考图，保持房间区域布局不漂移
+    if os.path.exists(ROOM_REFERENCE_IMAGE):
+        cmd.extend(["--reference-image", ROOM_REFERENCE_IMAGE])
+
+    proc = subprocess.run(cmd, capture_output=True, text=True, env=os.environ.copy(), timeout=240)
+    if proc.returncode != 0:
+        raise RuntimeError(f"生图失败: {proc.stderr or proc.stdout}")
+
+    try:
+        result = json.loads(proc.stdout.strip().splitlines()[-1])
+    except Exception:
+        raise RuntimeError("生图结果解析失败")
+
+    files = result.get("files") or []
+    if not files:
+        raise RuntimeError("生图未返回文件")
+
+    gen_path = files[0]
+    if not os.path.exists(gen_path):
+        raise RuntimeError("生图文件不存在")
+
+    if Image is None:
+        raise RuntimeError("Pillow 不可用，无法做尺寸标准化")
+
+    with Image.open(gen_path) as im:
+        im = im.convert("RGBA").resize((width, height), Image.Resampling.LANCZOS)
+        im.save(out_webp_path, "WEBP", quality=92, method=6)
 
 
 def state_to_area(state):
@@ -804,6 +944,183 @@ def set_state_endpoint():
         return jsonify({"status": "ok"})
     except Exception as e:
         return jsonify({"status": "error", "msg": str(e)}), 500
+
+
+@app.route("/assets/template.zip", methods=["GET"])
+def assets_template_download():
+    if not os.path.exists(ASSET_TEMPLATE_ZIP):
+        return jsonify({"ok": False, "msg": "模板包不存在，请先生成"}), 404
+    return send_from_directory(ROOT_DIR, "assets-replace-template.zip", as_attachment=True)
+
+
+@app.route("/assets/list", methods=["GET"])
+def assets_list():
+    items = []
+    for p in FRONTEND_PATH.rglob("*"):
+        if not p.is_file():
+            continue
+        rel = p.relative_to(FRONTEND_PATH).as_posix()
+        if rel.startswith("fonts/"):
+            continue
+        if p.suffix.lower() not in ASSET_ALLOWED_EXTS:
+            continue
+        st = p.stat()
+        width = None
+        height = None
+        if Image is not None:
+            try:
+                with Image.open(p) as im:
+                    width, height = im.size
+            except Exception:
+                pass
+        items.append({
+            "path": rel,
+            "size": st.st_size,
+            "ext": p.suffix.lower(),
+            "width": width,
+            "height": height,
+            "mtime": datetime.fromtimestamp(st.st_mtime).isoformat(),
+        })
+    items.sort(key=lambda x: x["path"])
+    return jsonify({"ok": True, "count": len(items), "items": items})
+
+
+@app.route("/assets/generate-rpg-background", methods=["POST"])
+def assets_generate_rpg_background():
+    """Generate a new RPG-themed background and replace office_bg_small.webp."""
+    try:
+        req = request.get_json(silent=True) or {}
+        custom_prompt = (req.get("prompt") or "").strip() if isinstance(req, dict) else ""
+
+        target = FRONTEND_PATH / "office_bg_small.webp"
+        if not target.exists():
+            return jsonify({"ok": False, "msg": "office_bg_small.webp 不存在"}), 404
+
+        # 覆盖前保留最近一次备份
+        bak = target.with_suffix(target.suffix + ".bak")
+        shutil.copy2(target, bak)
+
+        _generate_rpg_background_to_webp(str(target), width=1280, height=720, custom_prompt=custom_prompt)
+
+        # 每次生成都归档一份历史底图（可回溯风格演化）
+        os.makedirs(BG_HISTORY_DIR, exist_ok=True)
+        ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+        hist_file = os.path.join(BG_HISTORY_DIR, f"office_bg_small-{ts}.webp")
+        shutil.copy2(target, hist_file)
+
+        st = target.stat()
+        return jsonify({
+            "ok": True,
+            "path": "office_bg_small.webp",
+            "size": st.st_size,
+            "history": os.path.relpath(hist_file, ROOT_DIR),
+            "msg": "已生成并替换 RPG 房间底图（已自动归档）",
+        })
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/assets/restore-reference-background", methods=["POST"])
+def assets_restore_reference_background():
+    """Restore office_bg_small.webp from fixed reference image."""
+    try:
+        target = FRONTEND_PATH / "office_bg_small.webp"
+        if not target.exists():
+            return jsonify({"ok": False, "msg": "office_bg_small.webp 不存在"}), 404
+        if not os.path.exists(ROOM_REFERENCE_IMAGE):
+            return jsonify({"ok": False, "msg": "参考图不存在"}), 404
+
+        # 备份当前底图
+        bak = target.with_suffix(target.suffix + ".bak")
+        shutil.copy2(target, bak)
+
+        if Image is None:
+            return jsonify({"ok": False, "msg": "Pillow 不可用"}), 500
+
+        with Image.open(ROOM_REFERENCE_IMAGE) as im:
+            im = im.convert("RGBA").resize((1280, 720), Image.Resampling.LANCZOS)
+            im.save(target, "WEBP", quality=92, method=6)
+
+        st = target.stat()
+        return jsonify({
+            "ok": True,
+            "path": "office_bg_small.webp",
+            "size": st.st_size,
+            "msg": "已恢复初始底图",
+        })
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/assets/upload", methods=["POST"])
+def assets_upload():
+    try:
+        rel_path = (request.form.get("path") or "").strip().lstrip("/")
+        backup = (request.form.get("backup") or "1").strip() != "0"
+        f = request.files.get("file")
+
+        if not rel_path or f is None:
+            return jsonify({"ok": False, "msg": "缺少 path 或 file"}), 400
+
+        target = (FRONTEND_PATH / rel_path).resolve()
+        try:
+            target.relative_to(FRONTEND_PATH.resolve())
+        except Exception:
+            return jsonify({"ok": False, "msg": "非法 path"}), 400
+
+        if target.suffix.lower() not in ASSET_ALLOWED_EXTS:
+            return jsonify({"ok": False, "msg": "仅允许上传图片/美术资源类型"}), 400
+
+        if not target.exists():
+            return jsonify({"ok": False, "msg": "目标文件不存在，请先从 /assets/list 选择 path"}), 404
+
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if backup:
+            bak = target.with_suffix(target.suffix + ".bak")
+            shutil.copy2(target, bak)
+
+        auto_sheet = (request.form.get("auto_spritesheet") or "0").strip() == "1"
+        ext_name = (f.filename or "").lower()
+        is_anim_input = ext_name.endswith(".gif") or ext_name.endswith(".webp")
+
+        if auto_sheet and is_anim_input and target.suffix.lower() in {".webp", ".png"}:
+            with tempfile.NamedTemporaryFile(suffix=os.path.splitext(ext_name)[1] or ".gif", delete=False) as tf:
+                src_path = tf.name
+                f.save(src_path)
+            try:
+                frame_w = int(request.form.get("frame_w") or 64)
+                frame_h = int(request.form.get("frame_h") or 64)
+                sheet_path, cols, rows, frames = _animated_to_spritesheet(src_path, frame_w, frame_h, out_ext=target.suffix.lower())
+                shutil.move(sheet_path, str(target))
+                st = target.stat()
+                from_type = "gif" if ext_name.endswith(".gif") else "webp"
+                to_type = "webp_spritesheet" if target.suffix.lower() == ".webp" else "png_spritesheet"
+                return jsonify({
+                    "ok": True,
+                    "path": rel_path,
+                    "size": st.st_size,
+                    "backup": backup,
+                    "converted": {
+                        "from": from_type,
+                        "to": to_type,
+                        "frame_w": frame_w,
+                        "frame_h": frame_h,
+                        "columns": cols,
+                        "rows": rows,
+                        "frames": frames,
+                    }
+                })
+            finally:
+                try:
+                    os.remove(src_path)
+                except Exception:
+                    pass
+
+        f.save(str(target))
+        st = target.stat()
+        return jsonify({"ok": True, "path": rel_path, "size": st.st_size, "backup": backup})
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
 
 
 if __name__ == "__main__":

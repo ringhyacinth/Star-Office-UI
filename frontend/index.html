@@ -123,6 +123,167 @@
             align-content: start;
             padding-top: 4px;
         }
+        #control-buttons button:last-child {
+            grid-column: 1 / span 2;
+            background: #14532d;
+            border-color: #22c55e;
+            color: #ecfdf5;
+        }
+
+        #asset-drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 420px;
+            max-width: 92vw;
+            height: 100vh;
+            background: #111827;
+            border-left: 2px solid #22c55e;
+            box-shadow: -8px 0 24px rgba(0,0,0,0.45);
+            transform: translateX(100%);
+            transition: transform 0.25s ease;
+            z-index: 1000001;
+            display: flex;
+            flex-direction: column;
+        }
+        #asset-drawer.open { transform: translateX(0); }
+        #asset-drawer-header {
+            color: #ecfdf5;
+            font-size: 15px;
+            padding: 12px;
+            border-bottom: 1px solid #374151;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #0b1220;
+        }
+        #asset-drawer-body {
+            padding: 10px;
+            overflow: auto;
+            color: #e5e7eb;
+            font-size: 12px;
+        }
+        .asset-toolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
+        .asset-toolbar input { flex:1; min-width: 150px; padding:6px 8px; border-radius:6px; border:1px solid #374151; background:#1f2937; color:#fff; }
+        .asset-toolbar button, #asset-drawer-header button { cursor:pointer; border:1px solid #4b5563; background:#1f2937; color:#fff; border-radius:6px; padding:6px 8px; font-family:'ArkPixel', monospace; }
+        .asset-toolbar button:hover, #asset-drawer-header button:hover { border-color:#22c55e; }
+        #asset-list { display:flex; flex-direction:column; gap:6px; }
+        .asset-item {
+            border: 1px solid #374151;
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 8px;
+            display: grid;
+            grid-template-columns: 56px 1fr 44px;
+            gap: 8px;
+            align-items: center;
+            cursor: pointer;
+        }
+        .asset-item.active { border-color: #22c55e; box-shadow: 0 0 0 1px #22c55e inset; }
+        .asset-thumb { width:56px; height:56px; object-fit: contain; background:#0b1220; border:1px solid #374151; border-radius:6px; }
+        .asset-meta { line-height: 1.45; }
+        .asset-path { color:#d1fae5; word-break: break-all; }
+        .asset-sub { color:#9ca3af; font-size:11px; }
+        .asset-plus-box { width:100%; height:92px; border:2px dashed #4b5563; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#9ca3af; font-size:34px; cursor:pointer; user-select:none; }
+        .asset-plus-box:hover { border-color:#22c55e; color:#22c55e; }
+        .asset-preview-box { border:1px solid #374151; border-radius:8px; padding:6px; background:#0b1220; margin-bottom:8px; }
+        .asset-preview-title { color:#9ca3af; font-size:11px; margin-bottom:4px; }
+        .asset-preview-img { width:100%; height:92px; object-fit:contain; background:#111827; border:1px solid #1f2937; border-radius:6px; }
+
+
+        #asset-move-panel { border:1px solid #334155; background:#0b1220; border-radius:10px; padding:10px; margin-bottom:10px; }
+        #asset-move-row { justify-content: center; gap:12px; margin-bottom:0; }
+        #asset-move-row .btn-move {
+            background:#facc15;
+            color:#1f2937;
+            border-color:#eab308;
+            font-size:13px;
+            padding:8px 0;
+            width:128px;
+            text-align:center;
+            font-weight:700;
+        }
+        #asset-move-row .btn-home {
+            background:#16a34a;
+            color:#ecfdf5;
+            border-color:#22c55e;
+            font-size:13px;
+            padding:8px 0;
+            width:128px;
+            text-align:center;
+            font-weight:700;
+        }
+        #asset-broker-row { justify-content:center; margin-top:8px; margin-bottom:0; }
+        #asset-broker-row .btn-broker {
+            background:#0ea5e9;
+            color:#e0f2fe;
+            border-color:#38bdf8;
+            font-size:12px;
+            padding:6px 12px;
+            min-width:120px;
+            text-align:center;
+            font-weight:700;
+        }
+        #asset-broker-panel {
+            display:none;
+            margin-top:8px;
+            border:1px dashed #334155;
+            border-radius:8px;
+            padding:8px;
+            background:#0f172a;
+        }
+        #asset-broker-panel.open { display:block; }
+        #asset-broker-prompt {
+            width:100%; min-height:66px; resize:vertical;
+            padding:8px; border-radius:6px;
+            border:1px solid #334155; background:#111827; color:#e5e7eb;
+            font-family:'ArkPixel', monospace; font-size:12px;
+            box-sizing:border-box;
+        }
+        #asset-broker-actions { margin-top:8px; display:flex; justify-content:flex-end; }
+        #asset-broker-actions button {
+            background:#22c55e; color:#052e16; border-color:#16a34a; font-weight:700;
+        }
+
+        .asset-inline-plus {
+            width:28px; height:28px;
+            border:1.5px solid rgba(148,163,184,.55);
+            border-radius:999px;
+            display:flex; align-items:center; justify-content:center;
+            cursor:pointer;
+            background:linear-gradient(180deg,#1f2937,#111827);
+            box-shadow:0 2px 8px rgba(0,0,0,.28);
+            opacity:0; transform:translateX(-10px) scale(.9);
+            pointer-events:none;
+            transition:all .16s ease;
+            margin-right:10px;
+            position: relative;
+        }
+        .asset-inline-plus span,
+        .asset-inline-plus span::before {
+            content:'';
+            position:absolute;
+            background:#e2e8f0;
+            border-radius:2px;
+        }
+        .asset-inline-plus span { width:12px; height:2px; }
+        .asset-inline-plus span::before { width:2px; height:12px; left:5px; top:-5px; }
+        .asset-item.active .asset-inline-plus {
+            opacity:1; transform:translateX(-4px) scale(1);
+            pointer-events:auto;
+        }
+        .asset-inline-plus:hover { border-color:#22c55e; box-shadow:0 0 0 2px rgba(34,197,94,.18); }
+        .asset-inline-plus:hover span,
+        .asset-inline-plus:hover span::before { background:#86efac; }
+        #asset-highlight {
+            position: fixed;
+            border: 3px solid #22c55e;
+            background: transparent;
+            box-shadow: none;
+            pointer-events: none;
+            display: none;
+            z-index: 999998;
+        }
         #control-buttons button { height: 52px; }
         #control-bar button {
             background: #3a3f4f;
@@ -415,6 +576,7 @@
                 <button onclick="setState('writing','工作中')">工作</button>
                 <button onclick="setState('syncing','同步中')">同步</button>
                 <button onclick="setState('error','报警中')">报警</button>
+                <button onclick="toggleAssetDrawer()">装修房间</button>
             </div>
         </div>
 
@@ -428,6 +590,51 @@
     </div>
     
     <div id="status-text">加载中...</div>
+    <div id="asset-highlight"></div>
+
+    <aside id="asset-drawer">
+        <div id="asset-drawer-header">
+            <span>装修房间 · 资产侧边栏</span>
+            <button onclick="toggleAssetDrawer(false)">关闭</button>
+        </div>
+        <div id="asset-drawer-body">
+            <div id="asset-auth-gate" class="asset-preview-box">
+                <div class="asset-preview-title">请输入装修验证码</div>
+                <div class="asset-toolbar">
+                    <input id="asset-pass-input" type="password" placeholder="输入验证码" />
+                    <button onclick="unlockAssetDrawer()">验证</button>
+                </div>
+                <div id="asset-auth-msg" class="asset-sub"></div>
+            </div>
+
+            <div id="asset-main-content" style="display:none;">
+                <div id="asset-move-panel">
+                    <div class="asset-toolbar" id="asset-move-row">
+                        <button class="btn-move" onclick="generateRpgBackground()">搬家🏠</button>
+                        <button class="btn-home" onclick="restoreHomeBackground()">回老家</button>
+                    </div>
+                    <div class="asset-toolbar" id="asset-broker-row">
+                        <button class="btn-broker" onclick="toggleBrokerPanel()">找中介</button>
+                    </div>
+                    <div id="asset-broker-panel">
+                        <div class="asset-sub" style="margin-bottom:6px;">写你的风格主题（严格保持原始房间结构，只改变视觉风格）</div>
+                        <textarea id="asset-broker-prompt" placeholder="例如：像素风赛博东京夜景，霓虹灯、雨夜地面反光、蓝紫主色"></textarea>
+                        <div id="asset-broker-actions">
+                            <button onclick="generateCustomRpgBackground()">按中介方案搬家</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="asset-toolbar">
+                    <input id="asset-search" placeholder="搜索资产名（如 desk / sofa / star）" oninput="renderAssetDrawerList()" />
+                    <button onclick="setAssetFilterMode('loaded')">已加载</button>
+                    <button onclick="setAssetFilterMode('all')">全部资产</button>
+                </div>
+                <input id="asset-upload-file" type="file" accept="image/*" style="display:none;" />
+                <div id="asset-upload-result" class="asset-sub"></div>
+                <div id="asset-list"></div>
+            </div>
+        </div>
+    </aside>
     <div id="coords-overlay" style="display:none; position:fixed; pointer-events:none; background:rgba(0,0,0,0.85); color:#fff; font-family:ArkPixel,monospace; font-size:14px; padding:8px 12px; border-radius:4px; z-index:99999;">
         <div id="coords-display">X: 0 | Y: 0</div>
     </div>
@@ -438,7 +645,7 @@
         移动视野
     </button>
 
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+    <script src="/static/vendor/phaser-3.80.1.min.js"></script>
     <script>
         // 检测浏览器是否支持 WebP
         let supportsWebP = false;
@@ -641,7 +848,16 @@
             ]
         };
 
-        let game, star, sofa, serverroom, areas = {}, currentState = 'idle', pendingDesiredState = null, statusText, lastFetch = 0, lastBlink = 0, lastBubble = 0, targetX = 660, targetY = 170, bubble = null, typewriterText = '', typewriterTarget = '', typewriterIndex = 0, lastTypewriter = 0, syncAnimSprite = null, catBubble = null;
+        let game, star, sofa, serverroom, officeBgSprite, areas = {}, currentState = 'idle', pendingDesiredState = null, statusText, lastFetch = 0, lastBlink = 0, lastBubble = 0, targetX = 660, targetY = 170, bubble = null, typewriterText = '', typewriterTarget = '', typewriterIndex = 0, lastTypewriter = 0, syncAnimSprite = null, catBubble = null, selectionBoxGraphics = null;
+        let currentOfficeBgTextureKey = 'office_bg';
+        let assetDrawerOpen = false;
+        let assetDrawerAuthed = (localStorage.getItem('assetDrawerAuthed') === '1');
+        const ASSET_DRAWER_PASS = '6969';
+        let assetFilterMode = 'loaded';
+        let assetListData = [];
+        let sceneAssetItems = [];
+        let selectedAssetInfo = null;
+        let assetThumbTimers = [];
         let isMoving = false;
         let waypoints = []; // list of (x,y) to walk through in order
         let lastWanderAt = 0;
@@ -674,6 +890,509 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ state, detail })
             }).then(() => fetchStatus());
+        }
+
+        function updateAssetAuthUI() {
+            const gate = document.getElementById('asset-auth-gate');
+            const main = document.getElementById('asset-main-content');
+            if (!gate || !main) return;
+            gate.style.display = assetDrawerAuthed ? 'none' : 'block';
+            main.style.display = assetDrawerAuthed ? 'block' : 'none';
+        }
+
+        function unlockAssetDrawer() {
+            const input = document.getElementById('asset-pass-input');
+            const msg = document.getElementById('asset-auth-msg');
+            const val = (input?.value || '').trim();
+            if (val === ASSET_DRAWER_PASS) {
+                assetDrawerAuthed = true;
+                localStorage.setItem('assetDrawerAuthed', '1');
+                if (msg) msg.textContent = '✅ 验证通过';
+                updateAssetAuthUI();
+                refreshAssetDrawerList();
+                bindDrawerFileMeta();
+            } else {
+                if (msg) msg.textContent = '❌ 验证码错误';
+            }
+        }
+
+        function formatSizeHuman(n) {
+            if (!n) return '0 KB';
+            if (n >= 1024 * 1024) return (n / 1024 / 1024).toFixed(2) + ' MB';
+            return (n / 1024).toFixed(1) + ' KB';
+        }
+
+        function pathToTextureCandidates(path) {
+            const file = (path || '').split('/').pop() || '';
+            const stem = file.replace(/\.[^.]+$/, '');
+            const map = {
+                'office_bg_small': 'office_bg',
+                'star-idle-spritesheet': 'star_idle',
+                'star-researching-spritesheet': 'star_researching',
+                'sofa-idle': 'sofa_idle',
+                'sofa-busy-spritesheet': 'sofa_busy',
+                'plants-spritesheet': 'plants',
+                'posters-spritesheet': 'posters',
+                'coffee-machine-spritesheet': 'coffee_machine',
+                'serverroom-spritesheet': 'serverroom',
+                'error-bug-spritesheet-grid': 'error_bug',
+                'cats-spritesheet': 'cats',
+                'desk-v2': 'desk_v2',
+                'desk': 'desk',
+                'star-working-spritesheet-grid': 'star_working',
+                'sync-animation-spritesheet-grid': 'sync_anim',
+                'memo-bg': 'memo_bg',
+                'flowers-spritesheet': 'flowers',
+            };
+            const cands = [];
+            if (map[stem]) cands.push(map[stem]);
+            cands.push(stem.replace(/-/g, '_'));
+            cands.push(stem);
+            return [...new Set(cands)];
+        }
+
+        function getCurrentScene() {
+            if (!game) return null;
+            if (game.children && game.add) return game;
+            if (game.scene && game.scene.scenes && game.scene.scenes.length) return game.scene.scenes[0];
+            return null;
+        }
+
+        function getSceneChildren() {
+            const scene = getCurrentScene();
+            return (scene && scene.children && scene.children.list) ? scene.children.list : [];
+        }
+
+        function resolveAssetPathByTextureKey(key) {
+            if (!key) return null;
+            const keyToStem = {
+                office_bg: 'office_bg_small',
+                star_idle: 'star-idle-spritesheet',
+                star_researching: 'star-researching-spritesheet',
+                sofa_idle: 'sofa-idle',
+                sofa_busy: 'sofa-busy-spritesheet',
+                plants: 'plants-spritesheet',
+                posters: 'posters-spritesheet',
+                coffee_machine: 'coffee-machine-spritesheet',
+                serverroom: 'serverroom-spritesheet',
+                error_bug: 'error-bug-spritesheet-grid',
+                cats: 'cats-spritesheet',
+                desk_v2: 'desk-v2',
+                desk: 'desk',
+                star_working: 'star-working-spritesheet-grid',
+                sync_anim: 'sync-animation-spritesheet-grid',
+                memo_bg: 'memo-bg',
+                flowers: 'flowers-spritesheet',
+            };
+            const stem = keyToStem[key] || key.replace(/_/g, '-');
+            const cands = assetListData.filter(it => (it.path || '').includes(stem + '.'));
+            const extPriority = ['.webp', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.avif'];
+            for (const ext of extPriority) {
+                const hit = cands.find(it => (it.path || '').endsWith(ext));
+                if (hit) return hit.path;
+            }
+            return cands[0]?.path || null;
+        }
+
+        function buildSceneAssetItems() {
+            const children = getSceneChildren();
+            const byKey = new Map();
+            for (const ch of children) {
+                const key = ch && ch.texture && ch.texture.key;
+                if (!key) continue;
+                if (!byKey.has(key)) byKey.set(key, ch);
+            }
+            const items = [];
+            for (const [key, ref] of byKey.entries()) {
+                const path = resolveAssetPathByTextureKey(key);
+                if (!path) continue;
+                const meta = assetListData.find(x => x.path === path) || {};
+                items.push({ id: `k:${key}`, key, path, ref, ext: meta.ext || '', size: meta.size || 0, width: meta.width || null, height: meta.height || null });
+            }
+            sceneAssetItems = items.sort((a, b) => a.key.localeCompare(b.key));
+        }
+
+        function mapAssetPathToSprite(path) {
+            const item = sceneAssetItems.find(x => x.path === path && x.ref && x.ref.getBounds);
+            if (item) return item.ref;
+            const cands = pathToTextureCandidates(path);
+            const children = getSceneChildren();
+            for (const ch of children) {
+                const key = ch && ch.texture && ch.texture.key;
+                if (key && cands.includes(key)) return ch;
+            }
+            return null;
+        }
+
+        function highlightSpriteByAssetPath(path) {
+            const hl = document.getElementById('asset-highlight');
+            if (!hl || !game || !game.canvas) return false;
+            const sp = mapAssetPathToSprite(path);
+            if (!sp || !sp.getBounds) {
+                hl.style.display = 'none';
+                return false;
+            }
+            const b = sp.getBounds();
+            const canvasRect = game.canvas.getBoundingClientRect();
+            const scaleX = canvasRect.width / config.width;
+            const scaleY = canvasRect.height / config.height;
+            hl.style.display = 'block';
+            hl.style.left = (canvasRect.left + b.x * scaleX) + 'px';
+            hl.style.top = (canvasRect.top + b.y * scaleY) + 'px';
+            hl.style.width = Math.max(24, b.width * scaleX) + 'px';
+            hl.style.height = Math.max(24, b.height * scaleY) + 'px';
+            return true;
+        }
+
+        function drawSelectionBoxOnScene(path) {
+            const scene = getCurrentScene();
+            if (!scene) return false;
+            const sp = mapAssetPathToSprite(path);
+            if (!sp || !sp.getBounds) {
+                if (selectionBoxGraphics) selectionBoxGraphics.setVisible(false);
+                return false;
+            }
+            if (!selectionBoxGraphics) selectionBoxGraphics = scene.add.graphics();
+            const b = sp.getBounds();
+            selectionBoxGraphics.clear();
+            selectionBoxGraphics.lineStyle(4, 0x22c55e, 1);
+            selectionBoxGraphics.strokeRect(b.x, b.y, b.width, b.height);
+            selectionBoxGraphics.setDepth(999999);
+            selectionBoxGraphics.setVisible(true);
+            return true;
+        }
+
+        function applyScenePreview(path) {
+            const ok = highlightSpriteByAssetPath(path);
+            const ok2 = drawSelectionBoxOnScene(path);
+            return !!(ok && ok2);
+        }
+
+        function updateActiveAssetItem(path) {
+            document.querySelectorAll('#asset-list .asset-item').forEach(el => {
+                const p = el.getAttribute('data-path');
+                el.classList.toggle('active', p === path);
+            });
+        }
+
+        function selectAssetInDrawer(path) {
+            selectedAssetInfo = assetListData.find(x => x.path === path) || null;
+            updateActiveAssetItem(path);
+            const ok = applyScenePreview(path, null);
+            const out = document.getElementById('asset-upload-result');
+            if (out) out.textContent = ok ? '' : '⚠️ 该资产在当前场景没有可定位对象（或尚未渲染）';
+        }
+
+        function clearAssetThumbTimers() {
+            assetThumbTimers.forEach(t => clearInterval(t));
+            assetThumbTimers = [];
+        }
+
+        function tryAnimateAssetThumb(item) {
+            if (!item) return;
+            const canvas = document.getElementById(`asset-thumb-canvas-${(item.path || '').replace(/[^a-zA-Z0-9]/g, '_')}`);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            const img = new Image();
+            img.onload = () => {
+                const fullW = img.naturalWidth || img.width;
+                const fullH = img.naturalHeight || img.height;
+                const fw = Number(item.width) || 0;
+                const fh = Number(item.height) || 0;
+                if (!fw || !fh) return;
+
+                // 判断是否可能是精灵表：整图宽高至少是单帧的整数倍，且总帧数>1
+                const cols = Math.floor(fullW / fw);
+                const rows = Math.floor(fullH / fh);
+                const frames = cols * rows;
+                if (cols < 1 || rows < 1 || frames <= 1) return;
+
+                let idx = 0;
+                const draw = () => {
+                    const cx = (idx % cols) * fw;
+                    const cy = Math.floor(idx / cols) * fh;
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.imageSmoothingEnabled = false;
+                    ctx.drawImage(img, cx, cy, fw, fh, 0, 0, canvas.width, canvas.height);
+                    idx = (idx + 1) % frames;
+                };
+                draw();
+                const timer = setInterval(draw, 120);
+                assetThumbTimers.push(timer);
+            };
+            img.src = `/static/${item.path}?t=${Date.now()}`;
+        }
+
+        function renderAssetDrawerList() {
+            const q = (document.getElementById('asset-search')?.value || '').trim().toLowerCase();
+            const list = document.getElementById('asset-list');
+            if (!list) return;
+
+            // 若“当前场景已加载”暂时抓不到（例如首帧尚未就绪），自动回退到全量资产，避免空白
+            let baseRows = [];
+            if (assetFilterMode === 'all') {
+                baseRows = assetListData.map(it => ({ ...it, key: '' }));
+            } else {
+                baseRows = sceneAssetItems.map(it => ({ ...it }));
+                if (baseRows.length === 0 && assetListData.length > 0) {
+                    baseRows = assetListData.map(it => ({ ...it, key: '' }));
+                }
+            }
+
+            const rows = baseRows
+                .filter(it => !q || (it.path || '').toLowerCase().includes(q) || (it.key || '').toLowerCase().includes(q))
+                .sort((a,b)=> (a.path || '').localeCompare(b.path || ''));
+
+            clearAssetThumbTimers();
+
+            if (rows.length === 0) {
+                list.innerHTML = '<div class="asset-sub" style="padding:8px">暂无资产（可点“刷新”重试）</div>';
+                return;
+            }
+
+            list.innerHTML = rows.map(it => {
+                const isActive = ((selectedAssetInfo && selectedAssetInfo.path) ? selectedAssetInfo.path : '') === it.path;
+                const reso = (it.width && it.height) ? `${it.width}×${it.height}` : '-';
+                const thumbId = `asset-thumb-canvas-${(it.path || '').replace(/[^a-zA-Z0-9]/g, '_')}`;
+                return `<div class="asset-item ${isActive ? 'active' : ''}" data-path="${it.path}" onclick="selectAssetInDrawer('${(it.path || '').replace(/'/g, "\\'")}')">
+                    <canvas id="${thumbId}" class="asset-thumb" width="56" height="56"></canvas>
+                    <div class="asset-meta">
+                        <div class="asset-path">${it.path}</div>
+                        <div class="asset-sub">${it.ext || ''} ｜ ${reso} ｜ ${formatSizeHuman(it.size || 0)}</div>
+                    </div>
+                    <div>
+                        <div class="asset-inline-plus" title="上传替换" onclick="event.stopPropagation(); openInlineAssetUploader()"><span></span></div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            // 先画静态缩略图，再尝试对精灵表做逐帧预览
+            rows.forEach(it => {
+                const canvas = document.getElementById(`asset-thumb-canvas-${(it.path || '').replace(/[^a-zA-Z0-9]/g, '_')}`);
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return;
+                const img = new Image();
+                img.onload = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.imageSmoothingEnabled = false;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    tryAnimateAssetThumb(it);
+                };
+                img.src = `/static/${it.path}?t=${Date.now()}`;
+            });
+        }
+
+        function setAssetFilterMode(mode) {
+            assetFilterMode = (mode === 'all') ? 'all' : 'loaded';
+            renderAssetDrawerList();
+        }
+
+        async function refreshAssetDrawerList() {
+            const out = document.getElementById('asset-upload-result');
+            try {
+                const selectedPath = (selectedAssetInfo && selectedAssetInfo.path) ? selectedAssetInfo.path : '';
+                const res = await fetch('/assets/list');
+                const data = await res.json();
+                assetListData = data.items || [];
+
+                // 场景渲染可能稍晚，做一次延迟抓取
+                buildSceneAssetItems();
+                if (sceneAssetItems.length === 0) {
+                    setTimeout(() => {
+                        buildSceneAssetItems();
+                        renderAssetDrawerList();
+                    }, 500);
+                }
+
+                renderAssetDrawerList();
+                if (out) out.textContent = `已加载资产：${assetListData.length} ｜ 场景抓取：${sceneAssetItems.length}`;
+
+                if (selectedPath) {
+                    updateActiveAssetItem(selectedPath);
+                    applyScenePreview(selectedPath, null);
+                }
+            } catch (e) {
+                console.error('加载资产列表失败', e);
+                if (out) out.textContent = '❌ 资产加载失败，请点“刷新”重试';
+            }
+        }
+
+        function bindDrawerFileMeta() {
+            const input = document.getElementById('asset-upload-file');
+            const out = document.getElementById('asset-upload-result');
+            if (!input || !out) return;
+            input.onchange = () => {
+                const f = input.files && input.files[0];
+                if (!f) { out.textContent = ''; return; }
+                out.textContent = `待上传：${f.name} ｜ ${formatSizeHuman(f.size)}`;
+            };
+        }
+
+        function openInlineAssetUploader() {
+            const input = document.getElementById('asset-upload-file');
+            if (!input) return;
+            input.click();
+        }
+        async function commitAssetUpdate() {
+            const path = (selectedAssetInfo && selectedAssetInfo.path) ? selectedAssetInfo.path : '';
+            const fi = document.getElementById('asset-upload-file');
+            const out = document.getElementById('asset-upload-result');
+            if (!path) { out.textContent = '请先选中一个资产路径'; return; }
+            if (!fi.files.length) { out.textContent = '请先选择文件'; return; }
+            const file = fi.files[0];
+            const fd = new FormData();
+            fd.append('path', path);
+            fd.append('backup', '1');
+            fd.append('file', file);
+
+            const nameLower = (file.name || '').toLowerCase();
+            const isAnimInput = nameLower.endsWith('.gif') || nameLower.endsWith('.webp');
+            const isSheetTarget = path.toLowerCase().endsWith('.webp') || path.toLowerCase().endsWith('.png');
+            if (isAnimInput && isSheetTarget) {
+                const fw = (selectedAssetInfo && selectedAssetInfo.width) ? selectedAssetInfo.width : 64;
+                const fh = (selectedAssetInfo && selectedAssetInfo.height) ? selectedAssetInfo.height : 64;
+                fd.append('auto_spritesheet', '1');
+                fd.append('frame_w', String(fw));
+                fd.append('frame_h', String(fh));
+            }
+
+            const res = await fetch('/assets/upload', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (data.ok) {
+                if (data.converted) {
+                    const toType = data.converted.to || 'spritesheet';
+                    out.textContent = `✅ 已更新（动图→${toType}）：${data.path} ｜ ${data.converted.frames}帧 ${data.converted.frame_w}x${data.converted.frame_h}`;
+                } else {
+                    out.textContent = `✅ 已更新到资产：${data.path}`;
+                }
+                await refreshAssetDrawerList();
+                selectAssetInDrawer(path);
+                if (fi) fi.value = '';
+                            } else {
+                out.textContent = `❌ 更新失败：${data.msg || res.status}`;
+            }
+        }
+
+        async function refreshOfficeBackgroundOnly() {
+            if (!game || !officeBgSprite) {
+                return false;
+            }
+            const ext = getExt('office_bg_small.png');
+            const nextKey = `office_bg_live_${Date.now()}`;
+            const nextUrl = `/static/office_bg_small${ext}?t=${Date.now()}`;
+            return new Promise((resolve) => {
+                try {
+                    game.load.once('complete', () => {
+                        try {
+                            officeBgSprite.setTexture(nextKey);
+                            const oldKey = currentOfficeBgTextureKey;
+                            currentOfficeBgTextureKey = nextKey;
+                            if (oldKey && oldKey !== nextKey && game.textures.exists(oldKey)) {
+                                game.textures.remove(oldKey);
+                            }
+                        } catch (e) {
+                            console.warn('局部刷新底图失败(setTexture)', e);
+                        }
+                        resolve(true);
+                    });
+                    game.load.once('loaderror', () => resolve(false));
+                    game.load.image(nextKey, nextUrl);
+                    game.load.start();
+                } catch (e) {
+                    console.warn('局部刷新底图失败(load)', e);
+                    resolve(false);
+                }
+            });
+        }
+
+        function toggleBrokerPanel() {
+            const panel = document.getElementById('asset-broker-panel');
+            if (!panel) return;
+            panel.classList.toggle('open');
+        }
+
+        async function generateCustomRpgBackground() {
+            const out = document.getElementById('asset-upload-result');
+            const prompt = (document.getElementById('asset-broker-prompt')?.value || '').trim();
+            if (!prompt) {
+                out.textContent = '请先输入地图风格主题';
+                return;
+            }
+            out.textContent = '🏘️ 中介正在按你的主题找房，请稍候（约20-90秒）...';
+            try {
+                const res = await fetch('/assets/generate-rpg-background', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt })
+                });
+                const data = await res.json();
+                if (!data.ok) {
+                    out.textContent = `❌ 生成失败：${data.msg || res.status}`;
+                    return;
+                }
+                out.textContent = '✅ 已按中介方案替换底图，正在刷新房间...';
+                const ok = await refreshOfficeBackgroundOnly();
+                if (!ok) out.textContent = '✅ 已按中介方案替换底图（局部刷新失败，可手动刷新页面）';
+            } catch (e) {
+                out.textContent = `❌ 生成失败：${e}`;
+            }
+        }
+
+        async function generateRpgBackground() {
+            const out = document.getElementById('asset-upload-result');
+            out.textContent = '🎨 正在生成 RPG 房间底图，请稍候（约20-90秒）...';
+            try {
+                const res = await fetch('/assets/generate-rpg-background', { method: 'POST' });
+                const data = await res.json();
+                if (!data.ok) {
+                    out.textContent = `❌ 生成失败：${data.msg || res.status}`;
+                    return;
+                }
+                out.textContent = '✅ 已生成并替换底图，正在刷新房间...';
+                const ok = await refreshOfficeBackgroundOnly();
+                if (!ok) out.textContent = '✅ 已生成并替换底图（局部刷新失败，可手动刷新页面）';
+            } catch (e) {
+                out.textContent = `❌ 生成失败：${e}`;
+            }
+        }
+
+        async function restoreHomeBackground() {
+            const out = document.getElementById('asset-upload-result');
+            out.textContent = '🏡 正在回老家（恢复初始底图）...';
+            try {
+                const res = await fetch('/assets/restore-reference-background', { method: 'POST' });
+                const data = await res.json();
+                if (!data.ok) {
+                    out.textContent = `❌ 恢复失败：${data.msg || res.status}`;
+                    return;
+                }
+                out.textContent = '✅ 已恢复初始底图，正在刷新房间...';
+                const ok = await refreshOfficeBackgroundOnly();
+                if (!ok) out.textContent = '✅ 已恢复初始底图（局部刷新失败，可手动刷新页面）';
+            } catch (e) {
+                out.textContent = `❌ 恢复失败：${e}`;
+            }
+        }
+
+        async function toggleAssetDrawer(force) {
+            const drawer = document.getElementById('asset-drawer');
+            const next = (typeof force === 'boolean') ? force : !assetDrawerOpen;
+            assetDrawerOpen = next;
+            drawer.classList.toggle('open', next);
+            if (next) {
+                updateAssetAuthUI();
+                if (assetDrawerAuthed) {
+                    await refreshAssetDrawerList();
+                    bindDrawerFileMeta();
+                }
+            } else {
+                const hl = document.getElementById('asset-highlight');
+                if (hl) hl.style.display = 'none';
+                if (selectionBoxGraphics) selectionBoxGraphics.setVisible(false);
+            }
         }
 
         // Guest Agent 离开房间
@@ -1268,8 +1987,8 @@
 
             // cache-busting to avoid stale background on client/CDN
             // use smaller/new map version provided by user
-            this.load.image('office_bg', '/static/office_bg_small' + (supportsWebP ? '.webp' : '.png') + '?v={{VERSION_TIMESTAMP}}');
-            this.load.spritesheet('star_idle', '/static/star-idle-spritesheet' + getExt('star-idle-spritesheet.png'), { frameWidth: 128, frameHeight: 128 });
+            this.load.image('office_bg', '/static/office_bg_small' + getExt('office_bg_small.png') + '?v={{VERSION_TIMESTAMP}}');
+            this.load.spritesheet('star_idle', '/static/star-idle-spritesheet' + getExt('star-idle-spritesheet.png') + '?v={{VERSION_TIMESTAMP}}', { frameWidth: 128, frameHeight: 128 });
             this.load.spritesheet('star_researching', '/static/star-researching-spritesheet' + getExt('star-researching-spritesheet.png'), { frameWidth: 128, frameHeight: 105 });
 
             // Furniture
@@ -1320,7 +2039,7 @@
 
         function create() {
             game = this;
-            this.add.image(640, 360, 'office_bg');
+            officeBgSprite = this.add.image(640, 360, 'office_bg');
 
             // Place furniture: Sofa
             // NOTE: coordinates are interpreted as the TOP-LEFT corner of the sprite
