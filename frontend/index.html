@@ -593,8 +593,9 @@
 
             #coords-toggle,
             #pan-toggle,
-            #lang-toggle-btn,
-            #lang-toggle-jp-btn {
+            #lang-btn-en,
+            #lang-btn-jp,
+            #lang-btn-cn {
                 font-size: 12px !important;
                 padding: 6px 8px !important;
             }
@@ -760,12 +761,9 @@
         移动视野
     </button>
     <div id="lang-toggle-group" style="position:fixed; top:calc(env(safe-area-inset-top, 0px) + 52px); left:12px; z-index:999999; display:flex; gap:2px; align-items:center;">
-        <button id="lang-toggle-btn" onclick="toggleLanguage()" style="padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">
-            EN
-        </button>
-        <button id="lang-toggle-jp-btn" onclick="toggleJapanese()" style="padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">
-            JP
-        </button>
+        <button id="lang-btn-en" onclick="setUILanguage('en')" style="padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">EN</button>
+        <button id="lang-btn-jp" onclick="setUILanguage('ja')" style="padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">JP</button>
+        <button id="lang-btn-cn" onclick="setUILanguage('zh')" style="padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">CN</button>
     </div>
 
     <script src="/static/vendor/phaser-3.80.1.min.js"></script>
@@ -788,8 +786,7 @@
                 chooseImage: '上传替换素材', setDefault: '设为默认', confirmUpload: '确认并刷新',
                 frameW: '单帧宽', frameH: '单帧高', cols: '列', rows: '行', scalePct: '缩放%',
                 showCoords: '显示坐标', hideCoords: '隐藏坐标', moveView: '移动视野', lockView: '锁定视野',
-                memoTitle: '— 昨 日 小 记 —', guestTitle: '— 访 客 列 表 —', officeTitle: '海辛小龙虾的办公室',
-                langBtn: 'EN', langBtnJp: 'JP'
+                memoTitle: '— 昨 日 小 记 —', guestTitle: '— 访 客 列 表 —', officeTitle: '海辛小龙虾的办公室'
             },
             en: {
                 controlTitle: 'Star Status',
@@ -806,8 +803,7 @@
                 chooseImage: 'Upload Replacement Asset', setDefault: 'Set Default', confirmUpload: 'Confirm & Refresh',
                 frameW: 'Frame W', frameH: 'Frame H', cols: 'Cols', rows: 'Rows', scalePct: 'Scale%',
                 showCoords: 'Show Coords', hideCoords: 'Hide Coords', moveView: 'Pan View', lockView: 'Lock View',
-                memoTitle: '— YESTERDAY NOTES —', guestTitle: '— VISITOR LIST —', officeTitle: 'Haixin Lobster Office',
-                langBtn: '中', langBtnJp: 'JP'
+                memoTitle: '— YESTERDAY NOTES —', guestTitle: '— VISITOR LIST —', officeTitle: 'Haixin Lobster Office'
             },
             ja: {
                 controlTitle: 'Star ステータス',
@@ -824,8 +820,7 @@
                 chooseImage: '差し替え素材をアップロード', setDefault: 'デフォルト化', confirmUpload: '確定して更新',
                 frameW: 'フレーム幅', frameH: 'フレーム高', cols: '列', rows: '行', scalePct: '拡大率%',
                 showCoords: '座標表示', hideCoords: '座標非表示', moveView: '視点移動', lockView: '視点固定',
-                memoTitle: '— 昨日のメモ —', guestTitle: '— 訪問者リスト —', officeTitle: 'ハイシン・ロブスターのオフィス',
-                langBtn: 'EN', langBtnJp: 'JP'
+                memoTitle: '— 昨日のメモ —', guestTitle: '— 訪問者リスト —', officeTitle: 'ハイシン・ロブスターのオフィス'
             }
         };
 
@@ -848,8 +843,19 @@
             setText('btn-state-syncing', 'btnSync');
             setText('btn-state-error', 'btnError');
             setText('btn-open-drawer', 'btnDecor');
-            setText('lang-toggle-btn', 'langBtn');
-            setText('lang-toggle-jp-btn', 'langBtnJp');
+            const langButtons = [
+                { id: 'lang-btn-en', lang: 'en' },
+                { id: 'lang-btn-jp', lang: 'ja' },
+                { id: 'lang-btn-cn', lang: 'zh' }
+            ];
+            langButtons.forEach(({ id, lang }) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const active = (uiLang === lang);
+                el.style.background = active ? '#22c55e' : '#333';
+                el.style.borderColor = active ? '#22c55e' : '#333';
+                el.style.color = '#fff';
+            });
 
             const drawerTitle = document.querySelector('#asset-drawer-header span');
             if (drawerTitle) drawerTitle.textContent = t('drawerTitle');
@@ -898,16 +904,16 @@
             ensureMemoBgVisible();
         }
 
-        function toggleLanguage() {
-            uiLang = (uiLang === 'zh') ? 'en' : 'zh';
+        function setUILanguage(lang) {
+            if (!['zh', 'en', 'ja'].includes(lang)) return;
+            uiLang = lang;
             localStorage.setItem('uiLang', uiLang);
             applyLanguage();
-        }
-
-        function toggleJapanese() {
-            uiLang = (uiLang === 'ja') ? 'zh' : 'ja';
-            localStorage.setItem('uiLang', uiLang);
-            applyLanguage();
+            // 语言切换时，当前正在显示的 loading 文案也实时切换
+            const overlay = document.getElementById('room-loading-overlay');
+            if (overlay && overlay.style.display === 'flex') {
+                showRoomLoadingOverlay();
+            }
         }
 
         // 检测浏览器是否支持 WebP
