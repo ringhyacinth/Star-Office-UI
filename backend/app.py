@@ -1138,9 +1138,8 @@ def assets_upload():
 
         auto_sheet = (request.form.get("auto_spritesheet") or "0").strip() == "1"
         ext_name = (f.filename or "").lower()
-        is_anim_input = ext_name.endswith(".gif") or ext_name.endswith(".webp")
 
-        if auto_sheet and is_anim_input and target.suffix.lower() in {".webp", ".png"}:
+        if auto_sheet and target.suffix.lower() in {".webp", ".png"}:
             with tempfile.NamedTemporaryFile(suffix=os.path.splitext(ext_name)[1] or ".gif", delete=False) as tf:
                 src_path = tf.name
                 f.save(src_path)
@@ -1148,6 +1147,49 @@ def assets_upload():
                 in_w, in_h = _probe_animated_frame_size(src_path)
                 frame_w = int(request.form.get("frame_w") or (in_w or 64))
                 frame_h = int(request.form.get("frame_h") or (in_h or 64))
+
+                # 如果是静态图上传到精灵表目标，按网格切片而不是整图覆盖
+                if not (ext_name.endswith(".gif") or ext_name.endswith(".webp")) and Image is not None:
+                    try:
+                        with Image.open(src_path) as sim:
+                            sim = sim.convert("RGBA")
+                            sw, sh = sim.size
+                            if frame_w <= 0 or frame_h <= 0:
+                                frame_w, frame_h = sw, sh
+                            cols = max(1, sw // frame_w)
+                            rows = max(1, sh // frame_h)
+                            sheet_w = cols * frame_w
+                            sheet_h = rows * frame_h
+                            if sheet_w <= 0 or sheet_h <= 0:
+                                raise RuntimeError("静态图尺寸与帧规格不匹配")
+
+                            cropped = sim.crop((0, 0, sheet_w, sheet_h))
+                            # 目标是 webp 仍按无损保存，避免像素损失
+                            if target.suffix.lower() == ".webp":
+                                cropped.save(str(target), "WEBP", lossless=True, quality=100, method=6)
+                            else:
+                                cropped.save(str(target), "PNG")
+
+                            st = target.stat()
+                            return jsonify({
+                                "ok": True,
+                                "path": rel_path,
+                                "size": st.st_size,
+                                "backup": backup,
+                                "converted": {
+                                    "from": ext_name.split(".")[-1] if "." in ext_name else "image",
+                                    "to": "webp_spritesheet" if target.suffix.lower() == ".webp" else "png_spritesheet",
+                                    "frame_w": frame_w,
+                                    "frame_h": frame_h,
+                                    "columns": cols,
+                                    "rows": rows,
+                                    "frames": cols * rows,
+                                    "preserve_original": False,
+                                    "pixel_art": True,
+                                }
+                            })
+                    finally:
+                        pass
 
                 # 默认：优先保留输入帧尺寸；若前端传了强制值则按前端。
                 preserve_original_val = request.form.get("preserve_original")
