@@ -25,6 +25,15 @@
             overflow-x: hidden;
         }
         /* 底部面板容器 */
+        #main-stage {
+            position: relative;
+            width: 1280px;
+            transition: transform .25s ease;
+            will-change: transform;
+        }
+        body.drawer-open #main-stage {
+            transform: translateX(calc(-1 * min(420px, 92vw)));
+        }
         #bottom-panels {
             display: flex;
             gap: 20px;
@@ -526,6 +535,10 @@
                 flex: 0 0 auto;
             }
 
+            body.drawer-open #main-stage {
+                transform: translateX(calc(-1 * min(92vw, 420px)));
+            }
+
             #memo-panel,
             #control-bar,
             #guest-agent-panel {
@@ -646,12 +659,13 @@
         </div>
     </div>
     
-    <div id="game-container">
-        <div id="status-text">加载中...</div>
-    </div>
-    
-    <!-- 底部面板容器 -->
-    <div id="bottom-panels">
+    <div id="main-stage">
+        <div id="game-container">
+            <div id="status-text">加载中...</div>
+        </div>
+        
+        <!-- 底部面板容器 -->
+        <div id="bottom-panels">
         <!-- Memo 面板 -->
         <div id="memo-panel">
             <div id="memo-title">— 昨 日 小 记 —</div>
@@ -682,6 +696,7 @@
                 <div style="color:#9ca3af;font-size:12px;text-align:center;padding:20px 0;">正在加载访客...</div>
             </div>
         </div>
+    </div>
     </div>
     
     <div id="asset-highlight"></div>
@@ -2165,6 +2180,7 @@ function toggleBrokerPanel() {
             const next = (typeof force === 'boolean') ? force : !assetDrawerOpen;
             assetDrawerOpen = next;
             drawer.classList.toggle('open', next);
+            document.body.classList.toggle('drawer-open', next);
             if (next) {
                 updateAssetAuthUI();
                 bindAssetDrawerBackgroundDeselect();
