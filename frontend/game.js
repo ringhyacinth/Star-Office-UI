@@ -66,11 +66,11 @@ async function loadMemo() {
       memoDate.textContent = data.date || '';
       memoContent.innerHTML = data.memo.replace(/\n/g, '<br>');
     } else {
-      memoContent.innerHTML = '<div id="memo-placeholder">暂无昨日日记</div>';
+      memoContent.innerHTML = '<div id="memo-placeholder">' + ((typeof t === 'function') ? t('index.memoEmpty') : '暂无昨日日记') + '</div>';
     }
   } catch (e) {
-    console.error('加载 memo 失败:', e);
-    memoContent.innerHTML = '<div id="memo-placeholder">加载失败</div>';
+    console.error('load memo failed:', e);
+    memoContent.innerHTML = '<div id="memo-placeholder">' + ((typeof t === 'function') ? t('common.loadFailed') : '加载失败') + '</div>';
   }
 }
 
@@ -82,7 +82,7 @@ function updateLoadingProgress() {
     loadingProgressBar.style.width = percent + '%';
   }
   if (loadingText) {
-    loadingText.textContent = `正在加载 Star 的像素办公室... ${percent}%`;
+    loadingText.textContent = (typeof t === 'function') ? t('index.loadingTextPercent', {percent: percent}) : `Loading... ${percent}%`;
   }
 }
 
@@ -100,91 +100,27 @@ function hideLoadingOverlay() {
 }
 
 const STATES = {
-  idle: { name: '待命', area: 'breakroom' },
-  writing: { name: '整理文档', area: 'writing' },
-  researching: { name: '搜索信息', area: 'researching' },
-  executing: { name: '执行任务', area: 'writing' },
-  syncing: { name: '同步备份', area: 'writing' },
-  error: { name: '出错了', area: 'error' }
+  idle: { name: (typeof t === 'function' ? t('states.idle') : '待命'), area: 'breakroom' },
+  writing: { name: (typeof t === 'function' ? t('states.writing') : '整理文档'), area: 'writing' },
+  researching: { name: (typeof t === 'function' ? t('states.researching') : '搜索信息'), area: 'researching' },
+  executing: { name: (typeof t === 'function' ? t('states.executing') : '执行任务'), area: 'writing' },
+  syncing: { name: (typeof t === 'function' ? t('states.syncing') : '同步备份'), area: 'writing' },
+  error: { name: (typeof t === 'function' ? t('states.error') : '出错了'), area: 'error' }
 };
 
-const BUBBLE_TEXTS = {
-  idle: [
-    '待命中：耳朵竖起来了',
-    '我在这儿，随时可以开工',
-    '先把桌面收拾干净再说',
-    '呼——给大脑放个风',
-    '今天也要优雅地高效',
-    '等待，是为了更准确的一击',
-    '咖啡还热，灵感也还在',
-    '我在后台给你加 Buff',
-    '状态：静心 / 充电',
-    '小猫说：慢一点也没关系'
-  ],
-  writing: [
-    '进入专注模式：勿扰',
-    '先把关键路径跑通',
-    '我来把复杂变简单',
-    '把 bug 关进笼子里',
-    '写到一半，先保存',
-    '把每一步都做成可回滚',
-    '今天的进度，明天的底气',
-    '先收敛，再发散',
-    '让系统变得更可解释',
-    '稳住，我们能赢'
-  ],
-  researching: [
-    '我在挖证据链',
-    '让我把信息熬成结论',
-    '找到了：关键在这里',
-    '先把变量控制住',
-    '我在查：它为什么会这样',
-    '把直觉写成验证',
-    '先定位，再优化',
-    '别急，先画因果图'
-  ],
-  executing: [
-    '执行中：不要眨眼',
-    '把任务切成小块逐个击破',
-    '开始跑 pipeline',
-    '一键推进：走你',
-    '让结果自己说话',
-    '先做最小可行，再做最美版本'
-  ],
-  syncing: [
-    '同步中：把今天锁进云里',
-    '备份不是仪式，是安全感',
-    '写入中…别断电',
-    '把变更交给时间戳',
-    '云端对齐：咔哒',
-    '同步完成前先别乱动',
-    '把未来的自己从灾难里救出来',
-    '多一份备份，少一份后悔'
-  ],
-  error: [
-    '警报响了：先别慌',
-    '我闻到 bug 的味道了',
-    '先复现，再谈修复',
-    '把日志给我，我会说人话',
-    '错误不是敌人，是线索',
-    '把影响面圈起来',
-    '先止血，再手术',
-    '我在：马上定位根因',
-    '别怕，这种我见多了',
-    '报警中：让问题自己现形'
-  ],
-  cat: [
-    '喵~',
-    '咕噜咕噜…',
-    '尾巴摇一摇',
-    '晒太阳最开心',
-    '有人来看我啦',
-    '我是这个办公室的吉祥物',
-    '伸个懒腰',
-    '今天的罐罐准备好了吗',
-    '呼噜呼噜',
-    '这个位置视野最好'
-  ]
+const BUBBLE_TEXTS = (typeof t === 'function') ? {
+  idle: t('bubbles.idle'),
+  writing: t('bubbles.writing'),
+  researching: t('bubbles.researching'),
+  executing: t('bubbles.executing'),
+  syncing: t('bubbles.syncing'),
+  error: t('bubbles.error'),
+  cat: t('bubbles.cat')
+} : {
+  idle: ['待命中：耳朵竖起来了'], writing: ['进入专注模式：勿扰'],
+  researching: ['我在挖证据链'], executing: ['执行中：不要眨眼'],
+  syncing: ['同步中：把今天锁进云里'], error: ['警报响了：先别慌'],
+  cat: ['喵~']
 };
 
 let game, star, sofa, serverroom, areas = {}, currentState = 'idle', pendingDesiredState = null, statusText, lastFetch = 0, lastBlink = 0, lastBubble = 0, targetX = 660, targetY = 170, bubble = null, typewriterText = '', typewriterTarget = '', typewriterIndex = 0, lastTypewriter = 0, syncAnimSprite = null, catBubble = null;
@@ -361,7 +297,7 @@ function create() {
   const plaqueY = LAYOUT.plaque.y;
   const plaqueBg = game.add.rectangle(plaqueX, plaqueY, LAYOUT.plaque.width, LAYOUT.plaque.height, 0x5d4037);
   plaqueBg.setStrokeStyle(3, 0x3e2723);
-  const plaqueText = game.add.text(plaqueX, plaqueY, '海辛小龙虾的办公室', {
+  const plaqueText = game.add.text(plaqueX, plaqueY, (typeof t === 'function') ? t('index.plaque') : '海辛小龙虾的办公室', {
     fontFamily: 'ArkPixel, monospace',
     fontSize: '18px',
     fill: '#ffd700',
@@ -537,7 +473,7 @@ function create() {
   coordsToggle.addEventListener('click', () => {
     showCoords = !showCoords;
     coordsOverlay.style.display = showCoords ? 'block' : 'none';
-    coordsToggle.textContent = showCoords ? '隐藏坐标' : '显示坐标';
+    coordsToggle.textContent = showCoords ? ((typeof t === 'function') ? t('index.hideCoords') : '隐藏坐标') : ((typeof t === 'function') ? t('index.showCoords') : '显示坐标');
     coordsToggle.style.background = showCoords ? '#e94560' : '#333';
   });
 
@@ -752,7 +688,7 @@ function fetchStatus() {
       }
     })
     .catch(error => {
-      typewriterTarget = '连接失败，正在重试...';
+      typewriterTarget = (typeof t === 'function') ? t('index.connectionFailed') : '连接失败，正在重试...';
       typewriterText = '';
       typewriterIndex = 0;
     });
@@ -902,7 +838,7 @@ function fetchAgents() {
       }
     })
     .catch(error => {
-      console.error('拉取 agents 失败:', error);
+      console.error('fetch agents failed:', error);
     });
 }
 

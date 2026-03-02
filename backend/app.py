@@ -15,6 +15,69 @@ FRONTEND_DIR = os.path.join(ROOT_DIR, "frontend")
 STATE_FILE = os.path.join(ROOT_DIR, "state.json")
 AGENTS_STATE_FILE = os.path.join(ROOT_DIR, "agents-state.json")
 JOIN_KEYS_FILE = os.path.join(ROOT_DIR, "join-keys.json")
+BACKEND_LOCALES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "locales")
+
+# --- i18n helpers ---
+_backend_locales = {}
+
+def _load_backend_locale(lang):
+    """Load and cache a backend locale JSON file."""
+    if lang in _backend_locales:
+        return _backend_locales[lang]
+    locale_file = os.path.join(BACKEND_LOCALES_DIR, f"{lang}.json")
+    if os.path.exists(locale_file):
+        try:
+            with open(locale_file, "r", encoding="utf-8") as f:
+                _backend_locales[lang] = json.load(f)
+                return _backend_locales[lang]
+        except Exception:
+            pass
+    return {}
+
+# Pre-load locales at import time
+_load_backend_locale("zh")
+_load_backend_locale("ja")
+
+def get_locale():
+    """Detect locale from request: ?lang= > Accept-Language > default zh"""
+    lang = request.args.get("lang", "").strip()
+    if lang in ("zh", "ja"):
+        return lang
+    accept = request.headers.get("Accept-Language", "")
+    if "ja" in accept.lower():
+        return "ja"
+    return "zh"
+
+def bt(key_path, params=None):
+    """Backend translate: get a value from the current locale's backend JSON.
+    key_path is dot-separated, e.g. 'errors.missingAgentId'.
+    params is an optional dict for {var} replacement.
+    """
+    locale = get_locale()
+    data = _load_backend_locale(locale) or _load_backend_locale("zh") or {}
+    parts = key_path.split(".")
+    val = data
+    for p in parts:
+        if isinstance(val, dict):
+            val = val.get(p)
+        else:
+            val = None
+            break
+    if val is None:
+        # Fallback to zh
+        val = _load_backend_locale("zh") or {}
+        for p in parts:
+            if isinstance(val, dict):
+                val = val.get(p)
+            else:
+                val = key_path
+                break
+    if val is None:
+        val = key_path
+    if isinstance(val, str) and params:
+        for k, v in params.items():
+            val = val.replace("{" + k + "}", str(v))
+    return val
 
 
 def get_yesterday_date_str():
@@ -28,19 +91,19 @@ def sanitize_content(text):
     import re
     
     # 移除 OpenID、User ID 等
-    text = re.sub(r'ou_[a-f0-9]+', '[用户]', text)
-    text = re.sub(r'user_id="[^"]+"', 'user_id="[隐藏]"', text)
+    text = re.sub(r'ou_[a-f0-9]+', '[user]', text)
+    text = re.sub(r'user_id="[^"]+"', 'user_id="[hidden]"', text)
     
     # 移除具体的人名（如果有的话）
     # 这里可以根据需要添加更多规则
     
     # 移除 IP 地址、路径等敏感信息
-    text = re.sub(r'/root/[^"\s]+', '[路径]', text)
+    text = re.sub(r'/root/[^"\s]+', '[path]', text)
     text = re.sub(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', '[IP]', text)
-    
+
     # 移除电话号码、邮箱等
-    text = re.sub(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', '[邮箱]', text)
-    text = re.sub(r'1[3-9]\d{9}', '[手机号]', text)
+    text = re.sub(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', '[email]', text)
+    text = re.sub(r'1[3-9]\d{9}', '[phone]', text)
     
     return text
 
@@ -68,24 +131,15 @@ def extract_memo_from_file(file_path):
                 core_points.append(line)
         
         if not core_points:
-            return "「昨日无事记录」\n\n若有恒，何必三更眠五更起；最无益，莫过一日曝十日寒。"
+            return bt("defaults.noRecordYesterday")
         
         # 从核心内容中提取 2-3 个关键点
         selected_points = core_points[:3]
         
-        # 睿智语录库
-        wisdom_quotes = [
-            "「工欲善其事，必先利其器。」",
-            "「不积跬步，无以至千里；不积小流，无以成江海。」",
-            "「知行合一，方可致远。」",
-            "「业精于勤，荒于嬉；行成于思，毁于随。」",
-            "「路漫漫其修远兮，吾将上下而求索。」",
-            "「昨夜西风凋碧树，独上高楼，望尽天涯路。」",
-            "「衣带渐宽终不悔，为伊消得人憔悴。」",
-            "「众里寻他千百度，蓦然回首，那人却在，灯火阑珊处。」",
-            "「世事洞明皆学问，人情练达即文章。」",
-            "「纸上得来终觉浅，绝知此事要躬行。」"
-        ]
+        # 睿智语录库 (locale-aware)
+        wisdom_quotes = bt("wisdom")
+        if not isinstance(wisdom_quotes, list):
+            wisdom_quotes = ["「知行合一，方可致远。」"]
         
         import random
         quote = random.choice(wisdom_quotes)
@@ -129,7 +183,7 @@ def extract_memo_from_file(file_path):
         
     except Exception as e:
         print(f"提取 memo 失败: {e}")
-        return "「昨日记录加载失败」\n\n「往者不可谏，来者犹可追。」"
+        return bt("defaults.loadFailed")
 
 app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path="/static")
 
@@ -148,13 +202,20 @@ def add_no_cache_headers(response):
     response.headers["Expires"] = "0"
     return response
 
-# Default state
+# Default state (Chinese fallback; runtime uses bt() for locale-aware detail)
 DEFAULT_STATE = {
     "state": "idle",
     "detail": "等待任务中...",
     "progress": 0,
     "updated_at": datetime.now().isoformat()
 }
+
+def get_default_state_detail():
+    """Return locale-aware default state detail."""
+    try:
+        return bt("defaults.waitingForTask")
+    except Exception:
+        return "等待任务中..."
 
 
 def load_state():
@@ -194,7 +255,7 @@ def load_state():
                 age = (datetime.now() - dt).total_seconds()
             if age > ttl:
                 state["state"] = "idle"
-                state["detail"] = "待命中（自动回到休息区）"
+                state["detail"] = bt("defaults.autoIdle")
                 state["progress"] = 0
                 state["updated_at"] = datetime.now().isoformat()
                 # persist the auto-idle so every client sees it consistently
@@ -417,12 +478,12 @@ def agent_approve():
         data = request.get_json()
         agent_id = (data.get("agentId") or "").strip()
         if not agent_id:
-            return jsonify({"ok": False, "msg": "缺少 agentId"}), 400
+            return jsonify({"ok": False, "msg": bt("errors.missingAgentId")}), 400
 
         agents = load_agents_state()
         target = next((a for a in agents if a.get("agentId") == agent_id and not a.get("isMain")), None)
         if not target:
-            return jsonify({"ok": False, "msg": "未找到 agent"}), 404
+            return jsonify({"ok": False, "msg": bt("errors.agentNotFound")}), 404
 
         target["authStatus"] = "approved"
         target["authApprovedAt"] = datetime.now().isoformat()
@@ -441,12 +502,12 @@ def agent_reject():
         data = request.get_json()
         agent_id = (data.get("agentId") or "").strip()
         if not agent_id:
-            return jsonify({"ok": False, "msg": "缺少 agentId"}), 400
+            return jsonify({"ok": False, "msg": bt("errors.missingAgentId")}), 400
 
         agents = load_agents_state()
         target = next((a for a in agents if a.get("agentId") == agent_id and not a.get("isMain")), None)
         if not target:
-            return jsonify({"ok": False, "msg": "未找到 agent"}), 404
+            return jsonify({"ok": False, "msg": bt("errors.agentNotFound")}), 404
 
         target["authStatus"] = "rejected"
         target["authRejectedAt"] = datetime.now().isoformat()
@@ -478,7 +539,7 @@ def join_agent():
     try:
         data = request.get_json()
         if not isinstance(data, dict) or not data.get("name"):
-            return jsonify({"ok": False, "msg": "请提供名字"}), 400
+            return jsonify({"ok": False, "msg": bt("errors.provideName")}), 400
 
         name = data["name"].strip()
         state = data.get("state", "idle")
@@ -489,12 +550,12 @@ def join_agent():
         state = normalize_agent_state(state)
 
         if not join_key:
-            return jsonify({"ok": False, "msg": "请提供接入密钥"}), 400
+            return jsonify({"ok": False, "msg": bt("errors.provideKey")}), 400
 
         keys_data = load_join_keys()
         key_item = next((k for k in keys_data.get("keys", []) if k.get("key") == join_key), None)
         if not key_item:
-            return jsonify({"ok": False, "msg": "接入密钥无效"}), 403
+            return jsonify({"ok": False, "msg": bt("errors.invalidKey")}), 403
         # key 可复用：不再因为 used=true 拒绝
 
         with join_lock:
@@ -502,7 +563,7 @@ def join_agent():
             keys_data = load_join_keys()
             key_item = next((k for k in keys_data.get("keys", []) if k.get("key") == join_key), None)
             if not key_item:
-                return jsonify({"ok": False, "msg": "接入密钥无效"}), 403
+                return jsonify({"ok": False, "msg": bt("errors.invalidKey")}), 403
 
             agents = load_agents_state()
 
@@ -552,7 +613,7 @@ def join_agent():
 
             if active_count >= max_concurrent:
                 save_agents_state(agents)
-                return jsonify({"ok": False, "msg": f"该接入密钥当前并发已达上限（{max_concurrent}），请稍后或换另一个 key"}), 429
+                return jsonify({"ok": False, "msg": bt("errors.concurrencyLimit", {"max": max_concurrent})}), 429
 
             if existing:
                 existing["state"] = state
@@ -602,7 +663,7 @@ def join_agent():
             save_agents_state(agents)
             save_join_keys(keys_data)
 
-        return jsonify({"ok": True, "agentId": agent_id, "authStatus": "approved", "nextStep": "已自动批准，立即开始推送状态"})
+        return jsonify({"ok": True, "agentId": agent_id, "authStatus": "approved", "nextStep": bt("messages.autoApproved")})
     except Exception as e:
         return jsonify({"ok": False, "msg": str(e)}), 500
 
@@ -621,7 +682,7 @@ def leave_agent():
         agent_id = (data.get("agentId") or "").strip()
         name = (data.get("name") or "").strip()
         if not agent_id and not name:
-            return jsonify({"ok": False, "msg": "请提供 agentId 或名字"}), 400
+            return jsonify({"ok": False, "msg": bt("errors.provideAgentIdOrName")}), 400
 
         agents = load_agents_state()
 
@@ -633,7 +694,7 @@ def leave_agent():
             target = next((a for a in agents if a.get("name") == name and not a.get("isMain")), None)
 
         if not target:
-            return jsonify({"ok": False, "msg": "没有找到要离开的 agent"}), 404
+            return jsonify({"ok": False, "msg": bt("errors.agentNotFoundLeave")}), 404
 
         join_key = target.get("joinKey")
         new_agents = [a for a in agents if a.get("isMain") or a.get("agentId") != target.get("agentId")]
@@ -686,7 +747,7 @@ def agent_push():
         name = (data.get("name") or "").strip()
 
         if not agent_id or not join_key or not state:
-            return jsonify({"ok": False, "msg": "缺少 agentId/joinKey/state"}), 400
+            return jsonify({"ok": False, "msg": bt("errors.missingFields")}), 400
 
         valid_states = {"idle", "writing", "researching", "executing", "syncing", "error"}
         state = normalize_agent_state(state)
@@ -694,28 +755,28 @@ def agent_push():
         keys_data = load_join_keys()
         key_item = next((k for k in keys_data.get("keys", []) if k.get("key") == join_key), None)
         if not key_item:
-            return jsonify({"ok": False, "msg": "joinKey 无效"}), 403
+            return jsonify({"ok": False, "msg": bt("errors.keyInvalid")}), 403
         # key 可复用：不再做 used/usedByAgentId 绑定校验
 
 
         agents = load_agents_state()
         target = next((a for a in agents if a.get("agentId") == agent_id and not a.get("isMain")), None)
         if not target:
-            return jsonify({"ok": False, "msg": "agent 未注册，请先 join"}), 404
+            return jsonify({"ok": False, "msg": bt("errors.agentNotRegistered")}), 404
 
         # Auth check: only approved agents can push.
         # Note: "offline" is a presence state (stale), not a revoked authorization.
         # Allow offline agents to resume pushing and auto-promote them back to approved.
         auth_status = target.get("authStatus", "pending")
         if auth_status not in {"approved", "offline"}:
-            return jsonify({"ok": False, "msg": "agent 未获授权，请等待主人批准"}), 403
+            return jsonify({"ok": False, "msg": bt("errors.agentNotAuthorized")}), 403
         if auth_status == "offline":
             target["authStatus"] = "approved"
             target["authApprovedAt"] = datetime.now().isoformat()
             target["authExpiresAt"] = (datetime.now() + timedelta(hours=24)).isoformat()
 
         if target.get("joinKey") != join_key:
-            return jsonify({"ok": False, "msg": "joinKey 不匹配"}), 403
+            return jsonify({"ok": False, "msg": bt("errors.keyMismatch")}), 403
 
         target["state"] = state
         target["detail"] = detail
@@ -775,7 +836,7 @@ def get_yesterday_memo():
         else:
             return jsonify({
                 "success": False,
-                "msg": "没有找到昨日日记"
+                "msg": bt("errors.noMemo")
             })
     except Exception as e:
         return jsonify({

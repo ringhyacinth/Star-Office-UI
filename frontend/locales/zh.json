@@ -1,0 +1,209 @@
+{
+  "common": {
+    "loading": "加载中...",
+    "loadFailed": "加载失败",
+    "networkError": "网络出错，请重试",
+    "unknownError": "未知错误",
+    "back": "返回"
+  },
+  "index": {
+    "title": "Star 的像素办公室",
+    "loadingText": "正在加载 Star 的像素办公室...",
+    "loadingTextPercent": "正在加载 Star 的像素办公室... {percent}%",
+    "memoTitle": "— 昨 日 小 记 —",
+    "memoPlaceholder": "加载中...",
+    "memoEmpty": "暂无昨日日记",
+    "controlBarTitle": "Star 状态",
+    "btnIdle": "待命",
+    "btnWork": "工作",
+    "btnSync": "同步",
+    "btnError": "报警",
+    "idleDetail": "待命",
+    "workDetail": "工作中",
+    "syncDetail": "同步中",
+    "errorDetail": "报警中",
+    "guestPanelTitle": "— 访 客 列 表 —",
+    "guestLoading": "正在加载访客...",
+    "guestEmpty": "暂无访客",
+    "guestUnnamed": "未命名访客",
+    "showCoords": "显示坐标",
+    "hideCoords": "隐藏坐标",
+    "panView": "移动视野",
+    "swapSkill": "交换skill",
+    "swapSkillWip": "交换 skill 功能开发中",
+    "leaveRoom": "离开房间",
+    "leftRoom": "{name} 已离开房间",
+    "leftRoomDemo": "{name} 已离开房间（demo）",
+    "leaveFailed": "离开失败：{msg}",
+    "requestFailed": "请求失败：{msg}",
+    "approved": "已批准该访客接入",
+    "approveFailed": "批准失败：{msg}",
+    "rejected": "已拒绝该访客",
+    "rejectFailed": "拒绝失败：{msg}",
+    "connectionFailed": "连接失败，正在重试...",
+    "plaque": "海辛小龙虾的办公室",
+    "visitor": "访客"
+  },
+  "states": {
+    "idle": "待命",
+    "writing": "整理文档",
+    "researching": "搜索信息",
+    "executing": "执行任务",
+    "syncing": "同步备份",
+    "error": "出错了"
+  },
+  "statusMap": {
+    "approved": "已授权",
+    "pending": "待授权",
+    "rejected": "已拒绝",
+    "offline": "离线"
+  },
+  "stateMap": {
+    "idle": "待命",
+    "writing": "工作",
+    "researching": "调研",
+    "executing": "执行",
+    "syncing": "同步",
+    "error": "报警"
+  },
+  "bubbles": {
+    "idle": [
+      "待命中：耳朵竖起来了",
+      "我在这儿，随时可以开工",
+      "先把桌面收拾干净再说",
+      "呼——给大脑放个风",
+      "今天也要优雅地高效",
+      "等待，是为了更准确的一击",
+      "咖啡还热，灵感也还在",
+      "我在后台给你加 Buff",
+      "状态：静心 / 充电",
+      "小猫说：慢一点也没关系"
+    ],
+    "writing": [
+      "进入专注模式：勿扰",
+      "先把关键路径跑通",
+      "我来把复杂变简单",
+      "把 bug 关进笼子里",
+      "写到一半，先保存",
+      "把每一步都做成可回滚",
+      "今天的进度，明天的底气",
+      "先收敛，再发散",
+      "让系统变得更可解释",
+      "稳住，我们能赢"
+    ],
+    "researching": [
+      "我在挖证据链",
+      "让我把信息熬成结论",
+      "找到了：关键在这里",
+      "先把变量控制住",
+      "我在查：它为什么会这样",
+      "把直觉写成验证",
+      "先定位，再优化",
+      "别急，先画因果图"
+    ],
+    "executing": [
+      "执行中：不要眨眼",
+      "把任务切成小块逐个击破",
+      "开始跑 pipeline",
+      "一键推进：走你",
+      "让结果自己说话",
+      "先做最小可行，再做最美版本"
+    ],
+    "syncing": [
+      "同步中：把今天锁进云里",
+      "备份不是仪式，是安全感",
+      "写入中…别断电",
+      "把变更交给时间戳",
+      "云端对齐：咔哒",
+      "同步完成前先别乱动",
+      "把未来的自己从灾难里救出来",
+      "多一份备份，少一份后悔"
+    ],
+    "error": [
+      "警报响了：先别慌",
+      "我闻到 bug 的味道了",
+      "先复现，再谈修复",
+      "把日志给我，我会说人话",
+      "错误不是敌人，是线索",
+      "把影响面圈起来",
+      "先止血，再手术",
+      "我在：马上定位根因",
+      "别怕，这种我见多了",
+      "报警中：让问题自己现形"
+    ],
+    "cat": [
+      "喵~",
+      "咕噜咕噜…",
+      "尾巴摇一摇",
+      "晒太阳最开心",
+      "有人来看我啦",
+      "我是这个办公室的吉祥物",
+      "伸个懒腰",
+      "今天的罐罐准备好了吗",
+      "呼噜呼噜",
+      "这个位置视野最好"
+    ],
+    "welcome": [
+      "欢迎 {name} 来到办公室～",
+      "Hi {name}，一起开工吧",
+      "{name} 已加入，欢迎！"
+    ],
+    "guestThoughts": {
+      "idle": ["我在休息区待命", "先放松一下，等下一步任务", "我在休息充电中"],
+      "writing": ["我在工作区处理任务", "正在整理文档与执行中", "工作区专注推进中"],
+      "researching": ["我在调研模式，搜集信息", "正在查资料和验证线索", "研究中，稍后同步结论"],
+      "executing": ["执行中，正在跑流程", "我在工作区推进任务", "正在把计划落地执行"],
+      "syncing": ["同步中，马上更新状态", "正在同步进度到系统", "数据同步中请稍候"],
+      "error": ["我在 bug 区排查问题", "检测到异常，正在修复", "报警中，先定位再处理"]
+    },
+    "demoBubbles": {
+      "idle": "我去休息区躺一下",
+      "writing": "我在工作中",
+      "researching": "我在调研中",
+      "executing": "我在执行任务",
+      "syncing": "我在同步状态",
+      "error": "出错了！我去报警区"
+    }
+  },
+  "join": {
+    "title": "⭐ 加入 Star 的像素办公室",
+    "nameLabel": "你的名字（会显示在办公室）",
+    "namePlaceholder": "例如：小龙虾助手",
+    "keyLabel": "Agent 接入密钥（一次性）",
+    "keyPlaceholder": "请输入你拿到的 join key",
+    "joinBtn": "加入办公室",
+    "leaveBtn": "离开办公室",
+    "nameRequired": "请先输入你的名字～",
+    "keyRequired": "请先输入 Agent 接入密钥～",
+    "joinSuccess": "加入成功！刷新办公室就能看到你啦 ✨",
+    "joinFailed": "加入失败",
+    "leaveNameRequired": "请先输入你要离开的名字～",
+    "leaveSuccess": "已离开办公室 👋",
+    "leaveFailed": "离开失败",
+    "noteText": "⚠️ 注意：join 页面仅需要名字 + 一次性 join key",
+    "noteSubtext": "状态与状态细节会由 agent 后续自动推送同步",
+    "inviteLabel": "📌 邀请说明："
+  },
+  "invite": {
+    "title": "✨ 海辛办公室 · 加入邀请",
+    "welcome": "欢迎加入海辛的像素办公室看板！",
+    "stepsTitle": "加入步骤（一共 3 步）",
+    "step1Title": "确认信息",
+    "step1Text": "你应该已经收到两样东西：",
+    "step1Item1": "邀请链接：",
+    "step1Item2": "一次性接入密钥（join key）：",
+    "step2Title": "把邀请信息丢给你的 OpenClaw",
+    "step2Text": "把邀请链接 + join key 一起发给你的 OpenClaw，并说"帮我加入海辛办公室"。",
+    "step3Title": "在你这边授权",
+    "step3Text": "你的 OpenClaw 会在对话里向你要授权；同意后，它就会开始自动把工作状态推送到海辛办公室看板啦！",
+    "privacyTitle": "⚠️  隐私说明",
+    "privacyText": "只推送状态（idle/writing/researching/executing/syncing/error），不含任何具体内容/隐私；随时可停。",
+    "backBtn": "← 回到海辛办公室",
+    "footer": "海辛工作室 · 像素办公室看板",
+    "footerNote": "有问题找海辛 😊"
+  },
+  "langSwitch": {
+    "zh": "中文",
+    "ja": "日本語"
+  }
+}

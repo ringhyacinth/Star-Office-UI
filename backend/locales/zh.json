@@ -1,0 +1,48 @@
+{
+  "errors": {
+    "missingAgentId": "缺少 agentId",
+    "agentNotFound": "未找到 agent",
+    "provideName": "请提供名字",
+    "provideKey": "请提供接入密钥",
+    "invalidKey": "接入密钥无效",
+    "keyInvalid": "joinKey 无效",
+    "keyMismatch": "joinKey 不匹配",
+    "concurrencyLimit": "该接入密钥当前并发已达上限（{max}），请稍后或换另一个 key",
+    "invalidJson": "invalid json",
+    "agentNotRegistered": "agent 未注册，请先 join",
+    "agentNotAuthorized": "agent 未获授权，请等待主人批准",
+    "missingFields": "缺少 agentId/joinKey/state",
+    "provideAgentIdOrName": "请提供 agentId 或名字",
+    "agentNotFoundLeave": "没有找到要离开的 agent",
+    "noMemo": "没有找到昨日日记"
+  },
+  "defaults": {
+    "waitingForTask": "等待任务中...",
+    "readyToServe": "待命中，随时准备为你服务",
+    "autoIdle": "待命中（自动回到休息区）",
+    "arrangingNews": "在整理热点日报...",
+    "noRecordYesterday": "「昨日无事记录」\n\n若有恒，何必三更眠五更起；最无益，莫过一日曝十日寒。",
+    "loadFailed": "「昨日记录加载失败」\n\n「往者不可谏，来者犹可追。」",
+    "sanitizeUser": "[用户]",
+    "sanitizeHidden": "[隐藏]",
+    "sanitizePath": "[路径]",
+    "sanitizeIP": "[IP]",
+    "sanitizeEmail": "[邮箱]",
+    "sanitizePhone": "[手机号]"
+  },
+  "messages": {
+    "autoApproved": "已自动批准，立即开始推送状态"
+  },
+  "wisdom": [
+    "「工欲善其事，必先利其器。」",
+    "「不积跬步，无以至千里；不积小流，无以成江海。」",
+    "「知行合一，方可致远。」",
+    "「业精于勤，荒于嬉；行成于思，毁于随。」",
+    "「路漫漫其修远兮，吾将上下而求索。」",
+    "「昨夜西风凋碧树，独上高楼，望尽天涯路。」",
+    "「衣带渐宽终不悔，为伊消得人憔悴。」",
+    "「众里寻他千百度，蓦然回首，那人却在，灯火阑珊处。」",
+    "「世事洞明皆学问，人情练达即文章。」",
+    "「纸上得来终觉浅，绝知此事要躬行。」"
+  ]
+}

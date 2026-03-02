@@ -1,0 +1,48 @@
+{
+  "errors": {
+    "missingAgentId": "agentId が必要です",
+    "agentNotFound": "agent が見つかりません",
+    "provideName": "名前を入力してください",
+    "provideKey": "アクセスキーを入力してください",
+    "invalidKey": "アクセスキーが無効です",
+    "keyInvalid": "joinKey が無効です",
+    "keyMismatch": "joinKey が一致しません",
+    "concurrencyLimit": "このアクセスキーの同時接続数が上限（{max}）に達しました。しばらく待つか別のキーを使ってください",
+    "invalidJson": "invalid json",
+    "agentNotRegistered": "agent が未登録です。先に join してください",
+    "agentNotAuthorized": "agent が未認可です。オーナーの承認をお待ちください",
+    "missingFields": "agentId/joinKey/state が必要です",
+    "provideAgentIdOrName": "agentId または名前を入力してください",
+    "agentNotFoundLeave": "退出する agent が見つかりません",
+    "noMemo": "昨日の日記が見つかりません"
+  },
+  "defaults": {
+    "waitingForTask": "タスク待機中...",
+    "readyToServe": "待機中、いつでもお手伝いします",
+    "autoIdle": "待機中（自動で休憩エリアに戻りました）",
+    "arrangingNews": "ホットニュースを整理中...",
+    "noRecordYesterday": "「昨日は記録なし」\n\n継続は力なり。千里の道も一歩から。",
+    "loadFailed": "「昨日の記録の読み込みに失敗」\n\n「過ぎたことは仕方ない、これからに目を向けよう。」",
+    "sanitizeUser": "[ユーザー]",
+    "sanitizeHidden": "[非表示]",
+    "sanitizePath": "[パス]",
+    "sanitizeIP": "[IP]",
+    "sanitizeEmail": "[メール]",
+    "sanitizePhone": "[電話番号]"
+  },
+  "messages": {
+    "autoApproved": "自動承認されました。すぐにステータス送信を開始してください"
+  },
+  "wisdom": [
+    "「良い仕事をしたければ、まず道具を整えよ。」",
+    "「千里の道も一歩から。大河も小さな流れから。」",
+    "「知行合一、遠くへ行ける。」",
+    "「学問は勤勉に磨かれ、遊びで廃れる。」",
+    "「道は遥か彼方まで続く、我は上下に求め続けん。」",
+    "「昨夜の西風が碧い木を枯らす、高楼に独り登り天涯を望む。」",
+    "「衣帯が緩んでも悔いなし、君のために痩せ衰えても。」",
+    "「千度探し求めて、ふと振り返れば、その人は灯火のほの暗い処に。」",
+    "「世の中の道理に通じるのが学問、人情に練達するのが文章。」",
+    "「紙上の学びは浅い、真に知るには実践あるのみ。」"
+  ]
+}

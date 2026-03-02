@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>加入 Star 的像素办公室</title>
+    <script src="/static/i18n.js"></script>
+    <script>document.title = t('join.title');</script>
     <style>
         @font-face {
             font-family: 'ArkPixel';
@@ -97,31 +99,66 @@
             line-height: 1.8;
         }
         .note a { word-break: break-all; }
+        #lang-switcher {
+            position: fixed;
+            bottom: 12px;
+            right: 12px;
+            display: flex;
+            gap: 4px;
+        }
+        #lang-switcher button {
+            width: auto;
+            padding: 4px 8px;
+            font-size: 11px;
+            border: 1px solid #555;
+            border-radius: 3px;
+            background: #333;
+            color: #ccc;
+        }
+        #lang-switcher button.active {
+            background: #e94560;
+            border-color: #e94560;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
-    <h1>⭐ 加入 Star 的像素办公室</h1>
+    <h1 data-i18n="join.title">⭐ 加入 Star 的像素办公室</h1>
     <div class="container">
         <div class="form-group">
-            <label>你的名字（会显示在办公室）</label>
-            <input type="text" id="agentName" placeholder="例如：小龙虾助手" maxlength="20">
+            <label data-i18n="join.nameLabel">你的名字（会显示在办公室）</label>
+            <input type="text" id="agentName" data-i18n-placeholder="join.namePlaceholder" placeholder="例如：小龙虾助手" maxlength="20">
         </div>
         <!-- 状态与细节改为自动同步，不在 join 页面填写 -->
         <div class="form-group">
-            <label>Agent 接入密钥（一次性）</label>
-            <input type="text" id="joinKey" placeholder="请输入你拿到的 join key" maxlength="64">
+            <label data-i18n="join.keyLabel">Agent 接入密钥（一次性）</label>
+            <input type="text" id="joinKey" data-i18n-placeholder="join.keyPlaceholder" placeholder="请输入你拿到的 join key" maxlength="64">
         </div>
-        <button id="joinBtn">加入办公室</button>
-        <button id="leaveBtn" style="margin-top:10px; background:#555; border-color:#555;">离开办公室</button>
+        <button id="joinBtn" data-i18n="join.joinBtn">加入办公室</button>
+        <button id="leaveBtn" style="margin-top:10px; background:#555; border-color:#555;" data-i18n="join.leaveBtn">离开办公室</button>
         <div id="status" class="status" style="display:none;"></div>
     </div>
     <div class="note">
-        ⚠️ 注意：join 页面仅需要名字 + 一次性 join key<br>
-        状态与状态细节会由 agent 后续自动推送同步
+        <span data-i18n="join.noteText">⚠️ 注意：join 页面仅需要名字 + 一次性 join key</span><br>
+        <span data-i18n="join.noteSubtext">状态与状态细节会由 agent 后续自动推送同步</span>
         <br><br>
-        📌 邀请说明：
+        <span data-i18n="join.inviteLabel">📌 邀请说明：</span>
         <a href="/invite" style="color:#ffd700; text-decoration: underline;">https://office.example.com/invite</a>
     </div>
+
+    <div id="lang-switcher">
+        <button onclick="I18N.setLocale('zh')">中文</button>
+        <button onclick="I18N.setLocale('ja')">日本語</button>
+    </div>
+    <script>
+        (function() {
+            var btns = document.querySelectorAll('#lang-switcher button');
+            var langs = ['zh', 'ja'];
+            for (var i = 0; i < btns.length; i++) {
+                if (langs[i] === I18N.locale) btns[i].classList.add('active');
+            }
+        })();
+    </script>
 
     <script>
         const joinBtn = document.getElementById('joinBtn');
@@ -140,11 +177,11 @@
             const name = agentNameInput.value.trim();
             const joinKey = joinKeyInput.value.trim();
             if (!name) {
-                showStatus('请先输入你的名字～', false);
+                showStatus(t('join.nameRequired'), false);
                 return;
             }
             if (!joinKey) {
-                showStatus('请先输入 Agent 接入密钥～', false);
+                showStatus(t('join.keyRequired'), false);
                 return;
             }
             try {
@@ -155,19 +192,19 @@
                 });
                 const data = await response.json();
                 if (data.ok) {
-                    showStatus('加入成功！刷新办公室就能看到你啦 ✨', true);
+                    showStatus(t('join.joinSuccess'), true);
                 } else {
-                    showStatus(data.msg || '加入失败', false);
+                    showStatus(data.msg || t('join.joinFailed'), false);
                 }
             } catch (e) {
-                showStatus('网络出错，请重试', false);
+                showStatus(t('common.networkError'), false);
             }
         }
 
         async function leave() {
             const name = agentNameInput.value.trim();
             if (!name) {
-                showStatus('请先输入你要离开的名字～', false);
+                showStatus(t('join.leaveNameRequired'), false);
                 return;
             }
             try {
@@ -178,12 +215,12 @@
                 });
                 const data = await response.json();
                 if (data.ok) {
-                    showStatus('已离开办公室 👋', true);
+                    showStatus(t('join.leaveSuccess'), true);
                 } else {
-                    showStatus(data.msg || '离开失败', false);
+                    showStatus(data.msg || t('join.leaveFailed'), false);
                 }
             } catch (e) {
-                showStatus('网络出错，请重试', false);
+                showStatus(t('common.networkError'), false);
             }
         }
 

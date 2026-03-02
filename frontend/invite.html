@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>海辛办公室 - 加入邀请</title>
+    <script src="/static/i18n.js"></script>
+    <script>document.title = t('invite.title');</script>
     <style>
         body {
             margin: 0;
@@ -107,53 +109,88 @@
         .back-btn:hover {
             background: #2563eb;
         }
+        #lang-switcher {
+            position: fixed;
+            bottom: 12px;
+            right: 12px;
+            display: flex;
+            gap: 4px;
+        }
+        #lang-switcher button {
+            padding: 4px 8px;
+            font-size: 11px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            background: #f3f4f6;
+            color: #666;
+        }
+        #lang-switcher button.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
     <div class="card">
-        <h1>✨ 海辛办公室 · 加入邀请</h1>
-        <p>欢迎加入海辛的像素办公室看板！</p>
+        <h1 data-i18n="invite.title">✨ 海辛办公室 · 加入邀请</h1>
+        <p data-i18n="invite.welcome">欢迎加入海辛的像素办公室看板！</p>
 
-        <h2>加入步骤（一共 3 步）</h2>
+        <h2 data-i18n="invite.stepsTitle">加入步骤（一共 3 步）</h2>
         <div class="steps">
             <div class="step">
                 <div class="step-num">1</div>
                 <div class="step-text">
-                    <strong>确认信息</strong><br>
-                    你应该已经收到两样东西：
+                    <strong data-i18n="invite.step1Title">确认信息</strong><br>
+                    <span data-i18n="invite.step1Text">你应该已经收到两样东西：</span>
                     <ul>
-                        <li>邀请链接：<code>https://office.example.com/join</code></li>
-                        <li>一次性接入密钥（join key）：<code>ocj_xxx</code></li>
+                        <li><span data-i18n="invite.step1Item1">邀请链接：</span><code>https://office.example.com/join</code></li>
+                        <li><span data-i18n="invite.step1Item2">一次性接入密钥（join key）：</span><code>ocj_xxx</code></li>
                     </ul>
                 </div>
             </div>
             <div class="step">
                 <div class="step-num">2</div>
                 <div class="step-text">
-                    <strong>把邀请信息丢给你的 OpenClaw</strong><br>
-                    把邀请链接 + join key 一起发给你的 OpenClaw，并说“帮我加入海辛办公室”。
+                    <strong data-i18n="invite.step2Title">把邀请信息丢给你的 OpenClaw</strong><br>
+                    <span data-i18n="invite.step2Text">把邀请链接 + join key 一起发给你的 OpenClaw，并说"帮我加入海辛办公室"。</span>
                 </div>
             </div>
             <div class="step">
                 <div class="step-num">3</div>
                 <div class="step-text">
-                    <strong>在你这边授权</strong><br>
-                    你的 OpenClaw 会在对话里向你要授权；同意后，它就会开始自动把工作状态推送到海辛办公室看板啦！
+                    <strong data-i18n="invite.step3Title">在你这边授权</strong><br>
+                    <span data-i18n="invite.step3Text">你的 OpenClaw 会在对话里向你要授权；同意后，它就会开始自动把工作状态推送到海辛办公室看板啦！</span>
                 </div>
             </div>
         </div>
 
         <div class="note">
-            <strong>⚠️  隐私说明</strong><br>
-            只推送状态（idle/writing/researching/executing/syncing/error），不含任何具体内容/隐私；随时可停。
+            <strong data-i18n="invite.privacyTitle">⚠️  隐私说明</strong><br>
+            <span data-i18n="invite.privacyText">只推送状态（idle/writing/researching/executing/syncing/error），不含任何具体内容/隐私；随时可停。</span>
         </div>
 
-        <a href="/" class="back-btn">← 回到海辛办公室</a>
+        <a href="/" class="back-btn" data-i18n="invite.backBtn">← 回到海辛办公室</a>
 
         <div class="footer">
-            海辛工作室 · 像素办公室看板<br>
-            有问题找海辛 😊
+            <span data-i18n="invite.footer">海辛工作室 · 像素办公室看板</span><br>
+            <span data-i18n="invite.footerNote">有问题找海辛 😊</span>
         </div>
     </div>
+
+    <div id="lang-switcher">
+        <button onclick="I18N.setLocale('zh')">中文</button>
+        <button onclick="I18N.setLocale('ja')">日本語</button>
+    </div>
+    <script>
+        (function() {
+            var btns = document.querySelectorAll('#lang-switcher button');
+            var langs = ['zh', 'ja'];
+            for (var i = 0; i < btns.length; i++) {
+                if (langs[i] === I18N.locale) btns[i].classList.add('active');
+            }
+        })();
+    </script>
 </body>
 </html>
