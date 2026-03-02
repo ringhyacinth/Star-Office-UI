@@ -640,7 +640,7 @@
 <body>
     <!-- 加载遮罩 -->
     <div id="loading-overlay">
-        <div id="loading-text">正在加载 Star 的像素办公室...</div>
+        <div id="loading-text">Loading Star’s pixel office...</div>
         <div id="loading-progress-container">
             <div id="loading-progress-bar"></div>
         </div>
@@ -786,7 +786,8 @@
                 chooseImage: '上传替换素材', setDefault: '设为默认', confirmUpload: '确认并刷新',
                 frameW: '单帧宽', frameH: '单帧高', cols: '列', rows: '行', scalePct: '缩放%',
                 showCoords: '显示坐标', hideCoords: '隐藏坐标', moveView: '移动视野', lockView: '锁定视野',
-                memoTitle: '— 昨 日 小 记 —', guestTitle: '— 访 客 列 表 —', officeTitle: '海辛小龙虾的办公室'
+                memoTitle: '— 昨 日 小 记 —', guestTitle: '— 访 客 列 表 —', officeTitle: '海辛小龙虾的办公室',
+                loadingOffice: '正在加载 Star 的像素办公室...'
             },
             en: {
                 controlTitle: 'Star Status',
@@ -803,7 +804,8 @@
                 chooseImage: 'Upload Replacement Asset', setDefault: 'Set Default', confirmUpload: 'Confirm & Refresh',
                 frameW: 'Frame W', frameH: 'Frame H', cols: 'Cols', rows: 'Rows', scalePct: 'Scale%',
                 showCoords: 'Show Coords', hideCoords: 'Hide Coords', moveView: 'Pan View', lockView: 'Lock View',
-                memoTitle: '— YESTERDAY NOTES —', guestTitle: '— VISITOR LIST —', officeTitle: 'Haixin Lobster Office'
+                memoTitle: '— YESTERDAY NOTES —', guestTitle: '— VISITOR LIST —', officeTitle: 'Haixin Lobster Office',
+                loadingOffice: 'Loading Star’s pixel office...'
             },
             ja: {
                 controlTitle: 'Star ステータス',
@@ -820,11 +822,19 @@
                 chooseImage: '差し替え素材をアップロード', setDefault: 'デフォルト化', confirmUpload: '確定して更新',
                 frameW: 'フレーム幅', frameH: 'フレーム高', cols: '列', rows: '行', scalePct: '拡大率%',
                 showCoords: '座標表示', hideCoords: '座標非表示', moveView: '視点移動', lockView: '視点固定',
-                memoTitle: '— 昨日のメモ —', guestTitle: '— 訪問者リスト —', officeTitle: 'ハイシン・ロブスターのオフィス'
+                memoTitle: '— 昨日のメモ —', guestTitle: '— 訪問者リスト —', officeTitle: 'ハイシン・ロブスターのオフィス',
+                loadingOffice: 'Star のピクセルオフィスを読み込み中...'
             }
         };
 
         function t(key) { return (I18N[uiLang] && I18N[uiLang][key]) || key; }
+        function renderBootLoadingText(percent) {
+            const loadingEl = document.getElementById('loading-text');
+            if (!loadingEl) return;
+            const base = t('loadingOffice');
+            const p = Number.isFinite(percent) ? ` ${Math.max(0, Math.min(100, Math.round(percent)))}%` : '';
+            loadingEl.textContent = `${base}${p}`;
+        }
 
         function ensureMemoBgVisible() {
             const panel = document.getElementById('memo-panel');
@@ -902,6 +912,7 @@
                 panBtn.textContent = on ? t('lockView') : t('moveView');
             }
             ensureMemoBgVisible();
+            renderBootLoadingText(Number(loadingProgressBar?.style?.width?.replace('%','') || 0));
         }
 
         function setUILanguage(lang) {
@@ -993,7 +1004,7 @@
                 loadingProgressBar.style.width = percent + '%';
             }
             if (loadingText) {
-                loadingText.textContent = `正在加载 Star 的像素办公室... ${percent}%`;
+                renderBootLoadingText(percent);
             }
         }
 
