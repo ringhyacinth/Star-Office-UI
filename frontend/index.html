@@ -240,10 +240,13 @@
             padding:3px 8px 0;
             border:none;
             border-radius:0;
+            background-color: transparent !important;
             background-repeat:no-repeat;
             background-size:300% 100%;
             background-position:0 0;
             image-rendering: pixelated;
+            appearance:none;
+            -webkit-appearance:none;
             color:#fff;
             text-align:center;
             font-size:14px;
@@ -303,6 +306,7 @@
         #asset-broker-row .btn-broker:hover,
         #asset-broker-actions button:hover {
             filter: brightness(1.06);
+            background-color: transparent !important;
         }
         #asset-move-row .btn-move:active,
         #asset-move-row .btn-home:active,
@@ -314,6 +318,7 @@
         #asset-broker-actions button.is-active {
             transform: translateY(1px) scale(0.98);
             filter: brightness(0.96);
+            background-color: transparent !important;
         }
 
         #asset-move-row .btn-move:active,
