@@ -120,26 +120,56 @@ python3 set_state.py idle "待命中"
 
 ## 4、Docker 部署（推荐）
 
+> ⚠️ **2026-03 更新**: 新版部署支持 **API Token 鉴权** 和 **OpenClaw Plugin**，推荐使用以下方式。
+
 ### 快速启动
 
 ```bash
 # 1) 克隆仓库
-git clone https://github.com/ringhyacinth/Star-Office-UI.git
+git clone https://github.com/MISAKIGA/Star-Office-UI.git
 cd Star-Office-UI
 
-# 2) 启动所有服务（后端 + Nginx）
+# 2) 复制并配置环境变量
+cp .env.example .env
+# 编辑 .env 文件，填入您的 API_TOKEN 和 ADMIN_TOKEN
+
+# 3) 启动所有服务
 docker-compose up -d
 
-# 3) 访问
-# 前端：http://localhost
-# 后端 API：http://localhost/api/
+# 4) 访问
+# 前端：http://localhost:18791
+# 后端 API：http://localhost:18791/api/
+```
+
+### 环境变量说明
+
+| 变量 | 必填 | 默认值 | 说明 |
+|------|------|--------|------|
+| `API_TOKEN` | ✅ | - | API 鉴权 Token，用于状态推送 |
+| `ADMIN_TOKEN` | ✅ | - | 管理 Token，用于生成/撤销 Token |
+| `PORT` | - | 18791 | 服务端口 |
+| `LOG_LEVEL` | - | info | 日志级别 |
+| `STATE_FILE` | - | /app/data/state.json | 状态文件路径 |
+| `AUTO_IDLE_SECONDS` | - | 300 | 自动空闲超时（秒） |
+
+生成随机 Token：
+```bash
+openssl rand -hex 32
 ```
 
 ### 手动构建
 
 ```bash
-docker build -t star-office-backend .
-docker run -d -p 5000:5000 -v $(pwd)/state.json:/app/state.json star-office-backend
+# 构建镜像
+docker build -t star-office-ui:latest .
+
+# 运行容器
+docker run -d -p 18791:18791 \
+  -e API_TOKEN=your-secure-token \
+  -e ADMIN_TOKEN=your-admin-token \
+  -v $(pwd)/data:/app/data \
+  --name star-office-ui \
+  star-office-ui:latest
 ```
 
 ### 开发模式
@@ -153,21 +183,154 @@ docker-compose up -d --watch
 
 | 服务 | 端口 | 说明 |
 |------|------|------|
-| Nginx | 80 | 前端静态页面 |
-| Backend | 5000 | Flask API |
+| Nginx | 18791 | 前端静态页面 + 后端 API |
 
 ### 目录挂载
 
 开发模式下，以下文件/目录会挂载到容器内：
 - `backend/` - 后端代码（热重载）
+- `frontend/` - 前端代码
 - `state.json` - 主状态文件
 - `agents-state.json` - Agent 状态
-- `join-keys.json` - 接入密钥
 - `memory/` - 日记目录
+- `.env` - 环境变量配置
 
 ---
 
-## 5、插件系统
+## 5、API Token 鉴权
+
+> 自 2026-03 版本起，所有状态修改 API 需要 Token 认证。
+
+### 认证方式
+
+| Header | 说明 |
+|--------|------|
+| `X-API-Token` | 用户 API Token（读写状态） |
+| `X-Admin-Token` | 管理员 Token（管理操作） |
+
+### API 端点
+
+#### 状态管理
+
+```bash
+# 获取当前状态（公开）
+curl http://localhost:18791/api/v1/status
+
+# 设置主 Agent 状态（需要 API Token）
+curl -X POST http://localhost:18791/api/v1/status \
+  -H "Content-Type: application/json" \
+  -H "X-API-Token: your-api-token" \
+  -d '{"state": "writing", "detail": "正在开发功能"}'
+
+# 推送 Agent 状态（需要 API Token）
+curl -X POST http://localhost:18791/api/v1/agent/push \
+  -H "Content-Type: application/json" \
+  -H "X-API-Token: your-api-token" \
+  -d '{
+    "agentId": "openclaw-main",
+    "name": "Shinyi",
+    "state": "writing",
+    "detail": "开发中"
+  }'
+```
+
+#### 管理接口（需要 Admin Token）
+
+```bash
+# 生成新的 API Token
+curl -X POST http://localhost:18791/api/v1/admin/token/generate \
+  -H "X-Admin-Token: your-admin-token"
+
+# 列出所有 Token
+curl http://localhost:18791/api/v1/admin/tokens \
+  -H "X-Admin-Token: your-admin-token"
+
+# 撤销 Token
+curl -X DELETE http://localhost:18791/api/v1/admin/token/<token> \
+  -H "X-Admin-Token: your-admin-token"
+```
+
+### 验证示例
+
+```bash
+# 无 Token 访问（应返回 403）
+curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:18791/api/v1/status \
+  -H "Content-Type: application/json" \
+  -d '{"state":"writing"}'
+# 输出: 403
+
+# 有 Token 访问（应返回 200）
+curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:18791/api/v1/status \
+  -H "Content-Type: application/json" \
+  -H "X-API-Token: your-api-token" \
+  -d '{"state":"writing","detail":"测试"}'
+# 输出: 200
+```
+
+---
+
+## 6、OpenClaw Plugin 集成
+
+> 将 Agent 状态实时同步到 Star Office UI 看板
+
+### 安装插件
+
+```bash
+# 1) 安装插件（自动）
+# 插件位于: ~/.openclaw/extensions/star-office-plugin/
+
+# 2) 配置插件
+# 编辑 ~/.openclaw/openclaw.json
+```
+
+### 配置 OpenClaw
+
+```json
+// ~/.openclaw/openclaw.json
+{
+  "plugins": {
+    "allow": ["star-office-plugin"],
+    "entries": {
+      "star-office-plugin": {
+        "enabled": true,
+        "config": {
+          "apiUrl": "http://localhost:18791",
+          "apiToken": "your-api-token",
+          "agentId": "openclaw-main",
+          "agentName": "Shinyi",
+          "autoIdleSeconds": 300
+        }
+      }
+    }
+  }
+}
+```
+
+### 插件功能
+
+- ✅ `onLoad` - 插件加载时显示"待命中"
+- ✅ `beforeAgentStart` / `onAgentStart` - Agent 启动时显示"工作中"
+- ✅ `onAgentEnd` - Agent 结束时显示"空闲"或"错误"
+- ✅ `onAgentError` - Agent 出错时显示错误状态
+- ✅ `onIdle` - Agent 空闲时更新状态
+- ⏱️ 自动空闲 - 超过 `autoIdleSeconds` 自动切换回空闲
+
+### 插件目录结构
+
+```
+~/.openclaw/extensions/star-office-plugin/
+├── package.json
+├── openclaw.plugin.json
+├── tsconfig.json
+├── src/
+│   └── index.ts
+└── dist/                  # 编译后
+    └── index.js
+```
+
+---
+
+## 7、插件系统
 
 Star Office UI 支持通过插件扩展功能。
 
@@ -519,7 +682,7 @@ If you make an interesting modification, please share!
 ```text
 star-office-ui/
   backend/
-    app.py
+    app.py              # Flask API (带 Token 鉴权)
     requirements.txt
     run.sh
   frontend/
@@ -530,11 +693,30 @@ star-office-ui/
     ...assets
   docs/
     screenshots/
-  office-agent-push.py
-  set_state.py
+  .env.example          # 环境变量模板
+  docker-compose.yml    # Docker 部署配置
+  Dockerfile
+  nginx.conf
+  office-agent-push.py  # 状态推送脚本
+  set_state.py          # 状态设置脚本
   state.sample.json
   join-keys.json
   SKILL.md
   README.md
   LICENSE
+  .github/workflows/
+    docker.yml          # CI/CD 自动构建
+```
+
+---
+
+## 更新日志
+
+### 2026-03 (v1.1.0)
+- ✅ 新增 API Token 鉴权（安全提升）
+- ✅ 新增 OpenClaw Lifecycle Plugin
+- ✅ 支持 Docker Compose 一键部署
+- ✅ 新增 .env.example 环境变量模板
+- ✅ 新增 GitHub Actions CI/CD
+- ✅ 优化 README 部署文档
 ```

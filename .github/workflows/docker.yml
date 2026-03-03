@@ -1,0 +1,125 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run container and test health
+        run: |
+          # Generate test tokens
+          API_TOKEN="test-api-token-$(date +%s)"
+          ADMIN_TOKEN="test-admin-token-$(date +%s)"
+          
+          # Run container
+          docker run -d --name test-star-office \
+            -e API_TOKEN=$API_TOKEN \
+            -e ADMIN_TOKEN=$ADMIN_TOKEN \
+            -p 18791:18791 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          
+          # Wait for container to start
+          sleep 10
+          
+          # Test health endpoint
+          echo "Testing health endpoint..."
+          curl -f http://localhost:18791/health || exit 1
+          
+          # Test without token (should fail)
+          echo "Testing without token..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:18791/api/v1/status -H "Content-Type: application/json" -d '{"state":"writing"}')
+          if [ "$response" != "403" ]; then
+            echo "Expected 403, got $response"
+            exit 1
+          fi
+          
+          # Test with token (should succeed)
+          echo "Testing with valid token..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:18791/api/v1/status \
+            -H "Content-Type: application/json" \
+            -H "X-API-Token: $API_TOKEN" \
+            -d '{"state":"writing","detail":"test"}')
+          if [ "$response" != "200" ]; then
+            echo "Expected 200, got $response"
+            exit 1
+          fi
+          
+          echo "All tests passed!"
+          
+          # Cleanup
+          docker stop test-star-office
+          docker rm test-star-office
+
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Ruff
+        run: pip install ruff
+
+      - name: Run linter
+        run: ruff check .
