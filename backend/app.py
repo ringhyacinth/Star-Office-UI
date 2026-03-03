@@ -7,9 +7,14 @@ import json
 import os
 import re
 import threading
+import sys
 
-# Paths (project-relative, no hardcoded absolute paths)
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PLUGINS_DIR = os.path.join(ROOT_DIR, "backend", "plugins")
+sys.path.insert(0, os.path.join(ROOT_DIR, "backend"))
+from plugins import PluginManager
+
+plugin_manager = None
 MEMORY_DIR = os.path.join(os.path.dirname(ROOT_DIR), "memory")
 FRONTEND_DIR = os.path.join(ROOT_DIR, "frontend")
 STATE_FILE = os.path.join(ROOT_DIR, "state.json")
@@ -26,22 +31,22 @@ def get_yesterday_date_str():
 def sanitize_content(text):
     """清理内容，保护隐私"""
     import re
-    
+
     # 移除 OpenID、User ID 等
-    text = re.sub(r'ou_[a-f0-9]+', '[用户]', text)
+    text = re.sub(r"ou_[a-f0-9]+", "[用户]", text)
     text = re.sub(r'user_id="[^"]+"', 'user_id="[隐藏]"', text)
-    
+
     # 移除具体的人名（如果有的话）
     # 这里可以根据需要添加更多规则
-    
+
     # 移除 IP 地址、路径等敏感信息
-    text = re.sub(r'/root/[^"\s]+', '[路径]', text)
-    text = re.sub(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', '[IP]', text)
-    
+    text = re.sub(r'/root/[^"\s]+', "[路径]", text)
+    text = re.sub(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}", "[IP]", text)
+
     # 移除电话号码、邮箱等
-    text = re.sub(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', '[邮箱]', text)
-    text = re.sub(r'1[3-9]\d{9}', '[手机号]', text)
-    
+    text = re.sub(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", "[邮箱]", text)
+    text = re.sub(r"1[3-9]\d{9}", "[手机号]", text)
+
     return text
 
 
@@ -50,10 +55,10 @@ def extract_memo_from_file(file_path):
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
-        
+
         # 提取真实内容，不做过度包装
         lines = content.strip().split("\n")
-        
+
         # 提取核心要点
         core_points = []
         for line in lines:
@@ -66,13 +71,13 @@ def extract_memo_from_file(file_path):
                 core_points.append(line[2:].strip())
             elif len(line) > 10:
                 core_points.append(line)
-        
+
         if not core_points:
             return "「昨日无事记录」\n\n若有恒，何必三更眠五更起；最无益，莫过一日曝十日寒。"
-        
+
         # 从核心内容中提取 2-3 个关键点
         selected_points = core_points[:3]
-        
+
         # 睿智语录库
         wisdom_quotes = [
             "「工欲善其事，必先利其器。」",
@@ -84,15 +89,16 @@ def extract_memo_from_file(file_path):
             "「衣带渐宽终不悔，为伊消得人憔悴。」",
             "「众里寻他千百度，蓦然回首，那人却在，灯火阑珊处。」",
             "「世事洞明皆学问，人情练达即文章。」",
-            "「纸上得来终觉浅，绝知此事要躬行。」"
+            "「纸上得来终觉浅，绝知此事要躬行。」",
         ]
-        
+
         import random
+
         quote = random.choice(wisdom_quotes)
-        
+
         # 组合内容
         result = []
-        
+
         # 添加核心内容
         if selected_points:
             for i, point in enumerate(selected_points):
@@ -107,31 +113,36 @@ def extract_memo_from_file(file_path):
                 else:
                     # 按 20 字切分
                     for j in range(0, len(point), 20):
-                        chunk = point[j:j+20]
+                        chunk = point[j : j + 20]
                         if j == 0:
                             result.append(f"· {chunk}")
                         else:
                             result.append(f"  {chunk}")
-        
+
         # 添加睿智语录
         if quote:
             if len(quote) <= 20:
                 result.append(f"\n{quote}")
             else:
                 for j in range(0, len(quote), 20):
-                    chunk = quote[j:j+20]
+                    chunk = quote[j : j + 20]
                     if j == 0:
                         result.append(f"\n{chunk}")
                     else:
                         result.append(chunk)
-        
+
         return "\n".join(result).strip()
-        
+
     except Exception as e:
         print(f"提取 memo 失败: {e}")
         return "「昨日记录加载失败」\n\n「往者不可谏，来者犹可追。」"
 
+
 app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path="/static")
+
+plugin_manager = PluginManager(PLUGINS_DIR)
+plugin_manager.load(app)
+print(f"[App] Loaded plugins: {plugin_manager.list_loaded()}")
 
 # Guard join-agent critical section to enforce per-key concurrency under parallel requests
 join_lock = threading.Lock()
@@ -148,12 +159,13 @@ def add_no_cache_headers(response):
     response.headers["Expires"] = "0"
     return response
 
+
 # Default state
 DEFAULT_STATE = {
     "state": "idle",
     "detail": "等待任务中...",
     "progress": 0,
-    "updated_at": datetime.now().isoformat()
+    "updated_at": datetime.now().isoformat(),
 }
 
 
@@ -189,7 +201,10 @@ def load_state():
             # Use UTC for aware datetimes; local time for naive.
             if dt.tzinfo:
                 from datetime import timezone
-                age = (datetime.now(timezone.utc) - dt.astimezone(timezone.utc)).total_seconds()
+
+                age = (
+                    datetime.now(timezone.utc) - dt.astimezone(timezone.utc)
+                ).total_seconds()
             else:
                 age = (datetime.now() - dt).total_seconds()
             if age > ttl:
@@ -263,7 +278,7 @@ DEFAULT_AGENTS = [
         "joinKey": None,
         "authStatus": "approved",
         "authExpiresAt": None,
-        "lastPushAt": None
+        "lastPushAt": None,
     },
     {
         "agentId": "npc1",
@@ -277,8 +292,8 @@ DEFAULT_AGENTS = [
         "joinKey": None,
         "authStatus": "approved",
         "authExpiresAt": None,
-        "lastPushAt": None
-    }
+        "lastPushAt": None,
+    },
 ]
 
 
@@ -322,20 +337,20 @@ def normalize_agent_state(s):
     未识别默认返回 idle.
     """
     if not s:
-        return 'idle'
+        return "idle"
     s_lower = s.lower().strip()
-    if s_lower in {'working', 'busy', 'write'}:
-        return 'writing'
-    if s_lower in {'run', 'running', 'execute', 'exec'}:
-        return 'executing'
-    if s_lower in {'sync'}:
-        return 'syncing'
-    if s_lower in {'research', 'search'}:
-        return 'researching'
-    if s_lower in {'idle', 'writing', 'researching', 'executing', 'syncing', 'error'}:
+    if s_lower in {"working", "busy", "write"}:
+        return "writing"
+    if s_lower in {"run", "running", "execute", "exec"}:
+        return "executing"
+    if s_lower in {"sync"}:
+        return "syncing"
+    if s_lower in {"research", "search"}:
+        return "researching"
+    if s_lower in {"idle", "writing", "researching", "executing", "syncing", "error"}:
         return s_lower
     # 默认 fallback
-    return 'idle'
+    return "idle"
 
 
 def state_to_area(state):
@@ -345,7 +360,7 @@ def state_to_area(state):
         "researching": "writing",
         "executing": "writing",
         "syncing": "writing",
-        "error": "error"
+        "error": "error",
     }
     return area_map.get(state, "breakroom")
 
@@ -381,7 +396,14 @@ def get_agents():
                 if now > auth_expires_at:
                     key = a.get("joinKey")
                     if key:
-                        key_item = next((k for k in keys_data.get("keys", []) if k.get("key") == key), None)
+                        key_item = next(
+                            (
+                                k
+                                for k in keys_data.get("keys", [])
+                                if k.get("key") == key
+                            ),
+                            None,
+                        )
                         if key_item:
                             key_item["used"] = False
                             key_item["usedBy"] = None
@@ -420,13 +442,18 @@ def agent_approve():
             return jsonify({"ok": False, "msg": "缺少 agentId"}), 400
 
         agents = load_agents_state()
-        target = next((a for a in agents if a.get("agentId") == agent_id and not a.get("isMain")), None)
+        target = next(
+            (a for a in agents if a.get("agentId") == agent_id and not a.get("isMain")),
+            None,
+        )
         if not target:
             return jsonify({"ok": False, "msg": "未找到 agent"}), 404
 
         target["authStatus"] = "approved"
         target["authApprovedAt"] = datetime.now().isoformat()
-        target["authExpiresAt"] = (datetime.now() + timedelta(hours=24)).isoformat()  # 默认授权24h
+        target["authExpiresAt"] = (
+            datetime.now() + timedelta(hours=24)
+        ).isoformat()  # 默认授权24h
 
         save_agents_state(agents)
         return jsonify({"ok": True, "agentId": agent_id, "authStatus": "approved"})
@@ -444,7 +471,10 @@ def agent_reject():
             return jsonify({"ok": False, "msg": "缺少 agentId"}), 400
 
         agents = load_agents_state()
-        target = next((a for a in agents if a.get("agentId") == agent_id and not a.get("isMain")), None)
+        target = next(
+            (a for a in agents if a.get("agentId") == agent_id and not a.get("isMain")),
+            None,
+        )
         if not target:
             return jsonify({"ok": False, "msg": "未找到 agent"}), 404
 
@@ -455,7 +485,9 @@ def agent_reject():
         join_key = target.get("joinKey")
         keys_data = load_join_keys()
         if join_key:
-            key_item = next((k for k in keys_data.get("keys", []) if k.get("key") == join_key), None)
+            key_item = next(
+                (k for k in keys_data.get("keys", []) if k.get("key") == join_key), None
+            )
             if key_item:
                 key_item["used"] = False
                 key_item["usedBy"] = None
@@ -492,7 +524,9 @@ def join_agent():
             return jsonify({"ok": False, "msg": "请提供接入密钥"}), 400
 
         keys_data = load_join_keys()
-        key_item = next((k for k in keys_data.get("keys", []) if k.get("key") == join_key), None)
+        key_item = next(
+            (k for k in keys_data.get("keys", []) if k.get("key") == join_key), None
+        )
         if not key_item:
             return jsonify({"ok": False, "msg": "接入密钥无效"}), 403
         # key 可复用：不再因为 used=true 拒绝
@@ -500,7 +534,9 @@ def join_agent():
         with join_lock:
             # 在锁内重新读取，避免并发请求都基于同一旧快照通过校验
             keys_data = load_join_keys()
-            key_item = next((k for k in keys_data.get("keys", []) if k.get("key") == join_key), None)
+            key_item = next(
+                (k for k in keys_data.get("keys", []) if k.get("key") == join_key), None
+            )
             if not key_item:
                 return jsonify({"ok": False, "msg": "接入密钥无效"}), 403
 
@@ -509,7 +545,10 @@ def join_agent():
             # 并发上限：同一个 key “同时在线”最多 3 个。
             # 在线判定：lastPushAt/updated_at 在 5 分钟内；否则视为 offline，不计入并发。
             now = datetime.now()
-            existing = next((a for a in agents if a.get("name") == name and not a.get("isMain")), None)
+            existing = next(
+                (a for a in agents if a.get("name") == name and not a.get("isMain")),
+                None,
+            )
             existing_id = existing.get("agentId") if existing else None
 
             def _age_seconds(dt_str):
@@ -552,7 +591,12 @@ def join_agent():
 
             if active_count >= max_concurrent:
                 save_agents_state(agents)
-                return jsonify({"ok": False, "msg": f"该接入密钥当前并发已达上限（{max_concurrent}），请稍后或换另一个 key"}), 429
+                return jsonify(
+                    {
+                        "ok": False,
+                        "msg": f"该接入密钥当前并发已达上限（{max_concurrent}），请稍后或换另一个 key",
+                    }
+                ), 429
 
             if existing:
                 existing["state"] = state
@@ -563,33 +607,68 @@ def join_agent():
                 existing["joinKey"] = join_key
                 existing["authStatus"] = "approved"
                 existing["authApprovedAt"] = datetime.now().isoformat()
-                existing["authExpiresAt"] = (datetime.now() + timedelta(hours=24)).isoformat()
-                existing["lastPushAt"] = datetime.now().isoformat()  # join 视为上线，纳入并发/离线判定
+                existing["authExpiresAt"] = (
+                    datetime.now() + timedelta(hours=24)
+                ).isoformat()
+                existing["lastPushAt"] = (
+                    datetime.now().isoformat()
+                )  # join 视为上线，纳入并发/离线判定
                 if not existing.get("avatar"):
                     import random
-                    existing["avatar"] = random.choice(["guest_role_1", "guest_role_2", "guest_role_3", "guest_role_4", "guest_role_5", "guest_role_6"])
+
+                    existing["avatar"] = random.choice(
+                        [
+                            "guest_role_1",
+                            "guest_role_2",
+                            "guest_role_3",
+                            "guest_role_4",
+                            "guest_role_5",
+                            "guest_role_6",
+                        ]
+                    )
                 agent_id = existing.get("agentId")
             else:
                 # Use ms + random suffix to avoid collisions under concurrent joins
                 import random
                 import string
-                agent_id = "agent_" + str(int(datetime.now().timestamp() * 1000)) + "_" + "".join(random.choices(string.ascii_lowercase + string.digits, k=4))
-                agents.append({
-                    "agentId": agent_id,
-                    "name": name,
-                    "isMain": False,
-                    "state": state,
-                    "detail": detail,
-                    "updated_at": datetime.now().isoformat(),
-                    "area": state_to_area(state),
-                    "source": "remote-openclaw",
-                    "joinKey": join_key,
-                    "authStatus": "approved",
-                    "authApprovedAt": datetime.now().isoformat(),
-                    "authExpiresAt": (datetime.now() + timedelta(hours=24)).isoformat(),
-                    "lastPushAt": datetime.now().isoformat(),
-                    "avatar": random.choice(["guest_role_1", "guest_role_2", "guest_role_3", "guest_role_4", "guest_role_5", "guest_role_6"])
-                })
+
+                agent_id = (
+                    "agent_"
+                    + str(int(datetime.now().timestamp() * 1000))
+                    + "_"
+                    + "".join(
+                        random.choices(string.ascii_lowercase + string.digits, k=4)
+                    )
+                )
+                agents.append(
+                    {
+                        "agentId": agent_id,
+                        "name": name,
+                        "isMain": False,
+                        "state": state,
+                        "detail": detail,
+                        "updated_at": datetime.now().isoformat(),
+                        "area": state_to_area(state),
+                        "source": "remote-openclaw",
+                        "joinKey": join_key,
+                        "authStatus": "approved",
+                        "authApprovedAt": datetime.now().isoformat(),
+                        "authExpiresAt": (
+                            datetime.now() + timedelta(hours=24)
+                        ).isoformat(),
+                        "lastPushAt": datetime.now().isoformat(),
+                        "avatar": random.choice(
+                            [
+                                "guest_role_1",
+                                "guest_role_2",
+                                "guest_role_3",
+                                "guest_role_4",
+                                "guest_role_5",
+                                "guest_role_6",
+                            ]
+                        ),
+                    }
+                )
 
             key_item["used"] = True
             key_item["usedBy"] = name
@@ -602,7 +681,14 @@ def join_agent():
             save_agents_state(agents)
             save_join_keys(keys_data)
 
-        return jsonify({"ok": True, "agentId": agent_id, "authStatus": "approved", "nextStep": "已自动批准，立即开始推送状态"})
+        return jsonify(
+            {
+                "ok": True,
+                "agentId": agent_id,
+                "authStatus": "approved",
+                "nextStep": "已自动批准，立即开始推送状态",
+            }
+        )
     except Exception as e:
         return jsonify({"ok": False, "msg": str(e)}), 500
 
@@ -627,21 +713,37 @@ def leave_agent():
 
         target = None
         if agent_id:
-            target = next((a for a in agents if a.get("agentId") == agent_id and not a.get("isMain")), None)
+            target = next(
+                (
+                    a
+                    for a in agents
+                    if a.get("agentId") == agent_id and not a.get("isMain")
+                ),
+                None,
+            )
         if (not target) and name:
             # fallback: remove by name only if agentId not provided
-            target = next((a for a in agents if a.get("name") == name and not a.get("isMain")), None)
+            target = next(
+                (a for a in agents if a.get("name") == name and not a.get("isMain")),
+                None,
+            )
 
         if not target:
             return jsonify({"ok": False, "msg": "没有找到要离开的 agent"}), 404
 
         join_key = target.get("joinKey")
-        new_agents = [a for a in agents if a.get("isMain") or a.get("agentId") != target.get("agentId")]
+        new_agents = [
+            a
+            for a in agents
+            if a.get("isMain") or a.get("agentId") != target.get("agentId")
+        ]
 
         # Optional: free key back to unused after leave
         keys_data = load_join_keys()
         if join_key:
-            key_item = next((k for k in keys_data.get("keys", []) if k.get("key") == join_key), None)
+            key_item = next(
+                (k for k in keys_data.get("keys", []) if k.get("key") == join_key), None
+            )
             if key_item:
                 key_item["used"] = False
                 key_item["usedBy"] = None
@@ -688,18 +790,29 @@ def agent_push():
         if not agent_id or not join_key or not state:
             return jsonify({"ok": False, "msg": "缺少 agentId/joinKey/state"}), 400
 
-        valid_states = {"idle", "writing", "researching", "executing", "syncing", "error"}
+        valid_states = {
+            "idle",
+            "writing",
+            "researching",
+            "executing",
+            "syncing",
+            "error",
+        }
         state = normalize_agent_state(state)
 
         keys_data = load_join_keys()
-        key_item = next((k for k in keys_data.get("keys", []) if k.get("key") == join_key), None)
+        key_item = next(
+            (k for k in keys_data.get("keys", []) if k.get("key") == join_key), None
+        )
         if not key_item:
             return jsonify({"ok": False, "msg": "joinKey 无效"}), 403
         # key 可复用：不再做 used/usedByAgentId 绑定校验
 
-
         agents = load_agents_state()
-        target = next((a for a in agents if a.get("agentId") == agent_id and not a.get("isMain")), None)
+        target = next(
+            (a for a in agents if a.get("agentId") == agent_id and not a.get("isMain")),
+            None,
+        )
         if not target:
             return jsonify({"ok": False, "msg": "agent 未注册，请先 join"}), 404
 
@@ -745,16 +858,20 @@ def get_yesterday_memo():
         # 先尝试找昨天的文件
         yesterday_str = get_yesterday_date_str()
         yesterday_file = os.path.join(MEMORY_DIR, f"{yesterday_str}.md")
-        
+
         target_file = None
         target_date = yesterday_str
-        
+
         if os.path.exists(yesterday_file):
             target_file = yesterday_file
         else:
             # 如果昨天没有，找最近的一天
             if os.path.exists(MEMORY_DIR):
-                files = [f for f in os.listdir(MEMORY_DIR) if f.endswith(".md") and re.match(r"\d{4}-\d{2}-\d{2}\.md", f)]
+                files = [
+                    f
+                    for f in os.listdir(MEMORY_DIR)
+                    if f.endswith(".md") and re.match(r"\d{4}-\d{2}-\d{2}\.md", f)
+                ]
                 if files:
                     files.sort(reverse=True)
                     # 跳过今天的（如果存在）
@@ -764,24 +881,14 @@ def get_yesterday_memo():
                             target_file = os.path.join(MEMORY_DIR, f)
                             target_date = f.replace(".md", "")
                             break
-        
+
         if target_file and os.path.exists(target_file):
             memo_content = extract_memo_from_file(target_file)
-            return jsonify({
-                "success": True,
-                "date": target_date,
-                "memo": memo_content
-            })
+            return jsonify({"success": True, "date": target_date, "memo": memo_content})
         else:
-            return jsonify({
-                "success": False,
-                "msg": "没有找到昨日日记"
-            })
+            return jsonify({"success": False, "msg": "没有找到昨日日记"})
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "msg": str(e)
-        }), 500
+        return jsonify({"success": False, "msg": str(e)}), 500
 
 
 @app.route("/set_state", methods=["POST"])
@@ -794,7 +901,14 @@ def set_state_endpoint():
         state = load_state()
         if "state" in data:
             s = data["state"]
-            valid_states = {"idle", "writing", "researching", "executing", "syncing", "error"}
+            valid_states = {
+                "idle",
+                "writing",
+                "researching",
+                "executing",
+                "syncing",
+                "error",
+            }
             if s in valid_states:
                 state["state"] = s
         if "detail" in data:
@@ -813,5 +927,5 @@ if __name__ == "__main__":
     print(f"State file: {STATE_FILE}")
     print("Listening on: http://0.0.0.0:18791")
     print("=" * 50)
-    
+
     app.run(host="0.0.0.0", port=18791, debug=False)

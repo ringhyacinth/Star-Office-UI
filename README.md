@@ -118,7 +118,108 @@ python3 set_state.py idle "待命中"
 
 ---
 
-## 4、常用 API
+## 4、Docker 部署（推荐）
+
+### 快速启动
+
+```bash
+# 1) 克隆仓库
+git clone https://github.com/ringhyacinth/Star-Office-UI.git
+cd Star-Office-UI
+
+# 2) 启动所有服务（后端 + Nginx）
+docker-compose up -d
+
+# 3) 访问
+# 前端：http://localhost
+# 后端 API：http://localhost/api/
+```
+
+### 手动构建
+
+```bash
+docker build -t star-office-backend .
+docker run -d -p 5000:5000 -v $(pwd)/state.json:/app/state.json star-office-backend
+```
+
+### 开发模式
+
+修改代码后自动重载：
+```bash
+docker-compose up -d --watch
+```
+
+### 端口说明
+
+| 服务 | 端口 | 说明 |
+|------|------|------|
+| Nginx | 80 | 前端静态页面 |
+| Backend | 5000 | Flask API |
+
+### 目录挂载
+
+开发模式下，以下文件/目录会挂载到容器内：
+- `backend/` - 后端代码（热重载）
+- `state.json` - 主状态文件
+- `agents-state.json` - Agent 状态
+- `join-keys.json` - 接入密钥
+- `memory/` - 日记目录
+
+---
+
+## 5、插件系统
+
+Star Office UI 支持通过插件扩展功能。
+
+### 创建插件
+
+在 `backend/plugins/` 目录下创建 Python 文件：
+
+```python
+# backend/plugins/my_plugin.py
+def on_load(app=None):
+    """插件加载时调用"""
+    print("[MyPlugin] loaded")
+    if app:
+        @app.route('/my-plugin/hello')
+        def hello():
+            return {"message": "Hello from plugin!"}
+    return {"status": "loaded"}
+
+def on_unload():
+    """插件卸载时调用"""
+    print("[MyPlugin] unloaded")
+```
+
+### 生命周期钩子
+
+| 钩子 | 说明 |
+|------|------|
+| `on_load(app)` | 插件加载时调用，传入 Flask app 实例 |
+| `on_unload()` | 插件卸载时调用 |
+
+### 管理插件
+
+```python
+from plugins import plugin_manager
+
+# 列出已加载插件
+print(plugin_manager.list_loaded())
+
+# 获取插件实例
+plugin = plugin_manager.get_plugin("my_plugin")
+
+# 卸载插件
+plugin_manager.unload("my_plugin")
+```
+
+### 重启生效
+
+添加或修改插件后，需要重启后端服务。
+
+---
+
+## 6、常用 API
 
 - `GET /health`：健康检查
 - `GET /status`：主 Agent 状态
@@ -131,7 +232,7 @@ python3 set_state.py idle "待命中"
 
 ---
 
-## 5、美术资产使用说明（请务必阅读）
+## 7、美术资产使用说明（请务必阅读）
 
 ### 访客角色资产来源
 
@@ -160,7 +261,7 @@ python3 set_state.py idle "待命中"
 
 ---
 
-## 6、开源许可与声明
+## 8、开源许可与声明
 
 - **Code / Logic：MIT**（见 `LICENSE`）
 - **Art Assets：非商用，仅学习/演示用途**
@@ -169,7 +270,7 @@ python3 set_state.py idle "待命中"
 
 ---
 
-## 7、期待更多玩法交流
+## 9、期待更多玩法交流
 
 欢迎你基于这个框架扩展：
 - 更丰富的状态语义与自动编排

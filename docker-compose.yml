@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+      - ./state.json:/app/state.json
+      - ./agents-state.json:/app/agents-state.json
+      - ./join-keys.json:/app/join-keys.json
+      - ./memory:/app/memory
+    environment:
+      - FLASK_ENV=development
+    networks:
+      - star-office-network
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./frontend:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+    networks:
+      - star-office-network
+
+networks:
+  star-office-network:
+    driver: bridge
