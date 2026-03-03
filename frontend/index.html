@@ -849,7 +849,9 @@
                 geminiPanelTitle: '🔐 API 设置（可折叠）', geminiHint: '可选：填写你的生图 API Key（留空不影响基础功能）', geminiMaskNoKey: '当前状态：未配置 Key', geminiMaskHasKey: '当前已配置：',
                 speedModeLabel: '生成模式', speedFast: '🍌2', speedQuality: '🍌Pro',
                 searchPlaceholder: '搜索资产名（如 desk / sofa / star）', loaded: '已加载', allAssets: '全部资产',
-                chooseImage: '上传替换素材', confirmUpload: '确认并刷新',
+                chooseImage: '上传替换素材', confirmUpload: '确认并刷新', uploadPending: '待上传', uploadTarget: '目标',
+                assetHintNotInScene: '当前场景未检测到此对象，仍可替换文件（刷新后生效）',
+                assetHintDefault: '通用素材：建议保持原图尺寸、透明通道与视觉重心一致，避免错位或失真',
                 showCoords: '显示坐标', hideCoords: '隐藏坐标', moveView: '移动视野', lockView: '锁定视野',
                 memoTitle: '昨 日 小 记', guestTitle: '访 客 列 表', officeTitle: '海辛小龙虾的办公室',
                 loadingOffice: '正在加载 Star 的像素办公室...'
@@ -869,7 +871,9 @@
                 geminiPanelTitle: '🔐 API Settings (collapsible)', geminiHint: 'Optional: set your image API key (base features work without it)', geminiMaskNoKey: 'Current: no key configured', geminiMaskHasKey: 'Configured key:',
                 speedModeLabel: 'Render Mode', speedFast: '🍌2', speedQuality: '🍌Pro',
                 searchPlaceholder: 'Search assets (desk / sofa / star)', loaded: 'Loaded', allAssets: 'All Assets',
-                chooseImage: 'Upload Replacement Asset', confirmUpload: 'Confirm & Refresh',
+                chooseImage: 'Upload Replacement Asset', confirmUpload: 'Confirm & Refresh', uploadPending: 'Pending Upload', uploadTarget: 'Target',
+                assetHintNotInScene: 'This object is not detected in current scene; you can still replace file (effective after refresh)',
+                assetHintDefault: 'Generic asset: keep source size, alpha channel, and visual anchor to avoid drift/distortion',
                 showCoords: 'Show Coords', hideCoords: 'Hide Coords', moveView: 'Pan View', lockView: 'Lock View',
                 memoTitle: 'YESTERDAY NOTES', guestTitle: 'VISITOR LIST', officeTitle: 'Haixin Lobster Office',
                 loadingOffice: 'Loading Star’s pixel office...'
@@ -889,7 +893,9 @@
                 geminiPanelTitle: '🔐 API設定（折りたたみ）', geminiHint: '任意：画像生成APIキーを設定（未設定でも基本機能は利用可）', geminiMaskNoKey: '現在：キー未設定', geminiMaskHasKey: '設定済みキー：',
                 speedModeLabel: '生成モード', speedFast: '🍌2', speedQuality: '🍌Pro',
                 searchPlaceholder: 'アセット検索（desk / sofa / star）', loaded: '読み込み済み', allAssets: '全アセット',
-                chooseImage: '差し替え素材をアップロード', confirmUpload: '確定して更新',
+                chooseImage: '差し替え素材をアップロード', confirmUpload: '確定して更新', uploadPending: 'アップロード待ち', uploadTarget: '対象',
+                assetHintNotInScene: '現在のシーンでこのオブジェクトは未検出です。ファイル差し替えは可能（更新後に反映）',
+                assetHintDefault: '汎用素材：元サイズ・透過・視覚アンカーを維持し、ズレや崩れを防いでください',
                 showCoords: '座標表示', hideCoords: '座標非表示', moveView: '視点移動', lockView: '視点固定',
                 memoTitle: '昨日のメモ', guestTitle: '訪問者リスト', officeTitle: 'ハイシン・ロブスターのオフィス',
                 loadingOffice: 'Star のピクセルオフィスを読み込み中...'
@@ -992,6 +998,12 @@
 
             // 语言切换后立即重绘资产侧栏，确保易懂名同步更新
             renderAssetDrawerList();
+
+            // 语言切换后同步刷新已选资产的指导文案（上传区小字三语联动）
+            if (selectedAssetInfo && selectedAssetInfo.path) {
+                const inScene = !!mapAssetPathToSprite(selectedAssetInfo.path);
+                renderSelectedAssetGuidance(selectedAssetInfo.path, inScene);
+            }
 
             // 语言切换时，当前正在显示的 loading 文案也实时切换
             const overlay = document.getElementById('room-loading-overlay');
@@ -1347,6 +1359,120 @@
             return langMap[stem] || stem;
         }
 
+        const ASSET_HELP_TEXT_MAP = {
+            zh: {
+                'office_bg_small': '主场景底图（当前生效）。建议 1280×720（16:9），保留房间结构与视角，避免角色站位错位。',
+                'office_bg': '历史背景备份。通常不直接生效，建议与 office_bg_small 保持同构图用于回退。',
+                'star-idle-spritesheet': '主角待机动画表。请保持 256×256 分帧与网格布局一致，否则待机动作会错帧。',
+                'star-working-spritesheet-grid': '主角工作动画表（工位状态）。请保持 300×300 分帧，建议人物重心与原图一致。',
+                'sync-animation': '同步状态素材（当前引用）。建议按 256×256 帧规范制作，避免同步状态显示静止或抖动。',
+                'sync-animation-spritesheet-grid': '同步动画表（兼容资源）。保持 256×256 网格可用于替换同步动作细节。',
+                'error-bug-spritesheet-grid': '报错状态动画表。请保持 220×220 分帧，建议高对比度以增强异常提示感。',
+                'desk-v3': '办公桌前景层。影响主角前后遮挡关系，建议保持当前比例与锚点视觉重心。',
+                'desk': '旧版办公桌素材（兼容用）。建议与 desk-v3 保持相近体积与锚点，避免遮挡异常。',
+                'sofa-idle': '沙发静态素材。建议保持 256×256 与透明背景，避免替换后位置漂移。',
+                'memo-bg': '小记面板底图。建议留出文字阅读区域，降低高频纹理，避免信息难读。',
+                'plants-spritesheet': '绿植随机素材。保持 160×160 分帧，可一次替换多个绿植位的观感。',
+                'posters-spritesheet': '海报随机素材。保持 160×160 分帧，建议统一风格避免墙面杂乱。',
+                'cats-spritesheet': '猫咪随机素材。保持 160×160 分帧，建议轮廓清晰、识别度高。',
+                'coffee-machine-spritesheet': '咖啡机动画表。保持 230×230 分帧，建议动作循环首尾衔接自然。',
+                'serverroom-spritesheet': '服务器房动画表。保持 180×251 分帧，灯效变化建议节奏均匀不过闪。',
+                'flowers-bloom-v2': '花朵随机素材。保持 128×128 分帧，建议色彩与整体办公室主色协调。',
+                'guest_anim_1': '访客动画序列 1（32×32 分帧）。建议保持像素风、轮廓清晰，与主角风格统一。',
+                'guest_anim_2': '访客动画序列 2（32×32 分帧）。建议保持像素风、轮廓清晰，与主角风格统一。',
+                'guest_anim_3': '访客动画序列 3（32×32 分帧）。建议保持像素风、轮廓清晰，与主角风格统一。',
+                'guest_anim_4': '访客动画序列 4（32×32 分帧）。建议保持像素风、轮廓清晰，与主角风格统一。',
+                'guest_anim_5': '访客动画序列 5（32×32 分帧）。建议保持像素风、轮廓清晰，与主角风格统一。',
+                'guest_anim_6': '访客动画序列 6（32×32 分帧）。建议保持像素风、轮廓清晰，与主角风格统一。',
+                'guest_role_1': '访客静态形象备用图 1。建议与对应 guest_anim 角色设定一致，避免切换割裂。',
+                'guest_role_2': '访客静态形象备用图 2。建议与对应 guest_anim 角色设定一致，避免切换割裂。',
+                'guest_role_3': '访客静态形象备用图 3。建议与对应 guest_anim 角色设定一致，避免切换割裂。',
+                'guest_role_4': '访客静态形象备用图 4。建议与对应 guest_anim 角色设定一致，避免切换割裂。',
+                'guest_role_5': '访客静态形象备用图 5。建议与对应 guest_anim 角色设定一致，避免切换割裂。',
+                'guest_role_6': '访客静态形象备用图 6。建议与对应 guest_anim 角色设定一致，避免切换割裂。'
+            },
+            en: {
+                'office_bg_small': 'Primary room background (active). Use 1280×720 (16:9), keep room structure/perspective to avoid character misalignment.',
+                'office_bg': 'Legacy backup background. Usually not directly active; keep composition aligned with office_bg_small for rollback.',
+                'star-idle-spritesheet': 'Main idle spritesheet. Keep 256×256 frame size and grid layout, or idle animation will break.',
+                'star-working-spritesheet-grid': 'Main working spritesheet (desk state). Keep 300×300 frames; preserve visual center/anchor.',
+                'sync-animation': 'Sync-state asset (currently referenced). Follow 256×256 frame spec to avoid static/jitter sync visuals.',
+                'sync-animation-spritesheet-grid': 'Sync spritesheet (compat resource). Keep 256×256 grid for sync animation replacement.',
+                'error-bug-spritesheet-grid': 'Error-state spritesheet. Keep 220×220 frames; high contrast helps warning readability.',
+                'desk-v3': 'Desk foreground layer. Controls overlap with character; keep ratio and visual anchor stable.',
+                'desk': 'Legacy desk asset (compatibility). Keep size/anchor close to desk-v3 to avoid overlap issues.',
+                'sofa-idle': 'Static sofa asset. Keep 256×256 and transparent background to prevent position drift.',
+                'memo-bg': 'Memo panel background. Reserve readable text area; avoid dense textures behind text.',
+                'plants-spritesheet': 'Random plant sprites. Keep 160×160 frames; updates several plant spots at once.',
+                'posters-spritesheet': 'Random poster sprites. Keep 160×160 frames; prefer consistent style to avoid wall clutter.',
+                'cats-spritesheet': 'Random cat sprites. Keep 160×160 frames; clear silhouette improves recognition.',
+                'coffee-machine-spritesheet': 'Coffee machine animation sheet. Keep 230×230 frames; make loop transitions smooth.',
+                'serverroom-spritesheet': 'Server-room animation sheet. Keep 180×251 frames; avoid over-flickering lights.',
+                'flowers-bloom-v2': 'Random flower sprites. Keep 128×128 frames; align palette with overall office mood.',
+                'guest_anim_1': 'Guest animation set 1 (32×32 frames). Keep pixel-art style/outline consistent with main cast.',
+                'guest_anim_2': 'Guest animation set 2 (32×32 frames). Keep pixel-art style/outline consistent with main cast.',
+                'guest_anim_3': 'Guest animation set 3 (32×32 frames). Keep pixel-art style/outline consistent with main cast.',
+                'guest_anim_4': 'Guest animation set 4 (32×32 frames). Keep pixel-art style/outline consistent with main cast.',
+                'guest_anim_5': 'Guest animation set 5 (32×32 frames). Keep pixel-art style/outline consistent with main cast.',
+                'guest_anim_6': 'Guest animation set 6 (32×32 frames). Keep pixel-art style/outline consistent with main cast.',
+                'guest_role_1': 'Fallback static guest avatar 1. Keep design aligned with corresponding guest_anim for smooth fallback.',
+                'guest_role_2': 'Fallback static guest avatar 2. Keep design aligned with corresponding guest_anim for smooth fallback.',
+                'guest_role_3': 'Fallback static guest avatar 3. Keep design aligned with corresponding guest_anim for smooth fallback.',
+                'guest_role_4': 'Fallback static guest avatar 4. Keep design aligned with corresponding guest_anim for smooth fallback.',
+                'guest_role_5': 'Fallback static guest avatar 5. Keep design aligned with corresponding guest_anim for smooth fallback.',
+                'guest_role_6': 'Fallback static guest avatar 6. Keep design aligned with corresponding guest_anim for smooth fallback.'
+            },
+            ja: {
+                'office_bg_small': 'メイン背景（現在有効）。1280×720（16:9）推奨。部屋構造と視点を維持し、キャラの位置ズレを防いでください。',
+                'office_bg': '旧背景のバックアップ。通常は直接反映されません。office_bg_small と同構図で保持すると復旧しやすいです。',
+                'star-idle-spritesheet': 'メイン待機スプライトシート。256×256 分割とグリッド構成を維持しないと待機アニメが崩れます。',
+                'star-working-spritesheet-grid': 'メイン作業スプライトシート（デスク状態）。300×300 分割を維持し、重心位置を揃えてください。',
+                'sync-animation': '同期状態素材（現在参照中）。256×256 仕様を守ると静止/ガタつきを回避できます。',
+                'sync-animation-spritesheet-grid': '同期スプライトシート（互換用）。256×256 グリッド維持で同期演出を差し替え可能です。',
+                'error-bug-spritesheet-grid': 'エラー状態スプライトシート。220×220 分割を維持し、視認性の高い配色を推奨。',
+                'desk-v3': 'デスク前景レイヤー。キャラとの前後関係に影響するため、比率と視覚アンカーを維持してください。',
+                'desk': '旧デスク素材（互換）。desk-v3 に近いサイズ/アンカーで差し替えると崩れにくいです。',
+                'sofa-idle': 'ソファ静止素材。256×256 と透過背景を維持し、位置ズレを防いでください。',
+                'memo-bg': 'メモパネル背景。文字可読域を確保し、細かすぎる模様は避けてください。',
+                'plants-spritesheet': '植物ランダム素材。160×160 分割を維持すると複数の植物表示を一括更新できます。',
+                'posters-spritesheet': 'ポスターランダム素材。160×160 分割を維持し、壁面の統一感を意識してください。',
+                'cats-spritesheet': '猫ランダム素材。160×160 分割を維持し、シルエットを明確にすると見分けやすいです。',
+                'coffee-machine-spritesheet': 'コーヒーマシンアニメ素材。230×230 分割を維持し、ループの繋がりを自然に。',
+                'serverroom-spritesheet': 'サーバールームアニメ素材。180×251 分割を維持し、過度な点滅は避けてください。',
+                'flowers-bloom-v2': '花ランダム素材。128×128 分割を維持し、全体の色調と合わせると馴染みます。',
+                'guest_anim_1': '訪客アニメセット 1（32×32 分割）。ピクセル感と輪郭太さを既存キャラに合わせてください。',
+                'guest_anim_2': '訪客アニメセット 2（32×32 分割）。ピクセル感と輪郭太さを既存キャラに合わせてください。',
+                'guest_anim_3': '訪客アニメセット 3（32×32 分割）。ピクセル感と輪郭太さを既存キャラに合わせてください。',
+                'guest_anim_4': '訪客アニメセット 4（32×32 分割）。ピクセル感と輪郭太さを既存キャラに合わせてください。',
+                'guest_anim_5': '訪客アニメセット 5（32×32 分割）。ピクセル感と輪郭太さを既存キャラに合わせてください。',
+                'guest_anim_6': '訪客アニメセット 6（32×32 分割）。ピクセル感と輪郭太さを既存キャラに合わせてください。',
+                'guest_role_1': '訪客静止フォールバック画像 1。対応する guest_anim とデザインを揃えると切替時に自然です。',
+                'guest_role_2': '訪客静止フォールバック画像 2。対応する guest_anim とデザインを揃えると切替時に自然です。',
+                'guest_role_3': '訪客静止フォールバック画像 3。対応する guest_anim とデザインを揃えると切替時に自然です。',
+                'guest_role_4': '訪客静止フォールバック画像 4。対応する guest_anim とデザインを揃えると切替時に自然です。',
+                'guest_role_5': '訪客静止フォールバック画像 5。対応する guest_anim とデザインを揃えると切替時に自然です。',
+                'guest_role_6': '訪客静止フォールバック画像 6。対応する guest_anim とデザインを揃えると切替時に自然です。'
+            }
+        };
+
+        function getAssetHelpText(path) {
+            const stem = toAssetStem(path);
+            const lang = (uiLang || 'zh');
+            const map = ASSET_HELP_TEXT_MAP[lang] || ASSET_HELP_TEXT_MAP.zh;
+            return map[stem] || t('assetHintDefault');
+        }
+
+        function renderSelectedAssetGuidance(path, inScene = null) {
+            const out = document.getElementById('asset-upload-result');
+            if (!out) return;
+            if (!path) { out.textContent = ''; return; }
+            const displayName = getAssetDisplayName(path);
+            const line1 = `📌 ${displayName}（${path}）`;
+            const line2 = `💡 ${getAssetHelpText(path)}`;
+            const line3 = (inScene === false) ? `⚠️ ${t('assetHintNotInScene')}` : '';
+            out.textContent = [line1, line2, line3].filter(Boolean).join('\n');
+        }
+
         function pathToTextureCandidates(path) {
             const file = (path || '').split('/').pop() || '';
             const stem = file.replace(/\.[^.]+$/, '');
@@ -1600,11 +1726,7 @@
             selectedAssetInfo = assetListData.find(x => x.path === path) || null;
             updateActiveAssetItem(path);
             const ok = applyScenePreview(path);
-
-            const out = document.getElementById('asset-upload-result');
-            if (out) out.textContent = ok
-                ? `已选中：${path}（请上传替换素材，然后点击“确认并刷新”）`
-                : `已选中：${path}（当前画面里没有这个对象，请直接上传替换素材并确认刷新）`;
+            renderSelectedAssetGuidance(path, ok);
             updateAssetConfirmButtonState();
         }
 
@@ -1823,14 +1945,28 @@
             if (!input || !out) return;
             input.onchange = () => {
                 const f = input.files && input.files[0];
+                const targetPath = (selectedAssetInfo && selectedAssetInfo.path) ? selectedAssetInfo.path : '';
                 if (!f) {
-                    const targetPath = (selectedAssetInfo && selectedAssetInfo.path) ? selectedAssetInfo.path : '';
-                    out.textContent = targetPath ? `已选中：${targetPath}（请上传替换素材，然后点击“确认并刷新”）` : '';
+                    if (targetPath) {
+                        const inScene = !!applyScenePreview(targetPath);
+                        renderSelectedAssetGuidance(targetPath, inScene);
+                    } else {
+                        out.textContent = '';
+                    }
                     updateAssetConfirmButtonState();
                     return;
                 }
-                const targetPath = (selectedAssetInfo && selectedAssetInfo.path) ? selectedAssetInfo.path : '（请先点选左侧某个资产）';
-                out.textContent = `待上传：${f.name} ｜ ${formatSizeHuman(f.size)} ｜ 目标：${targetPath}`;
+                const targetLabel = targetPath || '-';
+                const pending = `${t('uploadPending')}：${f.name} ｜ ${formatSizeHuman(f.size)} ｜ ${t('uploadTarget')}：${targetLabel}`;
+                if (targetPath) {
+                    const inScene = !!mapAssetPathToSprite(targetPath);
+                    const displayName = getAssetDisplayName(targetPath);
+                    const hint = getAssetHelpText(targetPath);
+                    const warn = inScene ? '' : `\n⚠️ ${t('assetHintNotInScene')}`;
+                    out.textContent = `${pending}\n📌 ${displayName}（${targetPath}）\n💡 ${hint}${warn}`;
+                } else {
+                    out.textContent = pending;
+                }
                 updateAssetConfirmButtonState();
             };
             updateAssetConfirmButtonState();
