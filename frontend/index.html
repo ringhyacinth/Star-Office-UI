@@ -235,7 +235,7 @@
         #asset-move-row .btn-move,
         #asset-move-row .btn-home,
         #asset-broker-row .btn-broker,
-        #asset-manual-row .btn-diy {
+        #asset-broker-row .btn-diy {
             width:122px;
             height:42px;
             padding:8px 8px 0;
@@ -251,16 +251,13 @@
             color:#fff;
             text-align:center;
             font-size:14px;
-            font-weight:700;
-            letter-spacing:.3px;
-            text-shadow:
-                0 1px 0 rgba(0,0,0,.65),
-                1px 0 0 rgba(0,0,0,.45),
-                -1px 0 0 rgba(0,0,0,.45);
+            font-weight:400;
+            letter-spacing:.2px;
+            text-shadow:none;
             display:inline-flex;
             align-items:flex-start;
             justify-content:center;
-            transition: transform .08s ease, filter .12s ease;
+            transition: padding-top .08s ease, filter .12s ease;
             box-shadow:none;
         }
         #asset-move-row .btn-move {
@@ -269,25 +266,49 @@
         #asset-move-row .btn-home {
             background-image:url('/static/btn-back-home-sprite.png?v={{VERSION_TIMESTAMP}}');
         }
-        #asset-broker-row { justify-content:center; margin-top:8px; margin-bottom:0; }
+        #asset-broker-row { justify-content:center; gap:12px; margin-top:8px; margin-bottom:0; }
         #asset-broker-row .btn-broker {
             background-image:url('/static/btn-broker-sprite.png?v={{VERSION_TIMESTAMP}}');
         }
-        #asset-manual-row { justify-content:center; margin-top:8px; margin-bottom:0; }
-        #asset-manual-row .btn-diy {
+        #asset-broker-row .btn-diy {
             background-image:url('/static/btn-diy-sprite.png?v={{VERSION_TIMESTAMP}}');
         }
-        #asset-manual-panel { display:none; margin-top:8px; }
-        #asset-manual-panel.open { display:block; }
-        #asset-broker-panel {
-            display:none;
+        #asset-manual-panel {
+            margin-top:0;
+            max-height:0;
+            opacity:0;
+            transform:translateY(-6px);
+            overflow:hidden;
+            pointer-events:none;
+            transition:max-height .28s ease, opacity .22s ease, transform .28s ease, margin-top .28s ease;
+        }
+        #asset-manual-panel.open {
             margin-top:8px;
+            max-height:1600px;
+            opacity:1;
+            transform:translateY(0);
+            pointer-events:auto;
+        }
+        #asset-broker-panel {
+            margin-top:0;
             border:1px dashed #334155;
             border-radius:8px;
             padding:8px;
             background:#0f172a;
+            max-height:0;
+            opacity:0;
+            transform:translateY(-6px);
+            overflow:hidden;
+            pointer-events:none;
+            transition:max-height .28s ease, opacity .22s ease, transform .28s ease, margin-top .28s ease;
         }
-        #asset-broker-panel.open { display:block; }
+        #asset-broker-panel.open {
+            margin-top:8px;
+            max-height:520px;
+            opacity:1;
+            transform:translateY(0);
+            pointer-events:auto;
+        }
         #asset-broker-prompt {
             width:100%; min-height:66px; resize:vertical;
             padding:8px; border-radius:6px;
@@ -311,7 +332,7 @@
         #asset-move-row .btn-move:hover,
         #asset-move-row .btn-home:hover,
         #asset-broker-row .btn-broker:hover,
-        #asset-manual-row .btn-diy:hover,
+        #asset-broker-row .btn-diy:hover,
         #asset-broker-actions button:hover {
             filter: brightness(1.06);
             background-color: transparent !important;
@@ -319,14 +340,14 @@
         #asset-move-row .btn-move:active,
         #asset-move-row .btn-home:active,
         #asset-broker-row .btn-broker:active,
-        #asset-manual-row .btn-diy:active,
+        #asset-broker-row .btn-diy:active,
         #asset-broker-actions button:active,
         #asset-move-row .btn-move.is-active,
         #asset-move-row .btn-home.is-active,
         #asset-broker-row .btn-broker.is-active,
-        #asset-manual-row .btn-diy.is-active,
+        #asset-broker-row .btn-diy.is-active,
         #asset-broker-actions button.is-active {
-            transform: translateY(1px) scale(0.98);
+            padding-top:13px;
             filter: brightness(0.96);
             background-color: transparent !important;
         }
@@ -337,14 +358,14 @@
         #asset-move-row .btn-home.is-active,
         #asset-broker-row .btn-broker:active,
         #asset-broker-row .btn-broker.is-active,
-        #asset-manual-row .btn-diy:active,
-        #asset-manual-row .btn-diy.is-active {
+        #asset-broker-row .btn-diy:active,
+        #asset-broker-row .btn-diy.is-active {
             background-position:50% 0;
         }
         #asset-move-row .btn-move.is-done,
         #asset-move-row .btn-home.is-done,
         #asset-broker-row .btn-broker.is-done,
-        #asset-manual-row .btn-diy.is-done {
+        #asset-broker-row .btn-diy.is-done {
             background-position:100% 0;
         }
 
@@ -818,8 +839,6 @@
                     </div>
                     <div class="asset-toolbar" id="asset-broker-row">
                         <button class="btn-broker" onclick="toggleBrokerPanel()">找中介</button>
-                    </div>
-                    <div class="asset-toolbar" id="asset-manual-row">
                         <button id="btn-diy" class="btn-diy" onclick="toggleManualPanel()">自己装</button>
                     </div>
                     <div id="asset-move-result" class="asset-sub" style="margin-top:4px; margin-bottom:6px;"></div>
@@ -1010,7 +1029,7 @@
             setText('btn-move-house', 'btnMove');
             setText('btn-back-home', 'btnHome');
             const brokerBtn = document.querySelector('#asset-broker-row .btn-broker'); if (brokerBtn) brokerBtn.textContent = t('btnBroker');
-            const diyBtn = document.querySelector('#asset-manual-row .btn-diy'); if (diyBtn) diyBtn.textContent = t('btnDIY');
+            const diyBtn = document.querySelector('#asset-broker-row .btn-diy'); if (diyBtn) diyBtn.textContent = t('btnDIY');
             const brokerHint = document.querySelector('#asset-broker-panel .asset-sub'); if (brokerHint) brokerHint.textContent = t('brokerHint');
             const brokerPrompt = document.getElementById('asset-broker-prompt'); if (brokerPrompt) brokerPrompt.placeholder = t('brokerPromptPh');
             const brokerGoBtn = document.querySelector('#asset-broker-actions button'); if (brokerGoBtn) brokerGoBtn.textContent = t('btnBrokerGo');
@@ -2194,7 +2213,7 @@ function toggleBrokerPanel() {
         }
 
         function toggleManualPanel() {
-            const btn = document.querySelector('#asset-manual-row .btn-diy');
+            const btn = document.querySelector('#asset-broker-row .btn-diy');
             flashButtonActive(btn);
             assetManualPanelOpen = !assetManualPanelOpen;
             updateManualPanelUI();
