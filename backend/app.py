@@ -2,12 +2,18 @@
 """Star Office UI - Backend State Service"""
 
 from flask import Flask, jsonify, send_from_directory, make_response, request
+from functools import wraps
 from datetime import datetime, timedelta
 import json
 import os
 import re
 import threading
 import sys
+
+# API Token Configuration
+API_TOKEN = os.environ.get("API_TOKEN", "")
+ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "")
+PUBLIC_ENDPOINTS = ["/", "/health", "/join", "/invite", "/frontend"]
 
 # Fix path: in Docker, __file__ is /app/app.py, so we need to handle both cases
 _app_py_dir = os.path.dirname(os.path.abspath(__file__))
@@ -40,6 +46,70 @@ else:
     STATE_FILE = os.path.join(ROOT_DIR, "state.json")
     AGENTS_STATE_FILE = os.path.join(ROOT_DIR, "agents-state.json")
     JOIN_KEYS_FILE = os.path.join(ROOT_DIR, "join-keys.json")
+
+
+def require_api_token(f):
+    """API Token 鉴权装饰器"""
+
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not API_TOKEN:
+            return f(*args, **kwargs)
+
+        token = request.headers.get("X-API-Token")
+        if token != API_TOKEN:
+            return jsonify(
+                {"error": "Forbidden", "message": "Invalid or missing API token"}
+            ), 403
+        return f(*args, **kwargs)
+
+    return decorated
+
+
+def require_admin_token(f):
+    """Admin Token 鉴权装饰器"""
+
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not ADMIN_TOKEN:
+            return f(*args, **kwargs)
+
+        token = request.headers.get("X-Admin-Token")
+        if token != ADMIN_TOKEN:
+            return jsonify(
+                {"error": "Forbidden", "message": "Invalid or missing admin token"}
+            ), 403
+        return f(*args, **kwargs)
+
+    return decorated
+
+
+def auth_middleware():
+    """请求级别的 Token 鉴权中间件"""
+    if not API_TOKEN and not ADMIN_TOKEN:
+        return None
+
+    path = request.path
+
+    # 公开端点不需要鉴权
+    if (
+        path in PUBLIC_ENDPOINTS
+        or path.startswith("/frontend")
+        or path.endswith(
+            (".js", ".css", ".ico", ".png", ".svg", ".woff", ".woff2", ".ttf")
+        )
+    ):
+        return None
+
+    # 检查 API Token
+    if API_TOKEN:
+        api_token = request.headers.get("X-API-Token")
+        if api_token != API_TOKEN:
+            return jsonify(
+                {"error": "Forbidden", "message": "Invalid or missing API token"}
+            ), 403
+
+    return None
 
 
 def get_yesterday_date_str():
@@ -159,6 +229,13 @@ def extract_memo_from_file(file_path):
 
 
 app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path="/static")
+
+
+# Register auth middleware
+@app.before_request
+def auth_check():
+    return auth_middleware()
+
 
 plugin_manager = PluginManager(PLUGINS_DIR)
 plugin_manager.load(app)
