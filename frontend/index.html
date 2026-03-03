@@ -1089,10 +1089,11 @@
                             <summary id="gemini-panel-summary" style="cursor:pointer; color:#cbd5e1;">🔐 API 设置（可折叠）</summary>
                             <div id="asset-gemini-config" style="display:block; margin-top:6px;">
                                 <div id="gemini-config-hint" class="asset-sub" style="margin-bottom:4px;">可选：填写你的生图 API Key（留空不影响基础功能）</div>
+                                <div class="asset-sub" style="margin-bottom:6px;"><a id="gemini-api-doc-link" href="https://ai.google.dev/gemini-api/docs/api-key?hl=zh-cn" target="_blank" rel="noopener noreferrer">📘 如何申请 Google API Key</a></div>
                                 <div id="gemini-mask-status" class="asset-sub" style="margin-bottom:6px; color:#a7f3d0;"></div>
                                 <div class="asset-toolbar" style="gap:6px; flex-wrap:wrap;">
                                     <input id="gemini-api-key-input" type="password" placeholder="粘贴 GEMINI_API_KEY（不会回显）" style="min-width:220px; flex:1;" autocomplete="new-password" />
-                                    <button onclick="saveGeminiConfigFromUI()">保存 Key</button>
+                                    <button id="btn-save-gemini-key" onclick="saveGeminiConfigFromUI()">保存 Key</button>
                                 </div>
                                 <div id="gemini-config-msg" class="asset-sub" style="margin-top:4px;"></div>
                             </div>
@@ -1173,7 +1174,7 @@
                 brokerDone: '✅ 已按中介方案生成并替换底图，正在刷新房间...',
                 moveSuccess: '✅ 搬家成功！',
                 brokerMissingKey: '❌ 生图失败：缺少 GEMINI API Key，请在下方填写并保存后重试',
-                geminiPanelTitle: '🔐 API 设置（可折叠）', geminiHint: '可选：填写你的生图 API Key（留空不影响基础功能）', geminiMaskNoKey: '当前状态：未配置 Key', geminiMaskHasKey: '当前已配置：',
+                geminiPanelTitle: '🔐 API 设置（可折叠）', geminiHint: '可选：填写你的生图 API Key（留空不影响基础功能）', geminiApiDoc: '📘 如何申请 Google API Key', geminiInputPh: '粘贴 GEMINI_API_KEY（不会回显）', geminiSaveKey: '保存 Key', geminiMaskNoKey: '当前状态：未配置 Key', geminiMaskHasKey: '当前已配置：',
                 speedModeLabel: '生成模式', speedFast: '🍌2', speedQuality: '🍌Pro',
                 searchPlaceholder: '搜索资产名（如 desk / sofa / star）', loaded: '已加载', allAssets: '全部资产',
                 chooseImage: '上传替换素材', confirmUpload: '确认并刷新', uploadPending: '待上传', uploadTarget: '目标',
@@ -1201,7 +1202,7 @@
                 brokerDone: '✅ Broker plan applied and background replaced, refreshing room...',
                 moveSuccess: '✅ Move successful!',
                 brokerMissingKey: '❌ Generation failed: missing GEMINI API key. Fill it below and retry.',
-                geminiPanelTitle: '🔐 API Settings (collapsible)', geminiHint: 'Optional: set your image API key (base features work without it)', geminiMaskNoKey: 'Current: no key configured', geminiMaskHasKey: 'Configured key:',
+                geminiPanelTitle: '🔐 API Settings (collapsible)', geminiHint: 'Optional: set your image API key (base features work without it)', geminiApiDoc: '📘 How to get a Google API Key', geminiInputPh: 'Paste GEMINI_API_KEY (input hidden)', geminiSaveKey: 'Save Key', geminiMaskNoKey: 'Current: no key configured', geminiMaskHasKey: 'Configured key:',
                 speedModeLabel: 'Render Mode', speedFast: '🍌2', speedQuality: '🍌Pro',
                 searchPlaceholder: 'Search assets (desk / sofa / star)', loaded: 'Loaded', allAssets: 'All Assets',
                 chooseImage: 'Upload Replacement Asset', confirmUpload: 'Confirm & Refresh', uploadPending: 'Pending Upload', uploadTarget: 'Target',
@@ -1229,7 +1230,7 @@
                 brokerDone: '✅ 仲介プランを適用して背景を更新しました。部屋を更新中...',
                 moveSuccess: '✅ 引っ越し成功！',
                 brokerMissingKey: '❌ 生成失敗：GEMINI APIキーが未設定です。下で入力して保存してください。',
-                geminiPanelTitle: '🔐 API設定（折りたたみ）', geminiHint: '任意：画像生成APIキーを設定（未設定でも基本機能は利用可）', geminiMaskNoKey: '現在：キー未設定', geminiMaskHasKey: '設定済みキー：',
+                geminiPanelTitle: '🔐 API設定（折りたたみ）', geminiHint: '任意：画像生成APIキーを設定（未設定でも基本機能は利用可）', geminiApiDoc: '📘 Google API Keyの取得方法', geminiInputPh: 'GEMINI_API_KEY を貼り付け（入力は非表示）', geminiSaveKey: 'Keyを保存', geminiMaskNoKey: '現在：キー未設定', geminiMaskHasKey: '設定済みキー：',
                 speedModeLabel: '生成モード', speedFast: '🍌2', speedQuality: '🍌Pro',
                 searchPlaceholder: 'アセット検索（desk / sofa / star）', loaded: '読み込み済み', allAssets: '全アセット',
                 chooseImage: '差し替え素材をアップロード', confirmUpload: '確定して更新', uploadPending: 'アップロード待ち', uploadTarget: '対象',
@@ -1307,6 +1308,9 @@
             const speedQualityBtn = document.getElementById('speed-quality-btn'); if (speedQualityBtn) speedQualityBtn.textContent = t('speedQuality');
             const geminiPanelSummary = document.getElementById('gemini-panel-summary'); if (geminiPanelSummary) geminiPanelSummary.textContent = t('geminiPanelTitle');
             const geminiHint = document.getElementById('gemini-config-hint'); if (geminiHint) geminiHint.textContent = t('geminiHint');
+            const geminiDocLink = document.getElementById('gemini-api-doc-link'); if (geminiDocLink) geminiDocLink.textContent = t('geminiApiDoc');
+            const geminiInput = document.getElementById('gemini-api-key-input'); if (geminiInput) geminiInput.placeholder = t('geminiInputPh');
+            const geminiSaveBtn = document.getElementById('btn-save-gemini-key'); if (geminiSaveBtn) geminiSaveBtn.textContent = t('geminiSaveKey');
 
             setPh('asset-search', 'searchPlaceholder');
 
@@ -2704,7 +2708,7 @@ function toggleBrokerPanel() {
                 if (data && data.ok) {
                     window.geminiConfig = {
                         hasKey: !!data.has_api_key,
-                        model: data.gemini_model || 'gemini-3.1-flash-image-preview'
+                        model: data.gemini_model || 'nanobanana-pro'
                     };
                     const box = document.getElementById('asset-gemini-config');
                     if (box) box.style.display = 'block';
@@ -2730,7 +2734,7 @@ function toggleBrokerPanel() {
                 const res = await fetch('/config/gemini', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ api_key: key, model: 'gemini-3.1-flash-image-preview' })
+                    body: JSON.stringify({ api_key: key, model: 'nanobanana-pro' })
                 });
                 const data = await res.json();
                 if (!data.ok) {
