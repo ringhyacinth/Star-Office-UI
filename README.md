@@ -4,6 +4,18 @@
 
 ![Star Office UI 封面 2](docs/screenshots/readme-cover-2.jpg)
 
+<div align="center">
+
+[![GitHub Stars](https://img.shields.io/github/stars/ringhyacinth/Star-Office-UI?style=flat-square&logo=github)](https://github.com/ringhyacinth/Star-Office-UI/stargazers)
+[![Code License](https://img.shields.io/badge/code-MIT-22c55e?style=flat-square)](LICENSE)
+[![Art Usage](https://img.shields.io/badge/art-non--commercial-important?style=flat-square&color=ea580c)](#5%E7%BE%8E%E6%9C%AF%E8%B5%84%E4%BA%A7%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E%E8%AF%B7%E5%8B%BF%E5%BF%BD%E8%AF%BB)
+
+[![Tech Stack](https://img.shields.io/badge/backend-Python%20%7C%20Flask-0f766e?style=flat-square&logo=python)](backend)
+[![Frontend](https://img.shields.io/badge/frontend-HTML5%20%7C%20Phaser%203-2563eb?style=flat-square&logo=javascript)](frontend)
+[![Multi‑Agent](https://img.shields.io/badge/agents-OpenClaw--friendly-9333ea?style=flat-square)](docs/STAR_OFFICE_UI_OVERVIEW.md)
+
+</div>
+
 一个面向多 Agent 协作的像素办公室看板：把 AI 助手（OpenClaw / 龙虾）的工作状态实时可视化，帮助团队直观看到“谁在做什么、昨天做了什么、现在是否在线”。
 
 > 本项目为 **Ring Hyacinth 与 Simon Lee 的共同项目（co-created project）**。
