@@ -111,6 +111,37 @@ Star Office UI 目前实现了：
 
 ## 3、快速开始
 
+> 💡 推荐使用 Docker 部署，一行命令启动，无需手动安装依赖
+
+### 方式一：Docker 部署（推荐）
+
+```bash
+# 1) 克隆
+git clone https://github.com/MISAKIGA/Star-Office-UI.git
+cd Star-Office-UI
+
+# 2) 配置环境变量
+cp .env.example .env
+# 编辑 .env 填入 API_TOKEN 和 ADMIN_TOKEN
+
+# 3) 启动（使用预构建镜像）
+docker run -d \
+  --name star-office-ui \
+  -p 5000:18791 \
+  -v /root/.openclaw/workspace/memory:/app/memory:ro \
+  -e API_TOKEN=your-api-token \
+  -e ADMIN_TOKEN=your-admin-token \
+  msga/star-office-ui-backend:latest
+
+# 或使用 docker-compose
+docker-compose up -d
+
+# 4) 访问
+# http://localhost:5000
+```
+
+### 方式二：本地运行
+
 ### 1) 安装依赖
 
 ```bash
@@ -155,9 +186,63 @@ python3 set_state.py idle "待命中"
 - `POST /leave-agent`：访客离开
 - `GET /yesterday-memo`：昨日小记
 
+### Token 鉴权
+
+部分接口需要 Token 鉴权：
+
+| Header | 用途 |
+|--------|------|
+| `X-API-Token` | 用户 API Token（读写状态） |
+| `X-Admin-Token` | 管理员 Token（管理操作） |
+
+生成 Token：
+```bash
+# 生成新 Token
+curl -X POST http://localhost:5000/api/v1/admin/token/generate \
+  -H "X-Admin-Token: your-admin-token"
+
+# 列出 Token
+curl http://localhost:5000/api/v1/admin/tokens \
+  -H "X-Admin-Token: your-admin-token"
+```
+
 ---
 
-## 5、美术资产使用说明（请务必阅读）
+## 5、OpenClaw 插件（自动状态同步）
+
+Star Office UI 提供 OpenClaw 插件，实现 Agent 状态自动同步：
+
+```json
+// 配置 ~/.openclaw/openclaw.json
+{
+  "plugins": {
+    "allow": ["star-office-plugin"],
+    "entries": {
+      "star-office-plugin": {
+        "enabled": true,
+        "config": {
+          "apiUrl": "http://localhost:5000",
+          "apiToken": "your-api-token",
+          "agentId": "openclaw-main",
+          "agentName": "Shinyi",
+          "autoIdleSeconds": 300
+        }
+      }
+    }
+  }
+}
+```
+
+**插件功能**：
+- ✅ `onLoad` - 启动时显示"空闲"
+- ✅ `beforeAgentStart` / `onAgentStart` - 自动显示"工作中"
+- ✅ `onAgentEnd` - 结束显示"空闲"或"错误"
+- ✅ `onAgentError` - 报错显示错误状态
+- ✅ 自动空闲 - 超过超时自动切换空闲
+
+---
+
+## 6、美术资产使用说明（请务必阅读）
 
 ### 访客角色资产来源
 
@@ -311,27 +396,32 @@ export ASSET_DRAWER_PASS="your-strong-pass"
 
 > 详细说明见：`docs/UPDATE_REPORT_2026-03-04_P0_P1.md`
 
-## 项目结构（简版）
+## 项目结构
 
 ```text
 star-office-ui/
   backend/
-    app.py
+    app.py              # Flask API (含 Token 鉴权)
     requirements.txt
-    run.sh
+    plugins/            # OpenClaw 插件
   frontend/
-    index.html
-    join.html
-    invite.html
+    index.html         # 主页面
     layout.js
-    ...assets
+    ...assets          # 像素素材
   docs/
     screenshots/
+  docker-compose.yml   # Docker 部署
+  Dockerfile           # 镜像构建
+  nginx.conf           # Nginx 配置
+  .env.example         # 环境变量模板
   office-agent-push.py
   set_state.py
   state.sample.json
   join-keys.json
   SKILL.md
+  README.md
+  LICENSE
+```
   README.md
   LICENSE
 ```
