@@ -1059,7 +1059,8 @@
             #pan-toggle,
             #lang-btn-en,
             #lang-btn-jp,
-            #lang-btn-cn {
+            #lang-btn-cn,
+            #lang-btn-tw {
                 font-size: 12px !important;
                 padding: 6px 8px !important;
             }
@@ -1257,6 +1258,7 @@
         <button id="lang-btn-en" onclick="setUILanguage('en')" style="padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">EN</button>
         <button id="lang-btn-jp" onclick="setUILanguage('ja')" style="padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">JP</button>
         <button id="lang-btn-cn" onclick="setUILanguage('zh')" style="padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">CN</button>
+        <button id="lang-btn-tw" onclick="setUILanguage('zh-TW')" style="padding:8px 10px; font-family:ArkPixel,monospace; font-size:13px; cursor:pointer; border:2px solid #333; border-radius:5px; background:#333; color:#fff;">TW</button>
     </div>
 
     <script src="/static/vendor/phaser-3.80.1.min.js"></script>
@@ -1347,6 +1349,34 @@
                 showCoords: '座標表示', hideCoords: '座標非表示', moveView: '視点移動', lockView: '視点固定',
                 memoTitle: '昨日のメモ', guestTitle: '訪問者リスト', officeTitle: 'ハイシン・ロブスターのオフィス',
                 loadingOffice: 'Star のピクセルオフィスを読み込み中...'
+            },
+            'zh-TW': {
+                controlTitle: 'Star 狀態',
+                btnIdle: '待命', btnWork: '工作', btnSync: '同步', btnError: '報警', btnDecor: '裝修房間',
+                drawerTitle: '裝修房間 · 資產側邊欄', drawerClose: '關閉',
+                authTitle: '請輸入裝修驗證碼', authPlaceholder: '輸入驗證碼', authVerify: '驗證', authDefaultPassHint: '預設密碼：1234（可隨時請我幫你改，建議改成強密碼）',
+                drawerVisibilityTip: '可見性：點擊條目右側眼睛按鈕切換該資產顯示',
+                hideDrawer: '👁 隱藏側邊欄', showDrawer: '👁 顯示側邊欄',
+                assetHide: '隱藏', assetShow: '顯示',
+                resetToDefault: '重設為預設', restorePrevAsset: '用上一版',
+                btnMove: '📦 搬新家', btnHome: '🐚 回老家', btnHomeLast: '↩️ 回上一個家', btnHomeFavorite: '⭐ 收藏這個家', btnBroker: '🤝 找仲介', btnDIY: '🪚 DIY', btnBrokerGo: '聽仲介的',
+                homeFavTitle: '🏠 收藏的家', homeFavEmpty: '還沒有收藏，先點「⭐ 收藏這個家」', homeFavApply: '切換到目前地圖', homeFavDelete: '刪除', homeFavSaved: '✅ 已收藏目前地圖', homeFavApplied: '✅ 已替換為收藏地圖', homeFavDeleted: '🗑️ 已刪除收藏',
+                brokerHint: '你會給龍蝦推薦什麼樣的房子',
+                brokerPromptPh: '例如：故宮主題、莫內風格、地牢主題、兵馬俑主題……',
+                brokerNeedPrompt: '請先輸入仲介方案描述',
+                brokerGenerating: '🏘️ 正在依照仲介方案產生底圖，請稍候（約 20-90 秒）...',
+                brokerDone: '✅ 已依照仲介方案產生並替換底圖，正在重新整理房間...',
+                moveSuccess: '✅ 搬家成功！',
+                brokerMissingKey: '❌ 產生圖片失敗：缺少 GEMINI API Key，請在下方填寫並儲存後重試',
+                geminiPanelTitle: '🔐 API 設定（可摺疊）', geminiHint: '選填：填寫你的圖片產生 API Key（留空不影響基礎功能）', geminiApiDoc: '📘 如何申請 Google API Key', geminiInputPh: '貼上 GEMINI_API_KEY（不會回顯）', geminiSaveKey: '儲存 Key', geminiMaskNoKey: '目前狀態：未設定 Key', geminiMaskHasKey: '目前已設定：',
+                speedModeLabel: '產生模式', speedFast: '🍌2', speedQuality: '🍌Pro',
+                searchPlaceholder: '搜尋資產名（如 desk / sofa / star）', loaded: '已載入', allAssets: '全部資產',
+                chooseImage: '上傳素材', confirmUpload: '確認重新整理', resetToDefault: '重設預設', restorePrevAsset: '回上一版', uploadPending: '待上傳', uploadTarget: '目標',
+                assetHintNotInScene: '目前場景未偵測到此物件，仍可替換檔案（重新整理後生效）',
+                assetHintDefault: '通用素材：建議保持原圖尺寸、透明通道與視覺重心一致，避免錯位或失真',
+                showCoords: '顯示座標', hideCoords: '隱藏座標', moveView: '移動視野', lockView: '鎖定視野',
+                memoTitle: '昨 日 小 記', guestTitle: '訪 客 列 表', officeTitle: '海辛小龍蝦的辦公室',
+                loadingOffice: '正在載入 Star 的像素辦公室...'
             }
         };
 
@@ -1379,7 +1409,8 @@
             const langButtons = [
                 { id: 'lang-btn-en', lang: 'en' },
                 { id: 'lang-btn-jp', lang: 'ja' },
-                { id: 'lang-btn-cn', lang: 'zh' }
+                { id: 'lang-btn-cn', lang: 'zh' },
+                { id: 'lang-btn-tw', lang: 'zh-TW' }
             ];
             langButtons.forEach(({ id, lang }) => {
                 const el = document.getElementById(id);
@@ -1447,7 +1478,7 @@
         }
 
         function setUILanguage(lang) {
-            if (!['zh', 'en', 'ja'].includes(lang)) return;
+            if (!['zh', 'en', 'ja', 'zh-TW'].includes(lang)) return;
             uiLang = lang;
             localStorage.setItem('uiLang', uiLang);
             applyLanguage();

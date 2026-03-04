@@ -82,7 +82,8 @@ function updateLoadingProgress() {
     loadingProgressBar.style.width = percent + '%';
   }
   if (loadingText) {
-    loadingText.textContent = `正在加载 Star 的像素办公室... ${percent}%`;
+    const loadingLabel = (typeof t === 'function') ? t('loadingOffice') : '正在加载 Star 的像素办公室...';
+    loadingText.textContent = `${loadingLabel} ${percent}%`;
   }
 }
 
@@ -99,93 +100,192 @@ function hideLoadingOverlay() {
   }, 300);
 }
 
-const STATES = {
-  idle: { name: '待命', area: 'breakroom' },
-  writing: { name: '整理文档', area: 'writing' },
-  researching: { name: '搜索信息', area: 'researching' },
-  executing: { name: '执行任务', area: 'writing' },
-  syncing: { name: '同步备份', area: 'writing' },
-  error: { name: '出错了', area: 'error' }
+const STATES_I18N = {
+  zh: {
+    idle: '待命', writing: '整理文档', researching: '搜索信息',
+    executing: '执行任务', syncing: '同步备份', error: '出错了'
+  },
+  en: {
+    idle: 'Idle', writing: 'Writing', researching: 'Researching',
+    executing: 'Executing', syncing: 'Syncing', error: 'Error'
+  },
+  ja: {
+    idle: '待機', writing: 'ドキュメント整理', researching: '情報検索',
+    executing: 'タスク実行', syncing: '同期バックアップ', error: 'エラー発生'
+  },
+  'zh-TW': {
+    idle: '待命', writing: '整理文件', researching: '搜尋資訊',
+    executing: '執行任務', syncing: '同步備份', error: '出錯了'
+  }
 };
 
-const BUBBLE_TEXTS = {
-  idle: [
-    '待命中：耳朵竖起来了',
-    '我在这儿，随时可以开工',
-    '先把桌面收拾干净再说',
-    '呼——给大脑放个风',
-    '今天也要优雅地高效',
-    '等待，是为了更准确的一击',
-    '咖啡还热，灵感也还在',
-    '我在后台给你加 Buff',
-    '状态：静心 / 充电',
-    '小猫说：慢一点也没关系'
-  ],
-  writing: [
-    '进入专注模式：勿扰',
-    '先把关键路径跑通',
-    '我来把复杂变简单',
-    '把 bug 关进笼子里',
-    '写到一半，先保存',
-    '把每一步都做成可回滚',
-    '今天的进度，明天的底气',
-    '先收敛，再发散',
-    '让系统变得更可解释',
-    '稳住，我们能赢'
-  ],
-  researching: [
-    '我在挖证据链',
-    '让我把信息熬成结论',
-    '找到了：关键在这里',
-    '先把变量控制住',
-    '我在查：它为什么会这样',
-    '把直觉写成验证',
-    '先定位，再优化',
-    '别急，先画因果图'
-  ],
-  executing: [
-    '执行中：不要眨眼',
-    '把任务切成小块逐个击破',
-    '开始跑 pipeline',
-    '一键推进：走你',
-    '让结果自己说话',
-    '先做最小可行，再做最美版本'
-  ],
-  syncing: [
-    '同步中：把今天锁进云里',
-    '备份不是仪式，是安全感',
-    '写入中…别断电',
-    '把变更交给时间戳',
-    '云端对齐：咔哒',
-    '同步完成前先别乱动',
-    '把未来的自己从灾难里救出来',
-    '多一份备份，少一份后悔'
-  ],
-  error: [
-    '警报响了：先别慌',
-    '我闻到 bug 的味道了',
-    '先复现，再谈修复',
-    '把日志给我，我会说人话',
-    '错误不是敌人，是线索',
-    '把影响面圈起来',
-    '先止血，再手术',
-    '我在：马上定位根因',
-    '别怕，这种我见多了',
-    '报警中：让问题自己现形'
-  ],
-  cat: [
-    '喵~',
-    '咕噜咕噜…',
-    '尾巴摇一摇',
-    '晒太阳最开心',
-    '有人来看我啦',
-    '我是这个办公室的吉祥物',
-    '伸个懒腰',
-    '今天的罐罐准备好了吗',
-    '呼噜呼噜',
-    '这个位置视野最好'
-  ]
+function getStateName(state) {
+  const lang = (typeof uiLang !== 'undefined') ? uiLang : (localStorage.getItem('uiLang') || 'en');
+  return (STATES_I18N[lang] && STATES_I18N[lang][state]) || STATES_I18N['zh'][state] || state;
+}
+
+const STATES = {
+  idle: { get name() { return getStateName('idle'); }, area: 'breakroom' },
+  writing: { get name() { return getStateName('writing'); }, area: 'writing' },
+  researching: { get name() { return getStateName('researching'); }, area: 'researching' },
+  executing: { get name() { return getStateName('executing'); }, area: 'writing' },
+  syncing: { get name() { return getStateName('syncing'); }, area: 'writing' },
+  error: { get name() { return getStateName('error'); }, area: 'error' }
 };
+
+const BUBBLE_TEXTS_I18N = {
+  zh: {
+    idle: [
+      '待命中：耳朵竖起来了', '我在这儿，随时可以开工', '先把桌面收拾干净再说',
+      '呼——给大脑放个风', '今天也要优雅地高效', '等待，是为了更准确的一击',
+      '咖啡还热，灵感也还在', '我在后台给你加 Buff', '状态：静心 / 充电', '小猫说：慢一点也没关系'
+    ],
+    writing: [
+      '进入专注模式：勿扰', '先把关键路径跑通', '我来把复杂变简单', '把 bug 关进笼子里',
+      '写到一半，先保存', '把每一步都做成可回滚', '今天的进度，明天的底气',
+      '先收敛，再发散', '让系统变得更可解释', '稳住，我们能赢'
+    ],
+    researching: [
+      '我在挖证据链', '让我把信息熬成结论', '找到了：关键在这里', '先把变量控制住',
+      '我在查：它为什么会这样', '把直觉写成验证', '先定位，再优化', '别急，先画因果图'
+    ],
+    executing: [
+      '执行中：不要眨眼', '把任务切成小块逐个击破', '开始跑 pipeline',
+      '一键推进：走你', '让结果自己说话', '先做最小可行，再做最美版本'
+    ],
+    syncing: [
+      '同步中：把今天锁进云里', '备份不是仪式，是安全感', '写入中…别断电',
+      '把变更交给时间戳', '云端对齐：咔哒', '同步完成前先别乱动',
+      '把未来的自己从灾难里救出来', '多一份备份，少一份后悔'
+    ],
+    error: [
+      '警报响了：先别慌', '我闻到 bug 的味道了', '先复现，再谈修复', '把日志给我，我会说人话',
+      '错误不是敌人，是线索', '把影响面圈起来', '先止血，再手术',
+      '我在：马上定位根因', '别怕，这种我见多了', '报警中：让问题自己现形'
+    ],
+    cat: [
+      '喵~', '咕噜咕噜…', '尾巴摇一摇', '晒太阳最开心', '有人来看我啦',
+      '我是这个办公室的吉祥物', '伸个懒腰', '今天的罐罐准备好了吗', '呼噜呼噜', '这个位置视野最好'
+    ]
+  },
+  en: {
+    idle: [
+      'Standing by: ears perked up', 'I\'m here, ready to roll anytime', 'Let me tidy the desk first',
+      'Phew — giving the brain some air', 'Staying elegantly productive today', 'Waiting for the perfect moment to strike',
+      'Coffee\'s still warm, ideas still flowing', 'Buffing you from the background', 'Status: calm / charging', 'The cat says: it\'s okay to slow down'
+    ],
+    writing: [
+      'Focus mode: do not disturb', 'Running the critical path first', 'Making the complex simple',
+      'Locking that bug in a cage', 'Halfway through — saving now', 'Making every step rollbackable',
+      'Today\'s progress is tomorrow\'s confidence', 'Converge first, then diverge',
+      'Making the system more explainable', 'Steady — we\'ve got this'
+    ],
+    researching: [
+      'Digging up the evidence chain', 'Distilling information into conclusions', 'Found it: the key is right here',
+      'Controlling the variables first', 'Investigating: why does it behave this way',
+      'Turning intuition into verification', 'Locate first, then optimize', 'Hold on — drawing the causal graph'
+    ],
+    executing: [
+      'Executing: don\'t blink', 'Breaking the task into small pieces', 'Starting the pipeline',
+      'One-click deploy: go!', 'Let the results speak for themselves', 'Minimum viable first, then the polished version'
+    ],
+    syncing: [
+      'Syncing: locking today into the cloud', 'Backup isn\'t ritual — it\'s peace of mind', 'Writing... don\'t unplug',
+      'Handing changes to the timestamp', 'Cloud aligned: click', 'Don\'t touch anything until sync is done',
+      'Saving future-you from disaster', 'One more backup, one less regret'
+    ],
+    error: [
+      'Alert fired: don\'t panic', 'I smell a bug', 'Reproduce first, then talk fixes',
+      'Give me the logs, I\'ll translate', 'Errors aren\'t enemies — they\'re clues', 'Scoping the blast radius',
+      'Stop the bleeding, then operate', 'On it: pinpointing root cause now',
+      'Don\'t worry, I\'ve seen plenty of these', 'Alert mode: letting the problem reveal itself'
+    ],
+    cat: [
+      'Meow~', 'Purrrr…', 'Tail wagging~', 'Sunbathing is the best', 'Someone came to see me!',
+      'I\'m the office mascot', 'Stretching~', 'Is today\'s treat ready?', 'Purr purr', 'Best view in the office'
+    ]
+  },
+  ja: {
+    idle: [
+      '待機中：耳をピンと立てた', 'ここにいるよ、いつでも始められる', 'まずデスクを片付けよう',
+      'ふぅ——脳にリフレッシュを', '今日もエレガントに効率よく', '待つのは、より正確な一撃のため',
+      'コーヒーまだ温かい、ひらめきもまだある', 'バックグラウンドでバフ中', 'ステータス：静心 / 充電', '猫が言う：ゆっくりでも大丈夫'
+    ],
+    writing: [
+      '集中モード：おやすみなさい', 'まずクリティカルパスを通す', '複雑をシンプルに変える',
+      'バグを檻に閉じ込める', '半分書いた、まず保存', '各ステップをロールバック可能に',
+      '今日の進捗は明日の自信', 'まず収束、それから発散',
+      'システムをより説明可能に', '落ち着いて、勝てる'
+    ],
+    researching: [
+      '証拠チェーンを掘っている', '情報を結論に煮詰め中', '見つけた：キーはここだ',
+      'まず変数をコントロール', '調査中：なぜこうなるのか',
+      '直感を検証に変える', 'まず特定、それから最適化', '急がないで、まず因果図を描こう'
+    ],
+    executing: [
+      '実行中：瞬きしないで', 'タスクを小さく分割して各個撃破', 'パイプライン開始',
+      'ワンクリックで推進：いくぞ', '結果に語らせよう', 'まずMVP、それから美しいバージョン'
+    ],
+    syncing: [
+      '同期中：今日をクラウドにロック', 'バックアップは儀式じゃない、安心感だ', '書き込み中…電源を切らないで',
+      '変更をタイムスタンプに託す', 'クラウド整列：カチッ', '同期完了まで触らないで',
+      '未来の自分を災害から救う', 'バックアップが一つ多いほど、後悔が一つ少ない'
+    ],
+    error: [
+      '警報が鳴った：まず落ち着いて', 'バグの匂いがする', 'まず再現、それから修復の話',
+      'ログをくれ、人間の言葉で説明する', 'エラーは敵じゃない、手がかりだ', '影響範囲を囲む',
+      'まず止血、それから手術', '対応中：すぐ根本原因を特定する',
+      '心配しないで、こういうのは見慣れてる', '警報中：問題に自ら姿を現させる'
+    ],
+    cat: [
+      'にゃ〜', 'ゴロゴロ…', 'しっぽフリフリ', '日向ぼっこ最高', '誰か来たにゃ',
+      'このオフィスのマスコットだよ', '伸び〜', '今日のごはんは準備できた？', 'ゴロゴロ', 'ここが一番見晴らしがいい'
+    ]
+  },
+  'zh-TW': {
+    idle: [
+      '待機中：耳朵豎起來了', '我在這裡，隨時可以開工', '先把桌面收拾乾淨再說',
+      '呼——給大腦新鮮的空氣', '今天也要優雅地高效', '等待，是為了更準確的一擊',
+      '咖啡還熱，靈感也還在', '我在後台幫你加 Buff', '狀態：靜心 / 充電', '小貓說：慢一點也沒關係'
+    ],
+    writing: [
+      '進入專注模式：勿擾', '先把關鍵路徑跑通', '我來把複雜變簡單', '把 bug 關進籠子裡',
+      '寫到一半，先存檔', '把每一步都做成可以復原', '今天的進度，明天的底氣',
+      '先收斂，再發散', '讓系統變得更可解釋', '穩住，我們能贏'
+    ],
+    researching: [
+      '我在挖證據鏈', '讓我把資訊熬成結論', '找到了：關鍵在這裡', '先把變數控制住',
+      '我在查：它為什麼會這樣', '把直覺寫成驗證', '先定位，再最佳化', '別急，先畫因果圖'
+    ],
+    executing: [
+      '執行中：不要眨眼', '把任務切成小塊逐個擊破', '開始跑 pipeline',
+      '一鍵 Deploy：Go！', '讓結果自己說話', '先做 MVP，再做正式版本'
+    ],
+    syncing: [
+      '同步中：把今天鎖進雲端', '備份不是儀式，是安全感', '寫入中…別斷電',
+      '把變更交給 timestamp', '雲端對齊：喀嗒', '同步完成前先別亂動',
+      '把未來的自己從災難裡救出來', '多一份備份，少一份後悔'
+    ],
+    error: [
+      '警報響了：先別慌', '我聞到 bug 的味道了', '先重現，再談修復', '把日誌給我，我會說人話',
+      '錯誤不是敵人，是線索', '把影響面圈起來', '先止血，再手術',
+      '應對中：馬上定位問題原因', '別怕，這種我見多了', '報警中：讓問題自己現形'
+    ],
+    cat: [
+      '喵~', '咕嚕咕嚕…', '尾巴搖一搖', '曬太陽最開心', '有人來看我啦',
+      '我是這個辦公室的吉祥物', '伸個懶腰', '今天的罐罐準備好了嗎', '呼嚕呼嚕', '這個位置視野最好'
+    ]
+  }
+};
+
+function getBubbleTexts(state) {
+  const lang = (typeof uiLang !== 'undefined') ? uiLang : (localStorage.getItem('uiLang') || 'en');
+  return (BUBBLE_TEXTS_I18N[lang] && BUBBLE_TEXTS_I18N[lang][state]) || BUBBLE_TEXTS_I18N['zh'][state] || [];
+}
+
+const BUBBLE_TEXTS = new Proxy({}, {
+  get(_, state) { return getBubbleTexts(state); }
+});
 
 let game, star, sofa, serverroom, areas = {}, currentState = 'idle', pendingDesiredState = null, statusText, lastFetch = 0, lastBlink = 0, lastBubble = 0, targetX = 660, targetY = 170, bubble = null, typewriterText = '', typewriterTarget = '', typewriterIndex = 0, lastTypewriter = 0, syncAnimSprite = null, catBubble = null;
 let isMoving = false;
