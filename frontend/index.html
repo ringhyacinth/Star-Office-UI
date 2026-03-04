@@ -894,6 +894,29 @@
             position: relative;
             top: 15px;
         }
+        #memo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px;
+            position: relative;
+            top: 10px;
+        }
+        #memo-toggle {
+            background: #1a1b2f;
+            color: #d4af37;
+            border: 1px solid #d4af37;
+            padding: 4px 12px;
+            font-size: 11px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+        #memo-toggle:hover {
+            background: #d4af37;
+            color: #1a1b2f;
+        }
         #memo-date {
             color: #888;
             font-size: 10px;
@@ -901,8 +924,9 @@
             text-align: right;
             flex-shrink: 0;
             position: relative;
-            left: -40px; /* move date left by 40px */
-            top: -10px;
+            left: 0px;
+            top: -15px;
+            padding-right: 10px;
         }
         #memo-content {
             color: #3b3b32;
@@ -1122,7 +1146,10 @@
     <div id="bottom-panels">
         <!-- Memo 面板 -->
         <div id="memo-panel">
-            <div id="memo-title">昨 日 小 记</div>
+            <div id="memo-header">
+                <div id="memo-title">昨 日 小 记</div>
+                <button id="memo-toggle" onclick="toggleMemoDate()">今日 →</button>
+            </div>
             <div id="memo-date"></div>
             <div class="memo-decoration">─ ─ ─ ─ ─</div>
             <div id="memo-content">
@@ -1260,6 +1287,7 @@
     </div>
 
     <script src="/static/vendor/phaser-3.80.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/15.0.6/marked.min.js"></script>
     <script>
         // 简易中英文切换
         let uiLang = localStorage.getItem('uiLang') || 'en';

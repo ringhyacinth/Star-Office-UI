@@ -54,24 +54,46 @@ let loadedAssets = 0;
 let loadingProgressBar, loadingProgressContainer, loadingOverlay, loadingText;
 
 // Memo 相关函数
+let currentMemoDate = 'yesterday'; // 'yesterday' or 'today'
+
 async function loadMemo() {
   const memoDate = document.getElementById('memo-date');
   const memoContent = document.getElementById('memo-content');
+  const memoTitle = document.getElementById('memo-title');
+  const memoToggle = document.getElementById('memo-toggle');
 
   try {
-    const response = await fetch('/yesterday-memo?t=' + Date.now(), { cache: 'no-store' });
+    const endpoint = currentMemoDate === 'today' ? '/today-memo' : '/yesterday-memo';
+    const response = await fetch(endpoint + '?t=' + Date.now(), { cache: 'no-store' });
     const data = await response.json();
 
     if (data.success && data.memo) {
       memoDate.textContent = data.date || '';
-      memoContent.innerHTML = data.memo.replace(/\n/g, '<br>');
+      // 使用 marked 渲染 Markdown
+      memoContent.innerHTML = marked.parse(data.memo);
     } else {
-      memoContent.innerHTML = '<div id="memo-placeholder">暂无昨日日记</div>';
+      memoContent.innerHTML = '<div id="memo-placeholder">' + (data.msg || '暂无日记') + '</div>';
     }
   } catch (e) {
     console.error('加载 memo 失败:', e);
     memoContent.innerHTML = '<div id="memo-placeholder">加载失败</div>';
   }
+}
+
+function toggleMemoDate() {
+  const memoToggle = document.getElementById('memo-toggle');
+  const memoTitle = document.getElementById('memo-title');
+  
+  if (currentMemoDate === 'yesterday') {
+    currentMemoDate = 'today';
+    memoToggle.textContent = '← 昨日';
+    memoTitle.textContent = '今 日 日 记';
+  } else {
+    currentMemoDate = 'yesterday';
+    memoToggle.textContent = '今日 →';
+    memoTitle.textContent = '昨 日 小 记';
+  }
+  loadMemo();
 }
 
 // 更新加载进度

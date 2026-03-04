@@ -27,6 +27,234 @@ from store_utils import (
     load_join_keys as _store_load_join_keys,
     save_join_keys as _store_save_join_keys,
 )
+from plugins import PluginManager
+
+# Initialize Plugin Manager
+PLUGINS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "plugins")
+plugin_manager = PluginManager(PLUGINS_DIR)
+
+import secrets
+import hashlib
+import uuid
+
+# Token storage file
+TOKENS_FILE = os.path.join(ROOT_DIR, "api-tokens.json")
+
+
+def _load_tokens():
+    """Load tokens from file"""
+    if not os.path.exists(TOKENS_FILE):
+        return {"api_tokens": [], "admin_tokens": []}
+    try:
+        with open(TOKENS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {"api_tokens": [], "admin_tokens": []}
+
+
+def _save_tokens(data):
+    """Save tokens to file"""
+    with open(TOKENS_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def _generate_token():
+    """Generate a secure random token"""
+    return secrets.token_urlsafe(32)
+
+
+def _hash_token(token: str) -> str:
+    """Hash token for storage (never store raw tokens)"""
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
+def _verify_token(token: str, hashed: str) -> bool:
+    """Verify token against hash"""
+    return _hash_token(token) == hashed
+
+
+# Token validation middleware
+def _require_api_token():
+    """Validate X-API-Token header"""
+    token = request.headers.get("X-API-Token")
+    if not token:
+        return jsonify({"ok": False, "code": "UNAUTHORIZED", "msg": "Missing X-API-Token header"}), 401
+    
+    tokens_data = _load_tokens()
+    token_hash = _hash_token(token)
+    
+    # Check API tokens
+    for t in tokens_data.get("api_tokens", []):
+        if t.get("hashed") == token_hash and t.get("active", True):
+            return None
+    
+    return jsonify({"ok": False, "code": "UNAUTHORIZED", "msg": "Invalid or inactive API token"}), 401
+
+
+def _require_admin_token():
+    """Validate X-Admin-Token header"""
+    token = request.headers.get("X-Admin-Token")
+    if not token:
+        return jsonify({"ok": False, "code": "UNAUTHORIZED", "msg": "Missing X-Admin-Token header"}), 401
+    
+    tokens_data = _load_tokens()
+    token_hash = _hash_token(token)
+    
+    # Check admin tokens
+    for t in tokens_data.get("admin_tokens", []):
+        if t.get("hashed") == token_hash and t.get("active", True):
+            return None
+    
+    return jsonify({"ok": False, "code": "UNAUTHORIZED", "msg": "Invalid or inactive admin token"}), 401
+
+
+# Token management API endpoints
+@app.route("/api/v1/admin/token/generate", methods=["POST"])
+def admin_token_generate():
+    """Generate new API or admin token"""
+    # Require admin token for this operation
+    guard = _require_admin_token()
+    if guard:
+        return guard
+    
+    try:
+        data = request.get_json(silent=True) or {}
+        token_type = (data.get("type") or "api").strip().lower()  # "api" or "admin"
+        name = (data.get("name") or "").strip()
+        
+        if token_type not in {"api", "admin"}:
+            return jsonify({"ok": False, "msg": "Token type must be 'api' or 'admin'"}), 400
+        
+        # Generate new token
+        raw_token = _generate_token()
+        token_hash = _hash_token(raw_token)
+        
+        tokens_data = _load_tokens()
+        
+        new_token = {
+            "id": str(uuid.uuid4()),
+            "name": name or f"{token_type}_token_{len(tokens_data.get(token_type + '_tokens', [])) + 1}",
+            "hashed": token_hash,
+            "type": token_type,
+            "active": True,
+            "created_at": datetime.now().isoformat(),
+        }
+        
+        key = f"{token_type}_tokens"
+        if key not in tokens_data:
+            tokens_data[key] = []
+        tokens_data[key].append(new_token)
+        
+        _save_tokens(tokens_data)
+        
+        # Return the raw token only once
+        return jsonify({
+            "ok": True,
+            "token": raw_token,
+            "type": token_type,
+            "name": new_token["name"],
+            "id": new_token["id"],
+            "created_at": new_token["created_at"],
+            "msg": "Token generated successfully. Save this token securely - it will not be shown again."
+        })
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/api/v1/admin/tokens", methods=["GET"])
+def admin_tokens_list():
+    """List all tokens (without exposing raw tokens)"""
+    guard = _require_admin_token()
+    if guard:
+        return guard
+    
+    try:
+        tokens_data = _load_tokens()
+        
+        # Return tokens without raw values
+        api_tokens = []
+        for t in tokens_data.get("api_tokens", []):
+            api_tokens.append({
+                "id": t.get("id"),
+                "name": t.get("name"),
+                "type": "api",
+                "active": t.get("active", True),
+                "created_at": t.get("created_at"),
+            })
+        
+        admin_tokens = []
+        for t in tokens_data.get("admin_tokens", []):
+            admin_tokens.append({
+                "id": t.get("id"),
+                "name": t.get("name"),
+                "type": "admin",
+                "active": t.get("active", True),
+                "created_at": t.get("created_at"),
+            })
+        
+        return jsonify({
+            "ok": True,
+            "api_tokens": api_tokens,
+            "admin_tokens": admin_tokens,
+            "total": len(api_tokens) + len(admin_tokens)
+        })
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/api/v1/admin/token/<token_id>", methods=["DELETE"])
+def admin_token_revoke(token_id):
+    """Revoke a token"""
+    guard = _require_admin_token()
+    if guard:
+        return guard
+    
+    try:
+        tokens_data = _load_tokens()
+        
+        # Check both api and admin tokens
+        found = False
+        for key in ["api_tokens", "admin_tokens"]:
+            tokens = tokens_data.get(key, [])
+            for t in tokens:
+                if t.get("id") == token_id:
+                    t["active"] = False
+                    t["revoked_at"] = datetime.now().isoformat()
+                    found = True
+                    break
+            if found:
+                break
+        
+        if not found:
+            return jsonify({"ok": False, "msg": "Token not found"}), 404
+        
+        _save_tokens(tokens_data)
+        
+        return jsonify({
+            "ok": True,
+            "msg": "Token revoked successfully",
+            "id": token_id
+        })
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+# API token protection middleware - can be applied to routes
+def _optional_api_token():
+    """Optional API token validation - returns None if not provided or valid"""
+    token = request.headers.get("X-API-Token")
+    if not token:
+        return None
+    
+    tokens_data = _load_tokens()
+    token_hash = _hash_token(token)
+    
+    for t in tokens_data.get("api_tokens", []):
+        if t.get("hashed") == token_hash and t.get("active", True):
+            return t
+    
+    return None
+
 
 try:
     from PIL import Image
@@ -1192,41 +1420,56 @@ def health():
 @app.route("/yesterday-memo", methods=["GET"])
 def get_yesterday_memo():
     """获取昨日小日记"""
+    return _get_memo_by_date(is_today=False)
+
+
+@app.route("/today-memo", methods=["GET"])
+def get_today_memo():
+    """获取今日日记"""
+    return _get_memo_by_date(is_today=True)
+
+
+@app.route("/memo", methods=["GET"])
+def get_memo_by_date():
+    """根据日期获取日记，支持 ?date=YYYY-MM-DD 或 ?is_today=true"""
+    is_today = request.args.get("is_today", "false").lower() == "true"
+    date_param = request.args.get("date", "")
+    
+    if date_param and re.match(r"\d{4}-\d{2}-\d{2}", date_param):
+        return _get_memo_by_date_str(date_param)
+    elif is_today:
+        return _get_memo_by_date(is_today=True)
+    else:
+        return _get_memo_by_date(is_today=False)
+
+
+def _get_memo_by_date(is_today: bool):
+    """根据 is_today 获取日记"""
+    if is_today:
+        date_str = datetime.now().strftime("%Y-%m-%d")
+    else:
+        date_str = get_yesterday_date_str()
+    return _get_memo_by_date_str(date_str)
+
+
+def _get_memo_by_date_str(date_str: str):
+    """根据日期字符串获取日记"""
     try:
-        # 先尝试找昨天的文件
-        yesterday_str = get_yesterday_date_str()
-        yesterday_file = os.path.join(MEMORY_DIR, f"{yesterday_str}.md")
+        target_file = os.path.join(MEMORY_DIR, f"{date_str}.md")
         
-        target_file = None
-        target_date = yesterday_str
-        
-        if os.path.exists(yesterday_file):
-            target_file = yesterday_file
-        else:
-            # 如果昨天没有，找最近的一天
-            if os.path.exists(MEMORY_DIR):
-                files = [f for f in os.listdir(MEMORY_DIR) if f.endswith(".md") and re.match(r"\d{4}-\d{2}-\d{2}\.md", f)]
-                if files:
-                    files.sort(reverse=True)
-                    # 跳过今天的（如果存在）
-                    today_str = datetime.now().strftime("%Y-%m-%d")
-                    for f in files:
-                        if f != f"{today_str}.md":
-                            target_file = os.path.join(MEMORY_DIR, f)
-                            target_date = f.replace(".md", "")
-                            break
-        
-        if target_file and os.path.exists(target_file):
+        if os.path.exists(target_file):
             memo_content = extract_memo_from_file(target_file)
             return jsonify({
                 "success": True,
-                "date": target_date,
-                "memo": memo_content
+                "date": date_str,
+                "memo": memo_content,
+                "is_today": date_str == datetime.now().strftime("%Y-%m-%d")
             })
         else:
             return jsonify({
                 "success": False,
-                "msg": "没有找到昨日日记"
+                "msg": f"没有找到 {date_str} 的日记",
+                "date": date_str
             })
     except Exception as e:
         return jsonify({
@@ -1949,6 +2192,170 @@ def assets_upload():
         return jsonify({"ok": False, "msg": str(e)}), 500
 
 
+# -----------------------------------------------------------------------
+# OpenClaw Plugin: Memo Sync APIs
+# -----------------------------------------------------------------------
+
+MEMO_STORE_FILE = os.path.join(ROOT_DIR, "memo-store.json")
+
+
+def load_memo_store():
+    """Load memo store from file."""
+    if os.path.exists(MEMO_STORE_FILE):
+        try:
+            with open(MEMO_STORE_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
+
+def save_memo_store(data):
+    """Save memo store to file."""
+    with open(MEMO_STORE_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+@app.route("/sync-memo", methods=["POST"])
+def sync_memo():
+    """Sync memo from OpenClaw plugin.
+    
+    Request body:
+    {
+        "source": "agent-id",
+        "date": "2026-03-04",
+        "memo": "memo content",
+        "summary": "optional summary"
+    }
+    """
+    # 支持 API Token 鉴权
+    token = request.headers.get("X-API-Token") or request.args.get("token")
+    if not token:
+        return jsonify({"ok": False, "msg": "缺少 X-API-Token"}), 401
+    
+    # 验证 token (使用 _verify_token 从 security_utils)
+    tokens = _load_tokens()
+    token_hash = _hash_token(token)
+    if token_hash not in tokens:
+        return jsonify({"ok": False, "msg": "无效的 API Token"}), 401
+    
+    try:
+        data = request.get_json()
+        if not isinstance(data, dict):
+            return jsonify({"ok": False, "msg": "invalid json"}), 400
+        
+        source = (data.get("source") or "").strip()
+        date = (data.get("date") or "").strip()
+        memo = (data.get("memo") or "").strip()
+        summary = (data.get("summary") or "").strip()
+        
+        if not source or not date or not memo:
+            return jsonify({"ok": False, "msg": "缺少 source/date/memo"}), 400
+        
+        # 保存 memo
+        store = load_memo_store()
+        if source not in store:
+            store[source] = {}
+        
+        store[source][date] = {
+            "memo": memo,
+            "summary": summary,
+            "synced_at": datetime.now().isoformat()
+        }
+        save_memo_store(store)
+        
+        return jsonify({"ok": True, "source": source, "date": date})
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/sources/<source_id>/memo", methods=["GET"])
+def get_source_memo(source_id):
+    """Get memo for a specific source.
+    
+    Query params:
+    - date: specific date (optional, default: yesterday)
+    """
+    # 支持 API Token 鉴权
+    token = request.headers.get("X-API-Token") or request.args.get("token")
+    if not token:
+        return jsonify({"ok": False, "msg": "缺少 X-API-Token"}), 401
+    
+    # 验证 token
+    tokens = _load_tokens()
+    token_hash = _hash_token(token)
+    if token_hash not in tokens:
+        return jsonify({"ok": False, "msg": "无效的 API Token"}), 401
+    
+    try:
+        source_id = source_id.strip()
+        date = request.args.get("date", "").strip()
+        
+        if not date:
+            # 默认获取昨天
+            date = get_yesterday_date_str()
+        
+        store = load_memo_store()
+        
+        if source_id not in store:
+            return jsonify({"success": False, "msg": "没有找到该来源的 memo"}), 404
+        
+        if date not in store[source_id]:
+            return jsonify({"success": False, "msg": f"没有找到 {date} 的 memo"}), 404
+        
+        memo_data = store[source_id][date]
+        return jsonify({
+            "success": True,
+            "source": source_id,
+            "date": date,
+            "memo": memo_data.get("memo", ""),
+            "summary": memo_data.get("summary", "")
+        })
+    except Exception as e:
+        return jsonify({"success": False, "msg": str(e)}), 500
+
+
+# -----------------------------------------------------------------------
+# Lifecycle Hooks for Plugins
+# -----------------------------------------------------------------------
+
+@app.route("/plugins/lifecycle/<hook_name>", methods=["POST"])
+def plugin_lifecycle_hook(hook_name):
+    """Trigger lifecycle hooks for loaded plugins.
+    
+    This endpoint allows external systems to trigger plugin lifecycle events.
+    Supported hooks: on_agent_start, on_agent_end, on_agent_error, on_idle
+    """
+    valid_hooks = {"on_agent_start", "on_agent_end", "on_agent_error", "on_idle"}
+    if hook_name not in valid_hooks:
+        return jsonify({"ok": False, "msg": f"无效的钩子: {hook_name}"}), 400
+    
+    try:
+        data = request.get_json() or {}
+        state = data.get("state", "idle")
+        detail = data.get("detail", "")
+        
+        # 更新主状态
+        current_state = load_state()
+        current_state["state"] = state
+        current_state["detail"] = detail
+        current_state["updated_at"] = datetime.now().isoformat()
+        save_state(current_state)
+        
+        # 触发插件钩子
+        for plugin_name in plugin_manager.list_loaded():
+            plugin = plugin_manager.get_plugin(plugin_name)
+            if plugin and hasattr(plugin, hook_name):
+                try:
+                    getattr(plugin, hook_name)(data)
+                except Exception as e:
+                    print(f"[Plugin {plugin_name}] {hook_name} failed: {e}")
+        
+        return jsonify({"ok": True, "hook": hook_name, "state": state})
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
 if __name__ == "__main__":
     raw_port = os.environ.get("STAR_BACKEND_PORT", "18791")
     try:
@@ -1978,6 +2385,11 @@ if __name__ == "__main__":
         else:
             print("Security hardening: OK")
     print("=" * 50)
+
+    # Load plugins
+    print("Loading plugins...")
+    plugin_manager.load(app)
+    print(f"Loaded plugins: {plugin_manager.list_loaded()}")
 
     app.run(host="0.0.0.0", port=backend_port, debug=False)
 
