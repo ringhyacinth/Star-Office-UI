@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Star Mini</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --mini-status-sprite-gap: 0px; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      font-family: Arial, sans-serif;
+    }
+    body.electron-shell,
+    body.electron-shell #wrap,
+    body.electron-shell #pet-box {
+      -webkit-app-region: drag;
+    }
+    body.electron-shell #status-pill,
+    body.electron-shell #pet-canvas {
+      -webkit-app-region: no-drag;
+    }
+    #wrap {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding-top: 8px;
+      gap: var(--mini-status-sprite-gap);
+    }
+    #status-pill {
+      max-width: 95%;
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.72);
+      color: #eee;
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      pointer-events: none;
+    }
+    #pet-box {
+      width: 180px;
+      height: 180px;
+      border-radius: 6px;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.14s ease, filter 0.18s ease;
+    }
+    #pet-canvas {
+      width: 140px;
+      height: 140px;
+      image-rendering: pixelated;
+      pointer-events: none;
+      transform: scale(1);
+      filter: drop-shadow(0 0 0 rgba(250, 244, 207, 0));
+      transition: transform 0.16s ease, filter 0.2s ease;
+    }
+    #pet-box:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.04);
+    }
+    #pet-box:hover #pet-canvas {
+      filter: drop-shadow(0 0 8px rgba(250, 244, 207, 0.2));
+    }
+    #pet-box:active {
+      transform: translateY(0);
+      filter: brightness(0.98);
+    }
+    #hint { display: none; }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <div id="status-pill">加载中...</div>
+    <div id="pet-box" title="点击恢复主窗口">
+      <canvas id="pet-canvas" width="140" height="140" aria-label="Star"></canvas>
+    </div>
+    <div id="hint">点击形象恢复主窗口</div>
+  </div>
+  <script>
+    (async function () {
+      const isTauri = !!window.__TAURI__;
+      const isElectron = !!window.__ELECTRON__;
+      const core = isTauri ? window.__TAURI__.core : null;
+      const eventApi = isTauri ? window.__TAURI__.event : null;
+      const win = isTauri ? window.__TAURI__.window.getCurrentWindow() : null;
+      const status = document.getElementById('status-pill');
+      const petCanvas = document.getElementById('pet-canvas');
+      const petCtx = petCanvas && petCanvas.getContext ? petCanvas.getContext('2d') : null;
+      if (isElectron) document.body.classList.add('electron-shell');
+
+      const BASE_URL = 'http://127.0.0.1:18791';
+      const STATIC_URL = `${BASE_URL}/static/`;
+      let uiLang = 'en';
+      const I18N = {
+        zh: { stateIdle: '待命', stateWriting: '整理文档', stateResearching: '搜索信息', stateExecuting: '执行任务', stateSyncing: '同步备份', stateError: '出错了', fallbackIdleDetail: '待命', connecting: '连接中...' },
+        en: { stateIdle: 'Standby', stateWriting: 'Organizing Docs', stateResearching: 'Researching', stateExecuting: 'Executing Tasks', stateSyncing: 'Syncing Backup', stateError: 'Error', fallbackIdleDetail: 'Standby', connecting: 'Connecting...' },
+        ja: { stateIdle: '待機', stateWriting: '文書整理', stateResearching: '情報検索', stateExecuting: 'タスク実行', stateSyncing: '同期バックアップ', stateError: 'エラー発生', fallbackIdleDetail: '待機', connecting: '接続中...' }
+      };
+      const t = (key) => ((I18N[uiLang] && I18N[uiLang][key]) || key);
+
+      // Keep exactly aligned with main page asset names.
+      const PET_ASSET_PATHS = {
+        idle: 'star-idle-v5.png',
+        working: 'star-working-spritesheet-grid.webp',
+        syncing: 'sync-animation-v3-grid.webp',
+        error: 'error-bug-spritesheet-grid.webp'
+      };
+      const PET_FRAME_CONFIG = {
+        idle: { frameW: 256, frameH: 256, fps: 12 },
+        working: { frameW: 300, frameH: 300, fps: 12 },
+        syncing: { frameW: 256, frameH: 256, fps: 12 },
+        error: { frameW: 220, frameH: 220, fps: 12 }
+      };
+      // Align perceived sprite size with main page defaults.
+      const PET_SCALE = { idle: 1.2, working: 1.4, syncing: 1.2, error: 1.2 };
+
+      let assetRefreshTick = Date.now();
+      let lastAssetKey = null;
+      let currentSpriteSrc = '';
+      let spriteImage = null;
+      let spriteMeta = { frameW: 1, frameH: 1, fps: 1, start: 0, end: 0, frames: 1 };
+      let currentFrame = 0;
+      let lastFrameAt = 0;
+      let rafId = null;
+      window.__miniLastState = { state: 'idle' };
+
+      function normalizeLang(rawLang) {
+        const v = String(rawLang || '').toLowerCase();
+        if (v === 'zh' || v === 'en' || v === 'ja') return v;
+        return 'en';
+      }
+      function normalizeState(state) {
+        if (!state) return 'idle';
+        if (state === 'working' || state === 'writing' || state === 'researching' || state === 'executing') return 'working';
+        if (state === 'sync' || state === 'syncing') return 'syncing';
+        if (state === 'error') return 'error';
+        return 'idle';
+      }
+      function stateLabel(rawState) {
+        const s = String(rawState || '').toLowerCase();
+        if (s === 'writing' || s === 'working') return t('stateWriting');
+        if (s === 'researching') return t('stateResearching');
+        if (s === 'executing' || s === 'run' || s === 'running') return t('stateExecuting');
+        if (s === 'syncing' || s === 'sync') return t('stateSyncing');
+        if (s === 'error') return t('stateError');
+        return t('stateIdle');
+      }
+      function buildPetSrcByState(rawState) {
+        const key = normalizeState(rawState);
+        const rel = PET_ASSET_PATHS[key] || PET_ASSET_PATHS.idle;
+        return { key, src: `${STATIC_URL}${rel}?v=${assetRefreshTick}` };
+      }
+      function resolveFrameRangeByState(stateKey, totalFrames) {
+        const maxIdx = Math.max(0, totalFrames - 1);
+        if (stateKey === 'working') {
+          return { start: 0, end: Math.min(37, maxIdx) };
+        }
+        if (stateKey === 'error') {
+          return { start: 0, end: Math.min(71, maxIdx) };
+        }
+        if (stateKey === 'syncing') {
+          if (totalFrames >= 3) {
+            const start = 1;
+            const end = Math.max(start, totalFrames - 2);
+            return { start, end };
+          }
+          return { start: 0, end: 0 };
+        }
+        // idle: use full available frames
+        return { start: 0, end: maxIdx };
+      }
+
+      function drawFrame() {
+        if (!petCtx || !spriteImage || !spriteMeta.frames) return;
+        const cols = Math.max(1, Math.floor(spriteImage.naturalWidth / spriteMeta.frameW));
+        const frame = spriteMeta.start + (currentFrame % spriteMeta.frames);
+        const sx = (frame % cols) * spriteMeta.frameW;
+        const sy = Math.floor(frame / cols) * spriteMeta.frameH;
+        petCtx.clearRect(0, 0, petCanvas.width, petCanvas.height);
+        petCtx.imageSmoothingEnabled = false;
+        petCtx.drawImage(
+          spriteImage,
+          sx, sy, spriteMeta.frameW, spriteMeta.frameH,
+          0, 0, petCanvas.width, petCanvas.height
+        );
+      }
+      function stopSpriteLoop() {
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      function startSpriteLoop() {
+        stopSpriteLoop();
+        const tick = (ts) => {
+          if (!spriteImage || !spriteMeta.frames) return;
+          const interval = 1000 / Math.max(1, spriteMeta.fps || 1);
+          if (!lastFrameAt || ts - lastFrameAt >= interval) {
+            currentFrame = (currentFrame + 1) % Math.max(1, spriteMeta.frames);
+            drawFrame();
+            lastFrameAt = ts;
+          }
+          rafId = requestAnimationFrame(tick);
+        };
+        rafId = requestAnimationFrame(tick);
+      }
+
+      function loadSpriteByState(rawState) {
+        const next = buildPetSrcByState(rawState);
+        const cfg = PET_FRAME_CONFIG[next.key] || PET_FRAME_CONFIG.idle;
+        if (currentSpriteSrc === next.src && lastAssetKey === next.key) return;
+
+        const img = new Image();
+        img.onload = () => {
+          spriteImage = img;
+          const cols = Math.max(1, Math.floor(img.naturalWidth / cfg.frameW));
+          const rows = Math.max(1, Math.floor(img.naturalHeight / cfg.frameH));
+          const totalFrames = Math.max(1, cols * rows);
+          const range = resolveFrameRangeByState(next.key, totalFrames);
+          const frames = Math.max(1, range.end - range.start + 1);
+          spriteMeta = {
+            frameW: cfg.frameW,
+            frameH: cfg.frameH,
+            fps: cfg.fps,
+            start: range.start,
+            end: range.end,
+            frames
+          };
+          currentFrame = 0;
+          lastFrameAt = 0;
+          drawFrame();
+          if (frames > 1) startSpriteLoop();
+          else stopSpriteLoop();
+          currentSpriteSrc = next.src;
+          lastAssetKey = next.key;
+        };
+        img.onerror = () => {
+          if (next.key !== 'idle') {
+            currentSpriteSrc = '';
+            lastAssetKey = null;
+            loadSpriteByState('idle');
+          }
+        };
+        img.src = next.src;
+      }
+
+      function applyState(data, instant = false) {
+        const payload = data || { state: 'idle' };
+        uiLang = normalizeLang(payload.ui_lang || uiLang);
+        window.__miniLastState = payload;
+        const state = payload.state || 'idle';
+        const detail = payload.detail || t('fallbackIdleDetail');
+        status.textContent = `[${stateLabel(state)}] ${detail}`;
+        loadSpriteByState(state);
+
+        const scale = PET_SCALE[normalizeState(state)] || 1;
+        if (instant) {
+          const prevTransition = petCanvas.style.transition;
+          petCanvas.style.transition = 'none';
+          petCanvas.style.transform = `scale(${scale})`;
+          requestAnimationFrame(() => {
+            petCanvas.style.transition = prevTransition || 'transform 0.16s ease, filter 0.2s ease';
+          });
+        } else {
+          petCanvas.style.transform = `scale(${scale})`;
+        }
+      }
+
+      async function fetchStatus() {
+        try {
+          if (core) {
+            const data = await core.invoke('read_state');
+            applyState(data);
+            return;
+          }
+          const resp = await fetch(`${BASE_URL}/status`, { cache: 'no-store' });
+          if (!resp.ok) throw new Error('bad status');
+          const data = await resp.json();
+          applyState(data);
+        } catch (_) {
+          status.textContent = t('connecting');
+        }
+      }
+
+      if (eventApi && eventApi.listen) {
+        try {
+          await eventApi.listen('mini-sync-state', (evt) => {
+            if (evt && evt.payload) applyState(evt.payload, true);
+          });
+        } catch (_) {}
+      }
+
+      let downAt = null;
+      let dragTriggered = false;
+      const DRAG_THRESHOLD = 6;
+      document.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0) return;
+        downAt = { x: e.clientX, y: e.clientY };
+        dragTriggered = false;
+      });
+      document.addEventListener('pointermove', async (e) => {
+        if (!downAt || dragTriggered || !win) return;
+        const moved = Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y);
+        if (moved < DRAG_THRESHOLD) return;
+        dragTriggered = true;
+        try { await win.startDragging(); } catch (_) {}
+      });
+      document.addEventListener('pointerup', async () => {
+        if (!downAt) return;
+        const wasDrag = dragTriggered;
+        downAt = null;
+        dragTriggered = false;
+        if (!wasDrag && core) {
+          try { await core.invoke('restore_main_window'); } catch (_) {}
+        }
+      });
+      document.addEventListener('contextmenu', async (e) => {
+        e.preventDefault();
+        if (!core) return;
+        try { await core.invoke('close_app'); } catch (_) {}
+      });
+
+      await fetchStatus();
+      setInterval(fetchStatus, 2000);
+    })();
+  </script>
+</body>
+</html>

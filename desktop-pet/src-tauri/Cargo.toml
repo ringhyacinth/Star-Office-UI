@@ -1,0 +1,17 @@
+[package]
+name = "star-desktop-pet"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "star_desktop_pet_lib"
+crate-type = ["lib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["macos-private-api"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+base64 = "0.22"

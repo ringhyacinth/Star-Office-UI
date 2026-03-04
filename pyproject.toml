@@ -1,0 +1,9 @@
+[project]
+name = "star-office-ui"
+version = "0.1.0"
+description = "Star Office UI - Backend State Service"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "flask>=3.0.0",
+]

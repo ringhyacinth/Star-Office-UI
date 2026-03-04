@@ -1,4 +1,4 @@
-# Python
+# Python environment
 __pycache__/
 *.py[cod]
 *.pyo
@@ -8,30 +8,31 @@ __pycache__/
 venv/
 .env
 
-# OS
+# OS/editor
 .DS_Store
 
-# Runtime / local files (敏感数据)
+# Runtime state (local only)
 state.json
 agents-state.json
-join-keys.json
+runtime-config.json
 *.log
 *.out
 *.pid
 *.backup*
 *.original
-
-# Cloudflare
 cloudflared.pid
 cloudflared.out
 healthcheck.log
 backend.log
 
-# Build outputs
+# Generated / mutable assets (local only)
+assets/bg-history/
+assets/home-favorites/
 frontend/office_bg.png
+frontend/*.bak
+layers/
+desktop-pet/src-tauri/icons/*Logo.png
 
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
+# Electron local build artifacts
+electron-shell/node_modules/
+electron-shell/release/

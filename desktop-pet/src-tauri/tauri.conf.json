@@ -1,0 +1,35 @@
+{
+  "productName": "Star Desktop Pet",
+  "version": "0.1.0",
+  "identifier": "com.star.desktop-pet",
+  "build": { "frontendDist": "../src" },
+  "app": {
+    "macOSPrivateApi": true,
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "Star Desktop Pet",
+        "x": 80,
+        "y": 60,
+        "width": 700,
+        "height": 500,
+        "url": "http://127.0.0.1:18791/?desktop=1",
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "resizable": true,
+        "shadow": false
+      }
+    ]
+  },
+  "bundle": {
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

@@ -26,13 +26,17 @@ STATUS_ENDPOINT = "/status"
 JOIN_ENDPOINT = "/join-agent"
 PUSH_ENDPOINT = "/agent-push"
 
+# 自动状态守护：当本地状态文件不存在或长期不更新时，自动回 idle，避免“假工作中”
+STALE_STATE_TTL_SECONDS = int(os.environ.get("OFFICE_STALE_STATE_TTL", "600"))
+
 # 本地状态存储（记住上次 join 拿到的 agentId）
 STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "office-agent-state.json")
 
 # 优先读取本机 OpenClaw 工作区的状态文件（更贴合 AGENTS.md 的工作流）
 # 支持自动发现，减少对方手动配置成本。
 DEFAULT_STATE_CANDIDATES = [
-    "/root/.openclaw/workspace/star-office-ui/state.json",
+    "/root/.openclaw/workspace/Star-Office-UI/state.json",  # 当前仓库（大小写精确）
+    "/root/.openclaw/workspace/star-office-ui/state.json",  # 历史/兼容路径
     "/root/.openclaw/workspace/state.json",
     os.path.join(os.getcwd(), "state.json"),
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "state.json"),
@@ -98,11 +102,27 @@ def map_detail_to_state(detail, fallback_state="idle"):
     return fallback_state
 
 
+def _state_age_seconds(data):
+    try:
+        ts = (data or {}).get("updated_at")
+        if not ts:
+            return None
+        dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+        if dt.tzinfo is not None:
+            from datetime import timezone
+            return (datetime.now(timezone.utc) - dt.astimezone(timezone.utc)).total_seconds()
+        return (datetime.now() - dt).total_seconds()
+    except Exception:
+        return None
+
+
 def fetch_local_status():
     """读取本地状态：
     1) 优先 state.json（符合 AGENTS.md：任务前切 writing，完成后切 idle）
     2) 其次尝试本地 HTTP /status
     3) 最后 fallback idle
+
+    额外防抖：如果本地状态更新时间超过 STALE_STATE_TTL_SECONDS，自动视为 idle。
     """
     # 1) 读本地 state.json（优先读取显式指定路径，其次自动发现）
     candidate_files = []
@@ -130,6 +150,13 @@ def fetch_local_status():
                     detail = data.get("detail", "") or ""
                     # detail 兜底纠偏，确保“工作/休息/报警”能正确落区
                     state = map_detail_to_state(detail, fallback_state=state)
+
+                    # 防止状态文件久未更新仍停留在 working 态
+                    age = _state_age_seconds(data)
+                    if age is not None and age > STALE_STATE_TTL_SECONDS:
+                        state = "idle"
+                        detail = f"本地状态超过{STALE_STATE_TTL_SECONDS}s未更新，自动回待命"
+
                     if VERBOSE:
                         print(f"[status-source:file] path={fp} state={state} detail={detail[:60]}")
                     return {"state": state, "detail": detail}
@@ -148,6 +175,12 @@ def fetch_local_status():
             state = normalize_state(data.get("state", "idle"))
             detail = data.get("detail", "") or ""
             state = map_detail_to_state(detail, fallback_state=state)
+
+            age = _state_age_seconds(data)
+            if age is not None and age > STALE_STATE_TTL_SECONDS:
+                state = "idle"
+                detail = f"本地/status 超过{STALE_STATE_TTL_SECONDS}s未更新，自动回待命"
+
             if VERBOSE:
                 print(f"[status-source:http] url={LOCAL_STATUS_URL} state={state} detail={detail[:60]}")
             return {"state": state, "detail": detail}

@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @font-face {
+            font-family: 'ipix';
+            src: url('ipix.ttf') format('truetype');
+        }
+        * { margin: 0; padding: 0; }
+        html, body {
+            background: transparent;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: 'ipix', monospace;
+        }
+        canvas { background: transparent !important; position: relative; }
+        #context-menu {
+            display: none;
+            position: fixed;
+            background: rgba(26, 26, 46, 0.95);
+            border: 2px solid #e94560;
+            border-radius: 6px;
+            padding: 4px 0;
+            z-index: 9999;
+            font-family: 'ipix', monospace;
+            font-size: 13px;
+            min-width: 110px;
+            backdrop-filter: blur(8px);
+        }
+        .menu-item { padding: 8px 16px; color: #eee; cursor: pointer; white-space: nowrap; }
+        .menu-item:hover { background: #e94560; }
+        .menu-sep { height: 1px; background: rgba(233,69,96,0.3); margin: 4px 8px; }
+        #bubble-layer {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            overflow: visible;
+            z-index: 100;
+        }
+        .speech-bubble {
+            position: absolute;
+            background: rgba(255,255,255,0.95);
+            border: 2px solid #888;
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-family: 'ipix', monospace;
+            font-size: 16px;
+            line-height: 1.3;
+            color: #333;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.2s;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.18));
+        }
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 8px solid #888;
+        }
+        .speech-bubble::before {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 7px solid rgba(255,255,255,0.95);
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div id="bubble-layer"></div>
+    <div id="context-menu">
+        <div class="menu-item" data-action="info">🏷️ Star 桌宠</div>
+        <div class="menu-sep"></div>
+        <div class="menu-item" data-action="quit">❌ 退出</div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+    <script>
+    (async function () {
+
+    /* ================================================================
+       §1  Tauri API
+       ================================================================ */
+    const isTauri   = !!window.__TAURI__;
+    const core      = isTauri ? window.__TAURI__.core   : null;
+    const winApi    = isTauri ? window.__TAURI__.window : null;
+    const dpiApi    = isTauri ? window.__TAURI__.dpi    : null;
+    const appWindow = winApi  ? winApi.getCurrentWindow() : null;
+
+    /* ================================================================
+       §2  Context menu & drag
+       ================================================================ */
+    const ctxMenu = document.getElementById('context-menu');
+    document.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        ctxMenu.style.display = 'block';
+        ctxMenu.style.left = Math.min(e.clientX, innerWidth  - 120) + 'px';
+        ctxMenu.style.top  = Math.min(e.clientY, innerHeight -  80) + 'px';
+    });
+    document.addEventListener('click', e => {
+        if (!e.target.closest('#context-menu')) ctxMenu.style.display = 'none';
+    });
+    document.querySelectorAll('.menu-item').forEach(el => {
+        el.addEventListener('click', () => {
+            ctxMenu.style.display = 'none';
+            if (el.dataset.action === 'quit' && appWindow) appWindow.close();
+        });
+    });
+    document.addEventListener('mousedown', e => {
+        if (e.button === 0 && !e.target.closest('#context-menu') && appWindow)
+            appWindow.startDragging();
+    });
+
+    /* ================================================================
+       §3  Load map config from Rust
+       ================================================================ */
+    let map = null;
+    if (core) {
+        try { map = await core.invoke('load_map'); }
+        catch (e) { console.warn('load_map:', e); }
+    }
+    if (!map) {
+        document.body.innerHTML = '<p style="color:#fff;padding:20px">map.json not found</p>';
+        return;
+    }
+
+    const T    = map.tile_size;
+    const COLS = map.cols;
+    const ROWS = map.rows;
+    const ZOOM = map.zoom;
+    const GW   = COLS * T;
+    const GH   = ROWS * T;
+    const BUBBLE_PAD = 40;
+
+    if (appWindow && dpiApi) {
+        try { await appWindow.setSize(new dpiApi.LogicalSize(GW * ZOOM, GH * ZOOM + BUBBLE_PAD)); }
+        catch (_) {}
+    }
+
+    /* ================================================================
+       §4  State definitions
+       ================================================================ */
+    const SPECIAL = new Set([
+        'writing','receiving','replying','researching','executing','syncing','error'
+    ]);
+    const NORM_MAP = {
+        working:'writing', run:'executing', running:'executing',
+        sync:'syncing', research:'researching'
+    };
+    const BUBBLE = {
+        idle:        ['摸鱼中…','有没有新任务？','咖啡真好喝☕','伸个懒腰~'],
+        writing:     ['这个要记下来','写得手酸','再检查一遍✍️'],
+        receiving:   ['有人找我！','看看是什么','来消息了📨'],
+        replying:    ['让我想想…','打字中…','这样回好了💬'],
+        researching: ['让我搜一下🔍','找到线索了','再深挖一点'],
+        executing:   ['冲鸭！🦆','加油加油','马上搞定⚡'],
+        syncing:     ['备份备份☁️','安全第一','同步中…'],
+        error:       ['啊哦…','出问题了❗','马上修好🔧']
+    };
+    const EMOJI = {
+        idle:'💤', writing:'✏️', receiving:'📨', replying:'💬',
+        researching:'🔍', executing:'⚡', syncing:'☁️', error:'❗'
+    };
+
+    /* ================================================================
+       §5  A* pathfinding
+       ================================================================ */
+    function astar(start, goal) {
+        const grid = map.collision;
+        const key  = (r, c) => r * COLS + c;
+        const sk   = key(start.row, start.col);
+        const gk   = key(goal.row, goal.col);
+
+        if (grid[goal.row]?.[goal.col] !== 0) return null;
+        if (sk === gk) return [{ row: goal.row, col: goal.col }];
+
+        const open    = new Set([sk]);
+        const from    = new Map();
+        const gScore  = new Map([[sk, 0]]);
+        const fScore  = new Map([[sk, h(start, goal)]]);
+        const dirs    = [[-1,0],[1,0],[0,-1],[0,1]];
+
+        while (open.size) {
+            let cur = -1, best = Infinity;
+            for (const k of open) {
+                const f = fScore.get(k) ?? Infinity;
+                if (f < best) { best = f; cur = k; }
+            }
+            if (cur === gk) {
+                const path = [];
+                let c = cur;
+                while (c !== undefined) {
+                    path.unshift({ row: Math.floor(c / COLS), col: c % COLS });
+                    c = from.get(c);
+                }
+                return path;
+            }
+            open.delete(cur);
+            const cr = Math.floor(cur / COLS), cc = cur % COLS;
+
+            for (const [dr, dc] of dirs) {
+                const nr = cr + dr, nc = cc + dc;
+                if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+                if (grid[nr][nc] !== 0) continue;
+                const nk = key(nr, nc);
+                const tg = (gScore.get(cur) ?? Infinity) + 1;
+                if (tg < (gScore.get(nk) ?? Infinity)) {
+                    from.set(nk, cur);
+                    gScore.set(nk, tg);
+                    fScore.set(nk, tg + h({ row: nr, col: nc }, goal));
+                    open.add(nk);
+                }
+            }
+        }
+        return null;
+    }
+
+    function h(a, b) {
+        return Math.abs(a.row - b.row) + Math.abs(a.col - b.col);
+    }
+
+    /* ================================================================
+       §6  Game globals
+       ================================================================ */
+    let game, star, stateEmoji, stateIcon, shadow;
+    let serverState = 'idle';
+    let charAnim    = 'idle';
+    let charGridR, charGridC;
+    let path        = null;
+    let pathIdx     = 0;
+    let nextBubbleAt = 5000;
+    let lastFetch    = 0;
+
+    const startPoi = map.pois.idle || { row: 5, col: 6 };
+    charGridR = startPoi.row;
+    charGridC = startPoi.col;
+
+    const SPEED = map.character_speed * T;
+
+    function tileX(c) { return c * T + T / 2; }
+    function tileY(r) { return r * T + T / 2; }
+
+    /* ================================================================
+       §7  Phaser game
+       ================================================================ */
+    const phaserGame = new Phaser.Game({
+        type: Phaser.AUTO,
+        width: GW, height: GH,
+        zoom: ZOOM,
+        transparent: true,
+        pixelArt: true,
+        scene: { preload: preloadScene, create: createScene, update: updateScene }
+    });
+    phaserGame.events.on('ready', () => {
+        phaserGame.canvas.style.marginTop = BUBBLE_PAD + 'px';
+    });
+
+    /* ────────── preload ────────── */
+    function preloadScene() {
+        this.load.spritesheet('tiles', map.tileset_url, {
+            frameWidth: T, frameHeight: T
+        });
+        if (map.state_icons && typeof map.state_icons === 'object') {
+            for (const [state, dataUrl] of Object.entries(map.state_icons)) {
+                if (dataUrl) this.load.image('icon_' + state, dataUrl);
+            }
+        }
+    }
+
+    /* ────────── create ────────── */
+    function createScene() {
+        game = this;
+
+        /* ground layer (depth -100) */
+        for (let r = 0; r < ROWS; r++)
+            for (let c = 0; c < COLS; c++) {
+                const id = map.ground[r]?.[c] ?? -1;
+                if (id < 0) continue;
+                game.add.sprite(tileX(c), tileY(r), 'tiles', id).setDepth(-100);
+            }
+
+        /* border layer (topmost, depth 8000) */
+        if (map.border) {
+            for (let r = 0; r < ROWS; r++)
+                for (let c = 0; c < COLS; c++) {
+                    const id = map.border[r]?.[c] ?? -1;
+                    if (id < 0) continue;
+                    game.add.sprite(tileX(c), tileY(r), 'tiles', id).setDepth(8000);
+                }
+        }
+
+        /* rug layer (depth -50, above ground/border, below objects & character) */
+        if (map.rug) {
+            for (let r = 0; r < ROWS; r++)
+                for (let c = 0; c < COLS; c++) {
+                    const id = map.rug[r]?.[c] ?? -1;
+                    if (id < 0) continue;
+                    game.add.sprite(tileX(c), tileY(r), 'tiles', id).setDepth(-50);
+                }
+        }
+
+        /* objects layer (depth = row for Y-sorting) */
+        for (let r = 0; r < ROWS; r++)
+            for (let c = 0; c < COLS; c++) {
+                const id = map.objects[r]?.[c] ?? -1;
+                if (id < 0) continue;
+                game.add.sprite(tileX(c), tileY(r), 'tiles', id).setDepth(r * 10);
+            }
+
+        /* fallback character textures */
+        buildCharTextures();
+        buildCharAnims();
+
+        /* shadow */
+        shadow = game.add.ellipse(0, 0, T * 0.8, T * 0.3, 0x000000, 0.2).setDepth(-1);
+
+        /* character sprite */
+        const sx = tileX(charGridC), sy = tileY(charGridR);
+        star = game.add.sprite(sx, sy, 'cf0').setDepth(charGridR * 10 + 1);
+        star.play('idle');
+
+        /* state indicator: icon (from state_icons) or emoji fallback */
+        stateEmoji = game.add.text(sx + T * 0.6, sy - T * 0.7, '💤', {
+            font: `${Math.round(T * 0.55)}px sans-serif`
+        }).setOrigin(0.5).setDepth(9000);
+
+        const iconScale = (T * 1.1) / 24;
+        const firstIconKey = map.state_icons && Object.keys(map.state_icons)[0];
+        if (firstIconKey && game.textures.exists('icon_' + firstIconKey)) {
+            stateIcon = game.add.sprite(sx + T * 0.6, sy - T * 0.7, 'icon_' + firstIconKey)
+                .setOrigin(0.5).setDepth(9000).setScale(iconScale);
+            stateIcon.setData('baseScale', iconScale);
+            stateIcon.setVisible(false);
+        } else {
+            stateIcon = null;
+        }
+
+        fetchState();
+    }
+
+    /* ────────── update ────────── */
+    function updateScene(time, dt) {
+        if (time - lastFetch > 2000) { fetchState(); lastFetch = time; }
+
+        /* follow path */
+        if (path && pathIdx < path.length) {
+            const wp = path[pathIdx];
+            const tx = tileX(wp.col), ty = tileY(wp.row);
+            const dx = tx - star.x, dy = ty - star.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const step = SPEED * dt / 1000;
+
+            if (dist <= step + 0.5) {
+                star.x = tx;
+                star.y = ty;
+                charGridR = wp.row;
+                charGridC = wp.col;
+                pathIdx++;
+            } else {
+                star.x += (dx / dist) * step;
+                star.y += (dy / dist) * step;
+            }
+
+            /* pick move animation based on direction */
+            const anim = pickMoveAnim(dx, dy);
+            if (anim !== charAnim) { charAnim = anim; star.play(anim, true); }
+        } else {
+            /* arrived or no path — play state animation */
+            path = null;
+            const anim = SPECIAL.has(serverState) ? serverState : 'idle';
+            if (anim !== charAnim) { charAnim = anim; star.play(anim, true); }
+
+            /* idle wander */
+            if (serverState === 'idle' && Math.random() < 0.003) {
+                const nb = walkableNeighbor(charGridR, charGridC, 3);
+                if (nb) navigateTo(nb.row, nb.col);
+            }
+        }
+
+        /* Y-sort depth */
+        star.setDepth(Math.round(star.y / T) * 10 + 1);
+
+        /* walk wobble */
+        const wobble = path ? Math.sin(time / 120) * 0.4 : 0;
+
+        /* track shadow, state icon / emoji (follow + pulse), bubble */
+        shadow.setPosition(star.x, star.y + T * 0.55 + wobble * 0.3);
+        const stateX = star.x + T * 0.6;
+        const stateY = star.y - T * 0.7 + (path ? wobble * 0.25 : 0);
+        const pulse = 1 + 0.12 * Math.sin(time / 180);
+        stateEmoji.setPosition(stateX, stateY);
+        stateEmoji.setScale(pulse);
+        if (stateIcon) {
+            stateIcon.setPosition(stateX, stateY);
+            const baseScale = stateIcon.getData('baseScale') || (T * 1.1) / 24;
+            stateIcon.setScale(baseScale * pulse);
+        }
+        updateBubblePos();
+
+        /* bubble */
+        if (time > nextBubbleAt) {
+            showBubble();
+            nextBubbleAt = time + 6000 + Math.random() * 4000;
+        }
+    }
+
+    function pickMoveAnim(dx, dy) {
+        if (Math.abs(dx) >= Math.abs(dy))
+            return dx > 0 ? 'move_right' : 'move_left';
+        return dy > 0 ? 'move_down' : 'move_up';
+    }
+
+    function walkableNeighbor(r, c, radius) {
+        const tries = 10;
+        for (let i = 0; i < tries; i++) {
+            const nr = r + Math.round((Math.random() - 0.5) * radius * 2);
+            const nc = c + Math.round((Math.random() - 0.5) * radius * 2);
+            if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS
+                && map.collision[nr][nc] === 0 && (nr !== r || nc !== c))
+                return { row: nr, col: nc };
+        }
+        return null;
+    }
+
+    function navigateTo(row, col) {
+        const p = astar({ row: charGridR, col: charGridC }, { row, col });
+        if (p && p.length > 1) {
+            path = p.slice(1);
+            pathIdx = 0;
+        }
+    }
+
+    /* ================================================================
+       §8  Server state polling + POI navigation
+       ================================================================ */
+    let prevServerState = 'idle';
+
+    async function fetchState() {
+        if (!core) return;
+        try {
+            const data = await core.invoke('read_state');
+            const raw  = NORM_MAP[data.state] || data.state || 'idle';
+            serverState = SPECIAL.has(raw) ? raw : 'idle';
+
+            if (serverState !== prevServerState) {
+                prevServerState = serverState;
+                const iconKey = 'icon_' + serverState;
+                if (stateIcon && game.textures.exists(iconKey)) {
+                    stateIcon.setTexture(iconKey).setVisible(true);
+                    stateEmoji.setVisible(false);
+                } else {
+                    if (stateIcon) stateIcon.setVisible(false);
+                    stateEmoji.setVisible(true);
+                    stateEmoji.setText(EMOJI[serverState] || '💤');
+                }
+                const poi = map.pois[serverState];
+                if (poi) navigateTo(poi.row, poi.col);
+            }
+        } catch (_) {}
+    }
+
+    /* ================================================================
+       §9  Character textures (16×16 fallback, 4 directions)
+       ================================================================ */
+    function tex(key, fn) {
+        const g = game.make.graphics();
+        fn(g);
+        g.generateTexture(key, T, T);
+        g.destroy();
+    }
+
+    function buildCharTextures() {
+        tex('cf0',  g => body(g, 'front', true));
+        tex('cf1',  g => body(g, 'front', false));
+        tex('cfw0', g => { body(g, 'front', true); feet(g, 'v', 0); });
+        tex('cfw1', g => { body(g, 'front', true); feet(g, 'v', 1); });
+
+        tex('cb0',  g => body(g, 'back'));
+        tex('cbw0', g => { body(g, 'back'); feet(g, 'v', 0); });
+        tex('cbw1', g => { body(g, 'back'); feet(g, 'v', 1); });
+
+        tex('cl0',  g => body(g, 'left', true));
+        tex('clw0', g => { body(g, 'left', true); feet(g, 'h', 0); });
+        tex('clw1', g => { body(g, 'left', true); feet(g, 'h', 1); });
+
+        tex('cr0',  g => body(g, 'right', true));
+        tex('crw0', g => { body(g, 'right', true); feet(g, 'h', 0); });
+        tex('crw1', g => { body(g, 'right', true); feet(g, 'h', 1); });
+    }
+
+    function body(g, dir, eyesOpen) {
+        const S = T;
+        const bx = Math.round(S * 0.15), by = Math.round(S * 0.1);
+        const bw = S - bx * 2, bh = Math.round(S * 0.8);
+
+        g.fillStyle(0xff6b35);
+        g.fillRect(bx, by, bw, bh);
+        g.fillStyle(0xffb347);
+        g.fillRect(bx + 1, by + 1, bw - 2, 1);
+
+        const ew = Math.max(2, Math.round(S * 0.18));
+        const eh = ew;
+        const ey = by + Math.round(bh * 0.28);
+        const pw = Math.max(1, Math.round(ew * 0.6));
+
+        switch (dir) {
+        case 'front': {
+            const e1x = bx + Math.round(bw * 0.18);
+            const e2x = bx + Math.round(bw * 0.55);
+            if (eyesOpen) {
+                g.fillStyle(0xffffff);
+                g.fillRect(e1x, ey, ew, eh);
+                g.fillRect(e2x, ey, ew, eh);
+                g.fillStyle(0x222222);
+                g.fillRect(e1x + 1, ey + 1, pw, pw);
+                g.fillRect(e2x + 1, ey + 1, pw, pw);
+            } else {
+                g.fillStyle(0x222222);
+                g.fillRect(e1x, ey + Math.round(eh / 2), ew, 1);
+                g.fillRect(e2x, ey + Math.round(eh / 2), ew, 1);
+            }
+            g.fillStyle(0xff8c69);
+            const mw = Math.max(2, Math.round(bw * 0.3));
+            g.fillRect(bx + Math.round((bw - mw) / 2), by + Math.round(bh * 0.7), mw, Math.max(1, Math.round(S * 0.1)));
+            break;
+        }
+        case 'back':
+            g.fillStyle(0xcc5522);
+            g.fillRect(bx + Math.round(bw * 0.25), by + Math.round(bh * 0.2), Math.round(bw * 0.5), 2);
+            break;
+        case 'left': {
+            const ex = bx + Math.round(bw * 0.12);
+            if (eyesOpen) {
+                g.fillStyle(0xffffff);
+                g.fillRect(ex, ey, ew, eh);
+                g.fillStyle(0x222222);
+                g.fillRect(ex, ey + 1, pw, pw);
+            } else {
+                g.fillStyle(0x222222);
+                g.fillRect(ex, ey + Math.round(eh / 2), ew, 1);
+            }
+            g.fillStyle(0xff8c69);
+            g.fillRect(bx, by + Math.round(bh * 0.7), Math.round(bw * 0.3), Math.max(1, Math.round(S * 0.1)));
+            break;
+        }
+        case 'right': {
+            const ex = bx + Math.round(bw * 0.55);
+            if (eyesOpen) {
+                g.fillStyle(0xffffff);
+                g.fillRect(ex, ey, ew, eh);
+                g.fillStyle(0x222222);
+                g.fillRect(ex + ew - pw, ey + 1, pw, pw);
+            } else {
+                g.fillStyle(0x222222);
+                g.fillRect(ex, ey + Math.round(eh / 2), ew, 1);
+            }
+            g.fillStyle(0xff8c69);
+            const mw = Math.round(bw * 0.3);
+            g.fillRect(bx + bw - mw, by + Math.round(bh * 0.7), mw, Math.max(1, Math.round(S * 0.1)));
+            break;
+        }
+        }
+    }
+
+    function feet(g, axis, frame) {
+        const S = T;
+        const bx = Math.round(S * 0.15);
+        const bw = S - bx * 2;
+        const fy = Math.round(S * 0.85);
+        const fw = Math.max(2, Math.round(bw * 0.25));
+        const fh = Math.max(1, Math.round(S * 0.1));
+        g.fillStyle(0xcc5522);
+        if (frame === 0) {
+            g.fillRect(bx + 1, fy, fw, fh);
+        } else {
+            g.fillRect(bx + bw - fw - 1, fy, fw, fh);
+        }
+    }
+
+    /* ================================================================
+       §10  Character animations
+       ================================================================ */
+    function buildCharAnims() {
+        const defs = {
+            idle:       { f: ['cf0','cf0','cf0','cf0','cf0','cf1'], r: 2 },
+            move_down:  { f: ['cfw0','cf0','cfw1','cf0'], r: 6 },
+            move_up:    { f: ['cbw0','cb0','cbw1','cb0'], r: 6 },
+            move_left:  { f: ['clw0','cl0','clw1','cl0'], r: 6 },
+            move_right: { f: ['crw0','cr0','crw1','cr0'], r: 6 },
+            writing:    { f: ['cf0','cf0','cf1','cf0'], r: 2 },
+            receiving:  { f: ['cf0','cf1','cf0','cf1'], r: 3 },
+            replying:   { f: ['cf0','cf0','cf0','cf1'], r: 2 },
+            researching:{ f: ['cf0','cf0','cf1','cf0'], r: 1.5 },
+            executing:  { f: ['cf0','cf1','cf0','cf1'], r: 4 },
+            syncing:    { f: ['cf0','cf0','cf0','cf1'], r: 1 },
+            error:      { f: ['cf1','cf0','cf1','cf1'], r: 2 },
+        };
+        Object.entries(defs).forEach(([k, d]) => {
+            game.anims.create({
+                key: k,
+                frames: d.f.map(f => ({ key: f })),
+                frameRate: d.r,
+                repeat: -1
+            });
+        });
+    }
+
+    /* ================================================================
+       §11  Speech bubble (DOM-based, never clipped by canvas)
+       ================================================================ */
+    const bubbleLayer = document.getElementById('bubble-layer');
+    let bubbleEl = null;
+    let bubbleTimer = null;
+
+    function showBubble() {
+        removeBubble();
+        const pool = BUBBLE[serverState] || BUBBLE.idle;
+        const text = pool[Math.floor(Math.random() * pool.length)];
+
+        bubbleEl = document.createElement('div');
+        bubbleEl.className = 'speech-bubble';
+        bubbleEl.textContent = text;
+        bubbleLayer.appendChild(bubbleEl);
+
+        updateBubblePos();
+        requestAnimationFrame(() => { if (bubbleEl) bubbleEl.style.opacity = '1'; });
+
+        bubbleTimer = setTimeout(() => {
+            if (bubbleEl) bubbleEl.style.opacity = '0';
+            setTimeout(removeBubble, 300);
+        }, 3500);
+    }
+
+    function removeBubble() {
+        if (bubbleTimer) { clearTimeout(bubbleTimer); bubbleTimer = null; }
+        if (bubbleEl) { bubbleEl.remove(); bubbleEl = null; }
+    }
+
+    function updateBubblePos() {
+        if (!bubbleEl || !star) return;
+        const winW = window.innerWidth;
+        const bw = bubbleEl.offsetWidth  || 80;
+        const bh = bubbleEl.offsetHeight || 30;
+
+        const cx = star.x * ZOOM;
+        const cy = star.y * ZOOM + BUBBLE_PAD;
+
+        let x = cx - bw / 2;
+        let y = cy - T * ZOOM * 0.8 - bh;
+
+        x = Math.max(4, Math.min(x, winW - bw - 4));
+        y = Math.max(2, y);
+
+        bubbleEl.style.left = x + 'px';
+        bubbleEl.style.top  = y + 'px';
+    }
+
+    })();
+    </script>
+</body>
+</html>

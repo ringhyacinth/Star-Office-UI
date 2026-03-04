@@ -1,0 +1,13 @@
+{
+  "name": "star-desktop-pet",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "STAR_PROJECT_ROOT=.. tauri dev",
+    "build": "STAR_PROJECT_ROOT=.. tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

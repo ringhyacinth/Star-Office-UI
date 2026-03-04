@@ -1,0 +1,17 @@
+{
+  "identifier": "default",
+  "description": "Default capabilities for the desktop pet",
+  "windows": ["main", "mini"],
+  "remote": {
+    "urls": [
+      "http://127.0.0.1:*",
+      "http://localhost:*"
+    ]
+  },
+  "permissions": [
+    "core:default",
+    "core:window:allow-start-dragging",
+    "core:window:allow-close",
+    "core:window:allow-set-size"
+  ]
+}
