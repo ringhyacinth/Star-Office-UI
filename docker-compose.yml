@@ -16,6 +16,8 @@ services:
     #   - ./memory:/app/memory:ro
     environment:
       - FLASK_ENV=development
+      - API_TOKEN=${API_TOKEN}
+      - ADMIN_TOKEN=${ADMIN_TOKEN}
     networks:
       - star-office-network
 
