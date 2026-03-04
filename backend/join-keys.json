@@ -1,1 +1,3 @@
-{"keys": [{"key": "test-key-001", "used": false, "maxConcurrent": 3}]}
+{
+  "keys": []
+}

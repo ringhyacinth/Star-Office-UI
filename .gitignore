@@ -11,17 +11,27 @@ venv/
 # OS
 .DS_Store
 
-# Runtime / local files
+# Runtime / local files (敏感数据)
 state.json
 agents-state.json
-# keep join-keys.json in repo for first-run demo
+join-keys.json
 *.log
 *.out
 *.pid
 *.backup*
 *.original
+
+# Cloudflare
 cloudflared.pid
 cloudflared.out
 healthcheck.log
 backend.log
+
+# Build outputs
 frontend/office_bg.png
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
