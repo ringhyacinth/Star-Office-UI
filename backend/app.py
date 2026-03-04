@@ -40,12 +40,14 @@ if os.path.exists("/app/memory"):
     STATE_FILE = "/app/state.json"
     AGENTS_STATE_FILE = "/app/agents-state.json"
     JOIN_KEYS_FILE = "/app/join-keys.json"
+    SOURCES_DIR = "/app/sources"  # 多来源 memo 存储目录
 else:
     MEMORY_DIR = os.path.join(os.path.dirname(ROOT_DIR), "memory")
     FRONTEND_DIR = os.path.join(ROOT_DIR, "frontend")
     STATE_FILE = os.path.join(ROOT_DIR, "state.json")
     AGENTS_STATE_FILE = os.path.join(ROOT_DIR, "agents-state.json")
     JOIN_KEYS_FILE = os.path.join(ROOT_DIR, "join-keys.json")
+    SOURCES_DIR = os.path.join(ROOT_DIR, "sources")
 
 
 def require_api_token(f):
@@ -971,46 +973,6 @@ def health():
     return jsonify({"status": "ok", "timestamp": datetime.now().isoformat()})
 
 
-@app.route("/yesterday-memo", methods=["GET"])
-def get_yesterday_memo():
-    """获取昨日小日记"""
-    try:
-        # 先尝试找昨天的文件
-        yesterday_str = get_yesterday_date_str()
-        yesterday_file = os.path.join(MEMORY_DIR, f"{yesterday_str}.md")
-
-        target_file = None
-        target_date = yesterday_str
-
-        if os.path.exists(yesterday_file):
-            target_file = yesterday_file
-        else:
-            # 如果昨天没有，找最近的一天
-            if os.path.exists(MEMORY_DIR):
-                files = [
-                    f
-                    for f in os.listdir(MEMORY_DIR)
-                    if f.endswith(".md") and re.match(r"\d{4}-\d{2}-\d{2}\.md", f)
-                ]
-                if files:
-                    files.sort(reverse=True)
-                    # 跳过今天的（如果存在）
-                    today_str = datetime.now().strftime("%Y-%m-%d")
-                    for f in files:
-                        if f != f"{today_str}.md":
-                            target_file = os.path.join(MEMORY_DIR, f)
-                            target_date = f.replace(".md", "")
-                            break
-
-        if target_file and os.path.exists(target_file):
-            memo_content = extract_memo_from_file(target_file)
-            return jsonify({"success": True, "date": target_date, "memo": memo_content})
-        else:
-            return jsonify({"success": False, "msg": "没有找到昨日日记"})
-    except Exception as e:
-        return jsonify({"success": False, "msg": str(e)}), 500
-
-
 @app.route("/set_state", methods=["POST"])
 def set_state_endpoint():
     """Set state via POST (for UI control panel)"""
@@ -1038,6 +1000,209 @@ def set_state_endpoint():
         return jsonify({"status": "ok"})
     except Exception as e:
         return jsonify({"status": "error", "msg": str(e)}), 500
+
+
+# ============================================================================
+# 多来源 Memo 同步 API
+# ============================================================================
+
+def get_sources_dir():
+    """获取多来源 memo 存储目录"""
+    os.makedirs(SOURCES_DIR, exist_ok=True)
+    return SOURCES_DIR
+
+
+def get_source_memo_file(source: str, date: str = None):
+    """获取指定来源和日期的 memo 文件路径"""
+    if date is None:
+        date = get_yesterday_date_str()
+    # 文件名: sources/{source}/{date}.json
+    source_dir = os.path.join(get_sources_dir(), source)
+    os.makedirs(source_dir, exist_ok=True)
+    return os.path.join(source_dir, f"{date}.json")
+
+
+@app.route("/sync-memo", methods=["POST"])
+@require_api_token
+def sync_memo():
+    """
+    同步多来源 memo (去重逻辑)
+    
+    请求体:
+    {
+        "source": "openclaw-msga",  // 来源标识 (必填)
+        "date": "2026-03-03",       // 日期 (可选，默认昨天)
+        "memo": "xxx",               // memo 内容 (必填)
+        "summary": "xxx"             // 简短摘要 (可选)
+    }
+    
+    去重判断: 相同 source + date 已存在则覆盖
+    """
+    try:
+        data = request.get_json()
+        if not isinstance(data, dict):
+            return jsonify({"ok": False, "msg": "invalid json"}), 400
+        
+        source = (data.get("source") or "").strip()
+        memo = (data.get("memo") or "").strip()
+        date = data.get("date", "").strip() or get_yesterday_date_str()
+        summary = (data.get("summary") or "").strip()
+        
+        if not source:
+            return jsonify({"ok": False, "msg": "缺少 source 参数"}), 400
+        if not memo:
+            return jsonify({"ok": False, "msg": "缺少 memo 参数"}), 400
+        
+        # 验证日期格式
+        if not re.match(r"\d{4}-\d{2}-\d{2}", date):
+            return jsonify({"ok": False, "msg": "日期格式错误，应为 YYYY-MM-DD"}), 400
+        
+        # 写入文件 (去重: 相同 source+date 会覆盖)
+        memo_file = get_source_memo_file(source, date)
+        memo_data = {
+            "source": source,
+            "date": date,
+            "memo": memo,
+            "summary": summary or memo[:50] + "..." if len(memo) > 50 else memo,
+            "synced_at": datetime.now().isoformat()
+        }
+        
+        with open(memo_file, "w", encoding="utf-8") as f:
+            json.dump(memo_data, f, ensure_ascii=False, indent=2)
+        
+        return jsonify({
+            "ok": True, 
+            "msg": "同步成功",
+            "source": source,
+            "date": date,
+            "is_new": True  # 可用于判断是否为新同步
+        })
+        
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/sources", methods=["GET"])
+def list_sources():
+    """列出所有已同步的来源"""
+    try:
+        sources_dir = get_sources_dir()
+        if not os.path.exists(sources_dir):
+            return jsonify({"sources": []})
+        
+        sources = []
+        for name in os.listdir(sources_dir):
+            source_path = os.path.join(sources_dir, name)
+            if os.path.isdir(source_path):
+                # 统计该来源的 memo 数量
+                memos = [f for f in os.listdir(source_path) if f.endswith(".json")]
+                sources.append({
+                    "source": name,
+                    "memo_count": len(memos),
+                    "latest_date": max([f.replace(".json", "") for f in memos], default=None)
+                })
+        
+        # 按最新日期排序
+        sources.sort(key=lambda x: x["latest_date"] or "", reverse=True)
+        return jsonify({"sources": sources})
+        
+    except Exception as e:
+        return jsonify({"sources": [], "error": str(e)}), 500
+
+
+@app.route("/sources/<source>/memo", methods=["GET"])
+@app.route("/sources/<source>/memo/<date>", methods=["GET"])
+def get_source_memo(source, date=None):
+    """获取指定来源的 memo"""
+    try:
+        if date is None:
+            date = request.args.get("date", get_yesterday_date_str())
+        
+        memo_file = get_source_memo_file(source, date)
+        
+        if not os.path.exists(memo_file):
+            return jsonify({"success": False, "msg": "没有找到该 memo"}), 404
+        
+        with open(memo_file, "r", encoding="utf-8") as f:
+            memo_data = json.load(f)
+        
+        return jsonify({"success": True, **memo_data})
+        
+    except Exception as e:
+        return jsonify({"success": False, "msg": str(e)}), 500
+
+
+@app.route("/yesterday-memo", methods=["GET"])
+def get_yesterday_memo():
+    """获取昨日小日记 (支持多来源参数)"""
+    try:
+        # 支持 ?source=xxx 指定来源
+        source = request.args.get("source", "").strip()
+        
+        # 如果指定了来源，获取该来源的 memo
+        if source:
+            memo_file = get_source_memo_file(source)
+            if os.path.exists(memo_file):
+                with open(memo_file, "r", encoding="utf-8") as f:
+                    memo_data = json.load(f)
+                return jsonify({
+                    "success": True, 
+                    "date": memo_data.get("date"),
+                    "source": memo_data.get("source"),
+                    "memo": memo_data.get("memo"),
+                    "summary": memo_data.get("summary")
+                })
+            else:
+                return jsonify({"success": False, "msg": f"没有找到来源 {source} 的昨日 memo"})
+        
+        # 原逻辑: 读取本地 memory 目录
+        yesterday_str = get_yesterday_date_str()
+        yesterday_file = os.path.join(MEMORY_DIR, f"{yesterday_str}.md")
+
+        target_file = None
+        target_date = yesterday_str
+
+        if os.path.exists(yesterday_file):
+            target_file = yesterday_file
+        else:
+            if os.path.exists(MEMORY_DIR):
+                files = [
+                    f
+                    for f in os.listdir(MEMORY_DIR)
+                    if f.endswith(".md") and re.match(r"\d{4}-\d{2}-\d{2}\.md", f)
+                ]
+                if files:
+                    files.sort(reverse=True)
+                    today_str = datetime.now().strftime("%Y-%m-%d")
+                    for f in files:
+                        if f != f"{today_str}.md":
+                            target_file = os.path.join(MEMORY_DIR, f)
+                            target_date = f.replace(".md", "")
+                            break
+
+        if target_file and os.path.exists(target_file):
+            memo_content = extract_memo_from_file(target_file)
+            return jsonify({"success": True, "date": target_date, "memo": memo_content})
+        else:
+            # 尝试返回第一个来源的 memo
+            sources = os.listdir(SOURCES_DIR) if os.path.exists(SOURCES_DIR) else []
+            if sources:
+                first_source = sorted(sources)[0]
+                memo_file = get_source_memo_file(first_source)
+                if os.path.exists(memo_file):
+                    with open(memo_file, "r", encoding="utf-8") as f:
+                        memo_data = json.load(f)
+                    return jsonify({
+                        "success": True, 
+                        "date": memo_data.get("date"),
+                        "source": memo_data.get("source"),
+                        "memo": memo_data.get("memo"),
+                        "summary": memo_data.get("summary")
+                    })
+            
+            return jsonify({"success": False, "msg": "没有找到昨日日记"})
+    except Exception as e:
+        return jsonify({"success": False, "msg": str(e)}), 500
 
 
 if __name__ == "__main__":
