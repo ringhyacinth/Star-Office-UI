@@ -137,12 +137,24 @@ GEMINI_PROMPT_MAX_CHARS = int(os.getenv("STAR_OFFICE_GEMINI_PROMPT_MAX_CHARS", "
 REQUEST_LOG_ENABLED = feature_enabled("STAR_OFFICE_REQUEST_LOG_ENABLED", default=False)
 REQUEST_LOG_PATH = os.getenv("STAR_OFFICE_REQUEST_LOG_PATH", os.path.join(ROOT_DIR, "request.log"))
 
+# Production strict mode: enforce all hardening toggles on startup when enabled.
+PROD_STRICT_MODE = feature_enabled("STAR_OFFICE_PROD_STRICT_MODE", default=False)
+
 if is_production_mode():
     hardening_errors = []
     if not is_strong_secret(str(app.secret_key)):
         hardening_errors.append("FLASK_SECRET_KEY / STAR_OFFICE_SECRET is weak (need >=24 chars, non-default)")
     if not is_strong_drawer_pass(ASSET_DRAWER_PASS_DEFAULT):
         hardening_errors.append("ASSET_DRAWER_PASS is weak (do not use default 1234; recommend >=8 chars)")
+
+    if PROD_STRICT_MODE:
+        if not WRITE_API_BEARER_ENABLED:
+            hardening_errors.append("PROD_STRICT_MODE requires STAR_OFFICE_WRITE_API_BEARER_ENABLED=true")
+        if WRITE_API_BEARER_ENABLED and not WRITE_API_TOKENS:
+            hardening_errors.append("PROD_STRICT_MODE requires non-empty STAR_OFFICE_WRITE_API_TOKENS")
+        if not ASSET_READ_AUTH_ENABLED:
+            hardening_errors.append("PROD_STRICT_MODE requires STAR_OFFICE_ASSET_READ_AUTH_ENABLED=true")
+
     if hardening_errors:
         raise RuntimeError("Security hardening check failed in production mode: " + "; ".join(hardening_errors))
 
@@ -2158,6 +2170,7 @@ if __name__ == "__main__":
     print("Listening on: http://0.0.0.0:18791")
     mode = "production" if is_production_mode() else "development"
     print(f"Mode: {mode}")
+    print(f"Prod strict mode: {'ON' if PROD_STRICT_MODE else 'OFF'}")
     if is_production_mode():
         print("Security hardening: ENABLED (strict checks)")
     else:

@@ -90,6 +90,7 @@ def main() -> int:
     gemini_prompt_max_raw = (os.getenv("STAR_OFFICE_GEMINI_PROMPT_MAX_CHARS") or "1200").strip()
     request_log_enabled = (os.getenv("STAR_OFFICE_REQUEST_LOG_ENABLED") or "").strip().lower() in {"1", "true", "yes", "on"}
     request_log_path = (os.getenv("STAR_OFFICE_REQUEST_LOG_PATH") or "").strip()
+    prod_strict_mode = (os.getenv("STAR_OFFICE_PROD_STRICT_MODE") or "").strip().lower() in {"1", "true", "yes", "on"}
 
     if in_prod:
         if not is_strong_secret(secret):
@@ -149,6 +150,14 @@ def main() -> int:
         low = request_log_path.lower()
         if any(x in low for x in [".ssh", ".gnupg", ".aws"]):
             failures.append("STAR_OFFICE_REQUEST_LOG_PATH points to a sensitive directory")
+
+    if in_prod and prod_strict_mode:
+        if not write_api_guard_enabled:
+            failures.append("PROD_STRICT_MODE requires STAR_OFFICE_WRITE_API_BEARER_ENABLED=true")
+        if write_api_guard_enabled and not write_api_tokens:
+            failures.append("PROD_STRICT_MODE requires non-empty STAR_OFFICE_WRITE_API_TOKENS")
+        if not asset_read_auth_enabled:
+            failures.append("PROD_STRICT_MODE requires STAR_OFFICE_ASSET_READ_AUTH_ENABLED=true")
 
     tracked = tracked_files()
     risky_tracked = [
