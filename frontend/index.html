@@ -4968,11 +4968,33 @@ function closeTokenSettings() {
 
 async function loadTokenStatus() {
     try {
-        const res = await fetch('/api/settings/tokens');
-        const data = await res.json();
+        // Check localStorage first - user might have token saved locally but not saved to backend
+        const localApiToken = localStorage.getItem('apiToken') || '';
+        const localAdminToken = localStorage.getItem('adminToken') || '';
         
-        hasApiToken = data.hasApiToken;
-        hasAdminToken = data.hasAdminToken;
+        // If user has token in localStorage, use that status regardless of backend
+        if (localApiToken) {
+            hasApiToken = true;
+        }
+        if (localAdminToken) {
+            hasAdminToken = true;
+        }
+        
+        // Try to get backend status (may fail if no token)
+        try {
+            const res = await fetch('/api/settings/tokens');
+            const data = await res.json();
+            
+            // Only update if we don't have local storage
+            if (!localApiToken) {
+                hasApiToken = data.hasApiToken;
+            }
+            if (!localAdminToken) {
+                hasAdminToken = data.hasAdminToken;
+            }
+        } catch (e) {
+            // API call failed, rely on localStorage
+        }
         
         document.getElementById('api-token-status').textContent = hasApiToken ? '✅ 已配置' : '❌ 未配置';
         document.getElementById('api-token-status').style.color = hasApiToken ? '#4ade80' : '#64748b';
