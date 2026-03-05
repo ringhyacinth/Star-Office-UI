@@ -1,0 +1,59 @@
+name: pr-checks
+
+on:
+  pull_request:
+    branches: [master, main]
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+
+jobs:
+  minimal-ci:
+    name: syntax-and-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+
+      - name: Python syntax check
+        run: |
+          python -m py_compile backend/app.py
+          python -m py_compile scripts/smoke_test.py
+
+      - name: Start backend
+        run: |
+          nohup python backend/app.py >/tmp/star-office-backend.log 2>&1 &
+          echo $! > /tmp/star-office-backend.pid
+
+      - name: Wait for health endpoint
+        run: |
+          for i in {1..50}; do
+            if curl -fsS http://127.0.0.1:18791/health >/dev/null; then
+              exit 0
+            fi
+            sleep 0.2
+          done
+          echo "Backend failed to start" >&2
+          cat /tmp/star-office-backend.log || true
+          exit 1
+
+      - name: Smoke test
+        run: |
+          python scripts/smoke_test.py --base-url http://127.0.0.1:18791
+
+      - name: Dump backend log on failure
+        if: failure()
+        run: |
+          echo "==== backend log ===="
+          cat /tmp/star-office-backend.log || true
