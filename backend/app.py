@@ -1047,7 +1047,8 @@ def set_state_endpoint():
 
 # ==================== Memo Sync API (for OpenClaw Plugin) ====================
 
-MEMOS_FILE = os.path.join(DATA_DIR, "memos.json")
+# Use same DATA_DIR as tokens file
+MEMOS_FILE = os.path.join(os.path.dirname(TOKENS_FILE), "memos.json")
 
 def load_memos():
     """Load memos from file"""
@@ -1061,7 +1062,7 @@ def load_memos():
 
 def save_memos(data):
     """Save memos to file"""
-    os.makedirs(DATA_DIR, exist_ok=True)
+    os.makedirs(os.path.dirname(MEMOS_FILE), exist_ok=True)
     with open(MEMOS_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
