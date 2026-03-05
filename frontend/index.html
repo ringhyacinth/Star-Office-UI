@@ -4873,41 +4873,8 @@ function toggleBrokerPanel() {
         return response;
     };
 
-    // ==================== XHR Interceptor ====================
-    const originalXHROpen = XMLHttpRequest.prototype.open;
-    XMLHttpRequest.prototype.open = function(method, url, ...rest) {
-        this._token = savedApiToken;
-        return originalXHROpen.call(this, method, url, ...rest);
-    };
-
-    const originalXHRSend = XMLHttpRequest.prototype.send;
-    XMLHttpRequest.prototype.send = function(body) {
-        if (this._token) {
-            this.setRequestHeader('X-API-Token', this._token);
-        }
-        
-        // Hook into onload to check for auth errors
-        const originalOnLoad = this.onload;
-        this.onload = function() {
-            // Skip static assets
-            const isStaticAsset = this.responseURL.includes('/static/') || this.responseURL.includes('.png') || this.responseURL.includes('.webp') || this.responseURL.includes('.woff');
-            
-            if (!savedApiToken && !isStaticAsset && (this.responseURL.includes('/agents') || this.responseURL.includes('/status'))) {
-                try {
-                    const data = JSON.parse(this.responseText);
-                    if (data && (data.error || data.msg)) {
-                        showTokenErrorIfNeeded(data.error || data.msg);
-                    }
-                } catch (e) {}
-            }
-            // Safely call original onload
-            if (typeof originalOnLoad === 'function') {
-                originalOnLoad.call(this);
-            }
-        };
-        
-        return originalXHRSend.call(this, body);
-    };
+    // Note: XHR interceptor removed to avoid conflict with Phaser game engine
+    // Token is added via fetch interceptor, which Phaser doesn't use for game assets
 
     console.log('✅ Token Request Interceptor 已加载');
 </script>
