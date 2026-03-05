@@ -4815,5 +4815,326 @@ function toggleBrokerPanel() {
         // 启动游戏
         initGame();
     </script>
+
+<script></script>
+<script>
+    // ==================== 请求拦截器 ====================
+    // 自动为需要鉴权的请求添加 Token Header
+
+    const originalFetch = window.fetch;
+    window.fetch = async function(url, options = {}) {
+        options = options || {};
+        options.headers = options.headers || {};
+        
+        // 如果有保存的 API Token，自动添加到请求头
+        if (savedApiToken && typeof savedApiToken === 'string' && savedApiToken.length > 0) {
+            options.headers['X-API-Token'] = savedApiToken;
+        }
+        
+        return originalFetch(url, options);
+    };
+
+    // 同样拦截 XMLHttpRequest
+    const originalXHROpen = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+        this._token = savedApiToken;
+        return originalXHROpen.call(this, method, url, ...rest);
+    };
+
+    const originalXHRSend = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype.send = function(body) {
+        if (this._token && typeof this._token === 'string' && this._token.length > 0) {
+            this.setRequestHeader('X-API-Token', this._token);
+        }
+        return originalXHRSend.call(this, body);
+    };
+
+    console.log('✅ Token 请求拦截器已启用');
+</script>
+
+    <!-- Token Settings Button -->
+    <button id="token-settings-btn" onclick="openTokenSettings()" style="position:fixed; top:12px; right:80px; z-index:999999; padding:8px 14px; font-family:ArkPixel,monospace; font-size:12px; cursor:pointer; border:3px solid #4ade80; border-radius:0; background:#1a1a2e; color:#4ade80; box-shadow:4px 4px 0 #000;">
+        ⚙️ SETTINGS
+    </button>
+
+    <!-- Token Settings Modal -->
+    <div id="token-settings-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999999; align-items:center; justify-content:center;">
+        <div style="background:linear-gradient(180deg,#0f0f23 0%,#1a1a2e 100%); border:4px solid #4ade80; box-shadow:8px 8px 0 #000; padding:0; max-width:400px; width:90%; font-family:ArkPixel,monospace; color:#fff;">
+            <!-- Header -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin:0; padding:16px 20px; border-bottom:4px solid #4ade80; background:#16213e;">
+                <span style="font-size:14px; color:#4ade80; text-shadow:2px 2px 0 #000;">⚙️ TOKEN SETTINGS</span>
+                <button onclick="closeTokenSettings()" style="background:#ef4444; border:2px solid #fff; color:#fff; padding:4px 10px; font-family:ArkPixel,monospace; cursor:pointer; font-size:11px;">✕</button>
+            </div>
+            
+            <div style="padding:20px;">
+                <!-- API Token Section -->
+                <div style="margin-bottom:24px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+                        <span style="color:#fbbf24;">🔑</span>
+                        <span style="color:#fbbf24; font-size:13px;">API TOKEN</span>
+                    </div>
+                    <input type="password" id="settings-api-token" placeholder="输入 API Token" style="width:100%; padding:12px; background:#000; border:3px solid #334155; color:#fff; font-family:ArkPixel,monospace; font-size:12px; box-sizing:border-box;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                        <span id="api-token-status" style="font-size:11px; color:#64748b;">❌ 未配置</span>
+                        <div style="display:flex; gap:8px;">
+                            <button onclick="clearApiToken()" style="background:#475569; border:2px solid #334155; color:#fff; padding:6px 12px; font-family:ArkPixel,monospace; cursor:pointer; font-size:10px;">清除</button>
+                            <button onclick="saveApiToken()" style="background:#4ade80; border:2px solid #22c55e; color:#000; padding:6px 16px; font-family:ArkPixel,monospace; cursor:pointer; font-size:10px;">保存</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Admin Token Section -->
+                <div style="margin-bottom:20px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+                        <span style="color:#f472b6;">🛡️</span>
+                        <span style="color:#f472b6; font-size:13px;">ADMIN TOKEN</span>
+                    </div>
+                    <input type="password" id="settings-admin-token" placeholder="输入 Admin Token" style="width:100%; padding:12px; background:#000; border:3px solid #334155; color:#fff; font-family:ArkPixel,monospace; font-size:12px; box-sizing:border-box;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                        <span id="admin-token-status" style="font-size:11px; color:#64748b;">❌ 未配置</span>
+                        <div style="display:flex; gap:8px;">
+                            <button onclick="clearAdminToken()" style="background:#475569; border:2px solid #334155; color:#fff; padding:6px 12px; font-family:ArkPixel,monospace; cursor:pointer; font-size:10px;">清除</button>
+                            <button onclick="saveAdminToken()" style="background:#f472b6; border:2px solid #ec4899; color:#000; padding:6px 16px; font-family:ArkPixel,monospace; cursor:pointer; font-size:10px;">保存</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Admin Panel -->
+                <div id="admin-panel" style="display:none; margin-top:20px; padding-top:16px; border-top:3px dashed #6366f1;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+                        <span style="color:#6366f1;">🗝️</span>
+                        <span style="color:#6366f1; font-size:13px;">ADMIN 功能</span>
+                    </div>
+                    <div id="api-tokens-list" style="background:#000; border:3px solid #334155; padding:12px; max-height:120px; overflow-y:auto; margin-bottom:12px; font-size:11px; color:#94a3b8; white-space:pre-wrap;">
+                        加载中...
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button onclick="generateNewToken()" style="flex:1; background:#6366f1; border:2px solid #4f46e5; color:#fff; padding:10px; font-family:ArkPixel,monospace; cursor:pointer; font-size:11px;">+ 生成新 Token</button>
+                        <button onclick="refreshTokensList()" style="background:#475569; border:2px solid #334155; color:#fff; padding:10px 14px; font-family:ArkPixel,monospace; cursor:pointer; font-size:11px;">🔄</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div style="padding:16px 20px; border-top:4px solid #4ade80; text-align:center; background:#16213e;">
+                <button onclick="closeTokenSettings()" style="background:#334155; border:2px solid #475569; color:#fff; padding:10px 32px; font-family:ArkPixel,monospace; cursor:pointer; font-size:12px;">关 闭</button>
+            </div>
+        </div>
+    </div>
+
+
+<script>
+// ==================== Token Settings ====================
+let savedApiToken = '';
+let savedAdminToken = '';
+let hasApiToken = false;
+let hasAdminToken = false;
+
+function openTokenSettings() {
+    document.getElementById('token-settings-modal').style.display = 'flex';
+    loadTokenStatus();
+}
+
+function closeTokenSettings() {
+    document.getElementById('token-settings-modal').style.display = 'none';
+}
+
+async function loadTokenStatus() {
+    try {
+        const res = await fetch('/api/settings/tokens');
+        const data = await res.json();
+        
+        hasApiToken = data.hasApiToken;
+        hasAdminToken = data.hasAdminToken;
+        
+        document.getElementById('api-token-status').textContent = hasApiToken ? '✅ 已配置' : '❌ 未配置';
+        document.getElementById('api-token-status').style.color = hasApiToken ? '#4ade80' : '#64748b';
+        
+        document.getElementById('admin-token-status').textContent = hasAdminToken ? '✅ 已配置' : '❌ 未配置';
+        document.getElementById('admin-token-status').style.color = hasAdminToken ? '#f472b6' : '#64748b';
+        
+        if (hasAdminToken) {
+            document.getElementById('admin-panel').style.display = 'block';
+            refreshTokensList();
+        } else {
+            document.getElementById('admin-panel').style.display = 'none';
+        }
+    } catch (e) {
+        console.error('加载失败:', e);
+    }
+}
+
+async function saveApiToken() {
+    const token = document.getElementById('settings-api-token').value.trim();
+    if (!token) { alert('请输入 API Token'); return; }
+    
+    try {
+        const res = await fetch('/api/settings/tokens', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({apiToken: token})
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            savedApiToken = token;
+            hasApiToken = true;
+            document.getElementById('api-token-status').textContent = '✅ 已配置';
+            document.getElementById('api-token-status').style.color = '#4ade80';
+            document.getElementById('settings-api-token').value = '';
+            alert('✅ API Token 保存成功！');
+        } else {
+            alert('❌ 保存失败: ' + data.error);
+        }
+    } catch (e) {
+        alert('❌ 保存失败: ' + e.message);
+    }
+}
+
+async function saveAdminToken() {
+    const token = document.getElementById('settings-admin-token').value.trim();
+    if (!token) { alert('请输入 Admin Token'); return; }
+    
+    try {
+        const res = await fetch('/api/settings/tokens', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({adminToken: token})
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            savedAdminToken = token;
+            hasAdminToken = true;
+            document.getElementById('admin-token-status').textContent = '✅ 已配置';
+            document.getElementById('admin-token-status').style.color = '#f472b6';
+            document.getElementById('admin-panel').style.display = 'block';
+            document.getElementById('settings-admin-token').value = '';
+            refreshTokensList();
+            alert('✅ Admin Token 保存成功！');
+        } else {
+            alert('❌ 保存失败: ' + data.error);
+        }
+    } catch (e) {
+        alert('❌ 保存失败: ' + e.message);
+    }
+}
+
+async function clearApiToken() {
+    if (!confirm('确定清除 API Token？')) return;
+    
+    try {
+        const res = await fetch('/api/settings/tokens', {
+            method: 'DELETE',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({clearApiToken: true})
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            savedApiToken = '';
+            hasApiToken = false;
+            document.getElementById('api-token-status').textContent = '❌ 未配置';
+            document.getElementById('api-token-status').style.color = '#64748b';
+            alert('✅ 已清除');
+        }
+    } catch (e) {
+        alert('❌ 清除失败: ' + e.message);
+    }
+}
+
+async function clearAdminToken() {
+    if (!confirm('确定清除 Admin Token？')) return;
+    
+    try {
+        const res = await fetch('/api/settings/tokens', {
+            method: 'DELETE',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({clearAdminToken: true})
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            savedAdminToken = '';
+            hasAdminToken = false;
+            document.getElementById('admin-token-status').textContent = '❌ 未配置';
+            document.getElementById('admin-token-status').style.color = '#64748b';
+            document.getElementById('admin-panel').style.display = 'none';
+            alert('✅ 已清除');
+        }
+    } catch (e) {
+        alert('❌ 清除失败: ' + e.message);
+    }
+}
+
+async function refreshTokensList() {
+    if (!savedAdminToken) {
+        document.getElementById('api-tokens-list').textContent = '请先配置 Admin Token';
+        return;
+    }
+    
+    try {
+        const res = await fetch('/api/v1/admin/tokens', {
+            headers: {'X-Admin-Token': savedAdminToken}
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            const list = data.tokens.map(t => 
+                `• ${t.name} (${t.token_preview}) - ${t.enabled ? '✅' : '❌'}`
+            ).join('\n');
+            document.getElementById('api-tokens-list').textContent = list || '暂无 Token';
+        } else {
+            document.getElementById('api-tokens-list').textContent = '❌ ' + data.error;
+        }
+    } catch (e) {
+        document.getElementById('api-tokens-list').textContent = '❌ ' + e.message;
+    }
+}
+
+async function generateNewToken() {
+    if (!savedAdminToken) { alert('请先配置 Admin Token'); return; }
+    
+    const name = prompt('请输入 Token 名称:');
+    if (!name) return;
+    
+    try {
+        const res = await fetch('/api/v1/admin/token/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Admin-Token': savedAdminToken
+            },
+            body: JSON.stringify({name: name})
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            alert('✅ 新 Token: ' + data.token + '\n请妥善保存！');
+            refreshTokensList();
+        } else {
+            alert('❌ ' + data.error);
+        }
+    } catch (e) {
+        alert('❌ ' + e.message);
+    }
+}
+
+// ==================== Request Interceptor ====================
+const originalFetch = window.fetch;
+window.fetch = async function(url, options = {}) {
+    options = options || {};
+    options.headers = options.headers || {};
+    
+    if (savedApiToken) {
+        options.headers['X-API-Token'] = savedApiToken;
+    }
+    
+    return originalFetch(url, options);
+};
+
+console.log('✅ Token Settings 已加载');
+</script>
+
 </body>
 </html>

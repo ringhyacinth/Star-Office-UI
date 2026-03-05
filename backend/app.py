@@ -544,6 +544,7 @@ def get_agents():
 
 
 @app.route("/agent-approve", methods=["POST"])
+@require_api_token
 def agent_approve():
     """Approve an agent (set authStatus to approved)"""
     try:
@@ -573,6 +574,7 @@ def agent_approve():
 
 
 @app.route("/agent-reject", methods=["POST"])
+@require_api_token
 def agent_reject():
     """Reject an agent (set authStatus to rejected and optionally revoke key)"""
     try:
@@ -615,6 +617,7 @@ def agent_reject():
         return jsonify({"ok": False, "msg": str(e)}), 500
 
 
+@require_api_token
 @app.route("/join-agent", methods=["POST"])
 def join_agent():
     """Add a new agent with one-time join key validation and pending auth"""
@@ -803,8 +806,8 @@ def join_agent():
     except Exception as e:
         return jsonify({"ok": False, "msg": str(e)}), 500
 
-
 @app.route("/leave-agent", methods=["POST"])
+@require_api_token
 def leave_agent():
     """Remove an agent and free its one-time join key for reuse (optional)
 
@@ -824,7 +827,8 @@ def leave_agent():
 
         target = None
         if agent_id:
-            target = next(
+            agents = load_agents_state()
+        target = next(
                 (
                     a
                     for a in agents
@@ -834,7 +838,8 @@ def leave_agent():
             )
         if (not target) and name:
             # fallback: remove by name only if agentId not provided
-            target = next(
+            agents = load_agents_state()
+        target = next(
                 (a for a in agents if a.get("name") == name and not a.get("isMain")),
                 None,
             )
@@ -874,8 +879,8 @@ def get_status():
     state = load_state()
     return jsonify(state)
 
-
 @app.route("/agent-push", methods=["POST"])
+@require_api_token
 def agent_push():
     """Remote openclaw actively pushes status to office.
 
@@ -898,8 +903,8 @@ def agent_push():
         detail = (data.get("detail") or "").strip()
         name = (data.get("name") or "").strip()
 
-        if not agent_id or not join_key or not state:
-            return jsonify({"ok": False, "msg": "缺少 agentId/joinKey/state"}), 400
+        if not agent_id or not state:
+            return jsonify({"ok": False, "msg": "缺少 agentId/state"}), 400
 
         valid_states = {
             "idle",
@@ -910,14 +915,6 @@ def agent_push():
             "error",
         }
         state = normalize_agent_state(state)
-
-        keys_data = load_join_keys()
-        key_item = next(
-            (k for k in keys_data.get("keys", []) if k.get("key") == join_key), None
-        )
-        if not key_item:
-            return jsonify({"ok": False, "msg": "joinKey 无效"}), 403
-        # key 可复用：不再做 used/usedByAgentId 绑定校验
 
         agents = load_agents_state()
         target = next(
@@ -1019,6 +1016,7 @@ def get_today_memo():
 
 
 @app.route("/set_state", methods=["POST"])
+@require_api_token
 def set_state_endpoint():
     """Set state via POST (for UI control panel)"""
     try:
@@ -1249,6 +1247,70 @@ def rotate_admin_token():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+
+
+# ==================== Token 设置 API ====================
+
+@app.route("/api/settings/tokens", methods=["GET"])
+def get_tokens():
+    import json
+    try:
+        with open('/app/tokens.json', 'r') as f:
+            tokens = json.load(f)
+        return jsonify({
+            "success": True,
+            "hasApiToken": bool(tokens.get("apiToken")),
+            "hasAdminToken": bool(tokens.get("adminToken"))
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/settings/tokens", methods=["POST"])
+def save_tokens_settings():
+    import json
+    try:
+        data = request.get_json() or {}
+        try:
+            with open('/app/tokens.json', 'r') as f:
+                tokens = json.load(f)
+        except:
+            tokens = {"apiToken": "", "adminToken": ""}
+        
+        if data.get("apiToken"):
+            tokens["apiToken"] = data["apiToken"]
+        if data.get("adminToken"):
+            tokens["adminToken"] = data["adminToken"]
+        
+        with open('/app/tokens.json', 'w') as f:
+            json.dump(tokens, f, indent=2)
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/settings/tokens", methods=["DELETE"])
+def clear_tokens_settings():
+    import json
+    try:
+        data = request.get_json() or {}
+        try:
+            with open('/app/tokens.json', 'r') as f:
+                tokens = json.load(f)
+        except:
+            tokens = {"apiToken": "", "adminToken": ""}
+        
+        if data.get("clearApiToken"):
+            tokens["apiToken"] = ""
+        if data.get("clearAdminToken"):
+            tokens["adminToken"] = ""
+        
+        with open('/app/tokens.json', 'w') as f:
+            json.dump(tokens, f, indent=2)
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 if __name__ == "__main__":
     print("=" * 50)
     print("Star Office UI - Backend State Service")
@@ -1258,3 +1320,4 @@ if __name__ == "__main__":
     print("=" * 50)
 
     app.run(host="0.0.0.0", port=18791, debug=False)
+
