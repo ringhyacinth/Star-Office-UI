@@ -210,22 +210,46 @@ curl http://localhost:5000/api/v1/admin/tokens \
 
 ## 5、OpenClaw 插件（自动状态同步）
 
-Star Office UI 提供 OpenClaw 插件，实现 Agent 状态自动同步：
+Star Office UI 提供 OpenClaw 插件，实现 Agent 状态自动同步。支持两种使用方式：
+
+### 5.1 两种使用方式
+
+| 方式 | 描述 | 适用场景 |
+|------|------|---------|
+| **本地接入** | 通过 Join Key 加入办公室 | 多 Agent 协作、本地部署 |
+| **远程连接** | 通过插件配置连接到远程办公室 | 公网访问、远程监控 |
+
+### 5.2 安装方式
+
+#### 方式一：命令行安装（推荐）
+
+```bash
+# 安装本地插件
+openclaw plugins install ./plugins/openclaw
+
+# 或使用 --link 避免复制
+openclaw plugins install -l ./plugins/openclaw
+
+# 安装远程插件（指定版本）
+openclaw plugins install star-office-ui@1.0.0
+```
+
+> ⚠️ **安全提示**：将插件安装视为运行代码。优先使用固定版本。
+
+#### 方式二：手动配置
+
+编辑 `~/.openclaw/openclaw.json`：
 
 ```json
-// 配置 ~/.openclaw/openclaw.json
 {
   "plugins": {
-    "allow": ["star-office-plugin"],
+    "allow": ["star-office"],
     "entries": {
-      "star-office-plugin": {
+      "star-office": {
         "enabled": true,
         "config": {
           "apiUrl": "http://localhost:5000",
-          "apiToken": "your-api-token",
-          "agentId": "openclaw-main",
-          "agentName": "Shinyi",
-          "autoIdleSeconds": 300
+          "apiToken": "your-api-token"
         }
       }
     }
@@ -233,12 +257,40 @@ Star Office UI 提供 OpenClaw 插件，实现 Agent 状态自动同步：
 }
 ```
 
-**插件功能**：
-- ✅ `onLoad` - 启动时显示"空闲"
-- ✅ `beforeAgentStart` / `onAgentStart` - 自动显示"工作中"
-- ✅ `onAgentEnd` - 结束显示"空闲"或"错误"
-- ✅ `onAgentError` - 报错显示错误状态
-- ✅ 自动空闲 - 超过超时自动切换空闲
+### 5.3 配置参数说明
+
+| 参数 | 类型 | 必填 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| `apiUrl` | string | ✅ 必填 | `http://localhost:5000` | Star Office UI 后端 API 地址 |
+| `apiToken` | string | ✅ 必填 | - | API 鉴权 Token（需通过后端生成） |
+| `agentId` | string | ❌ 可选 | `openclaw-{timestamp}` | Agent 唯一标识 |
+| `agentName` | string | ❌ 可选 | - | Agent 显示名称 |
+| `joinKey` | string | ❌ 可选 | - | 远程模式时可留空 |
+| `memoryDir` | string | ❌ 可选 | `~/.openclaw/workspace/memory` | memory 文件目录 |
+| `autoIdleSeconds` | number | ❌ 可选 | `300` | 自动空闲超时（秒） |
+
+### 5.4 生成 API Token
+
+```bash
+# 1. 启动后端
+cd Star-Office-UI && docker-compose up -d
+
+# 2. 生成 Token（需要先设置 ADMIN_TOKEN）
+curl -X POST http://localhost:5000/api/v1/admin/token/generate \
+  -H "X-Admin-Token: your-admin-token" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "openclaw-agent", "type": "api"}'
+
+# 3. 复制返回的 token 到插件配置
+```
+
+### 5.5 插件功能
+
+- ✅ `before_agent_start` - Agent 开始工作时显示"工作中"
+- ✅ `agent_end` - Agent 结束时显示"空闲"或"错误"
+- ✅ `agent_error` - Agent 报错时显示错误状态
+- ✅ 自动同步昨日 memo 到办公室看板
+- ✅ 每日 8 点自动同步（通过 cron 或 heartbeat）
 
 ---
 
@@ -260,7 +312,7 @@ Star Office UI 提供 OpenClaw 插件，实现 Agent 状态自动同步：
 
 ---
 
-## 6、开源许可与声明
+## 7、开源许可与声明
 
 - **Code / Logic：MIT**（见 `LICENSE`）
 - **Art Assets：非商用，仅学习/演示用途**
@@ -269,7 +321,7 @@ Star Office UI 提供 OpenClaw 插件，实现 Agent 状态自动同步：
 
 ---
 
-## 7、期待更多玩法交流
+## 8、期待更多玩法交流
 
 欢迎你基于这个框架扩展：
 - 更丰富的状态语义与自动编排
@@ -281,7 +333,7 @@ Star Office UI 提供 OpenClaw 插件，实现 Agent 状态自动同步：
 
 ---
 
-## 8、项目作者
+## 9、项目作者
 
 本项目由 **Ring Hyacinth** 与 **Simon Lee** 共同创作与维护。
 

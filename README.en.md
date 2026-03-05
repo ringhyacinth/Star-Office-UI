@@ -155,9 +155,115 @@ python3 set_state.py idle "Standing by"
 - `POST /leave-agent`: Guest leaves
 - `GET /yesterday-memo`: Yesterday memo
 
+### Token Authentication
+
+Some APIs require token authentication:
+
+| Header | Usage |
+|--------|-------|
+| `X-API-Token` | User API Token (read/write status) |
+| `X-Admin-Token` | Admin Token (management operations) |
+
+Generate Token:
+```bash
+# Generate new Token
+curl -X POST http://localhost:5000/api/v1/admin/token/generate \
+  -H "X-Admin-Token: your-admin-token"
+
+# List Tokens
+curl http://localhost:5000/api/v1/admin/tokens \
+  -H "X-Admin-Token: your-admin-token"
+```
+
 ---
 
-## V. Art asset usage notes (please read)
+## V. OpenClaw Plugin (Auto State Sync)
+
+Star Office UI provides an OpenClaw plugin for automatic Agent status sync. Supports two usage modes:
+
+### 5.1 Two Usage Modes
+
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| **Local Join** | Join office via Join Key | Multi-agent collaboration, local deployment |
+| **Remote Connect** | Connect to remote office via plugin config | Public access, remote monitoring |
+
+### 5.2 Installation
+
+#### Option 1: CLI Installation (Recommended)
+
+```bash
+# Install local plugin
+openclaw plugins install ./plugins/openclaw
+
+# Or use --link to avoid copying
+openclaw plugins install -l ./plugins/openclaw
+
+# Install remote plugin (specific version)
+openclaw plugins install star-office-ui@1.0.0
+```
+
+> ⚠️ **Security Note**: Treat plugin installation as running code. Prefer using fixed versions.
+
+#### Option 2: Manual Configuration
+
+Edit `~/.openclaw/openclaw.json`:
+
+```json
+{
+  "plugins": {
+    "allow": ["star-office"],
+    "entries": {
+      "star-office": {
+        "enabled": true,
+        "config": {
+          "apiUrl": "http://localhost:5000",
+          "apiToken": "your-api-token"
+        }
+      }
+    }
+  }
+}
+```
+
+### 5.3 Configuration Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `apiUrl` | string | ✅ Required | `http://localhost:5000` | Star Office UI backend API URL |
+| `apiToken` | string | ✅ Required | - | API Auth Token (generated from backend) |
+| `agentId` | string | Optional | `openclaw-{timestamp}` | Agent unique identifier |
+| `agentName` | string | Optional | - | Agent display name |
+| `joinKey` | string | Optional | - | Can be empty for remote mode |
+| `memoryDir` | string | Optional | `~/.openclaw/workspace/memory` | Memory files directory |
+| `autoIdleSeconds` | number | Optional | `300` | Auto idle timeout (seconds) |
+
+### 5.4 Generate API Token
+
+```bash
+# 1. Start backend
+cd Star-Office-UI && docker-compose up -d
+
+# 2. Generate Token (requires ADMIN_TOKEN first)
+curl -X POST http://localhost:5000/api/v1/admin/token/generate \
+  -H "X-Admin-Token: your-admin-token" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "openclaw-agent", "type": "api"}'
+
+# 3. Copy returned token to plugin config
+```
+
+### 5.5 Plugin Features
+
+- ✅ `before_agent_start` - Show "working" when Agent starts
+- ✅ `agent_end` - Show "idle" or "error" when Agent ends
+- ✅ `agent_error` - Show error status on error
+- ✅ Auto sync yesterday memo to office dashboard
+- ✅ Daily sync at 8 AM (via cron or heartbeat)
+
+---
+
+## VI. Art asset usage notes (please read)
 
 ### Guest character asset source
 
@@ -175,7 +281,7 @@ Please keep attribution when redistributing/demoing, and follow the original lic
 
 ---
 
-## VI. Open-source license & notice
+## VII. Open-source license & notice
 
 - **Code / Logic: MIT** (see `LICENSE`)
 - **Art Assets: non-commercial, learning/demo only**
@@ -184,7 +290,7 @@ Forks, idea sharing, and PRs are welcome. Please strictly respect asset-usage bo
 
 ---
 
-## VII. Looking forward to more creative extensions
+## VIII. Looking forward to more creative extensions
 
 You can extend this framework with:
 - richer state semantics and automation orchestration
@@ -196,7 +302,7 @@ If you build something cool, feel free to share!
 
 ---
 
-## VIII. Project authors
+## IX. Project authors
 
 This project is co-created and maintained by **Ring Hyacinth** and **Simon Lee**.
 
@@ -207,7 +313,7 @@ This project is co-created and maintained by **Ring Hyacinth** and **Simon Lee**
 
 ---
 
-## IX. 2026-03 Incremental Updates (added on top of the original version)
+## X. 2026-03 Incremental Updates (added on top of the original version)
 
 > This section records only new/changed items. Other parts keep the original structure.
 
