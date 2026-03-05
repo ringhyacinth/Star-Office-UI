@@ -1951,6 +1951,7 @@ def assets_upload():
 
 if __name__ == "__main__":
     raw_port = os.environ.get("STAR_BACKEND_PORT", "18791")
+    backend_host = os.environ.get("STAR_BACKEND_HOST", "0.0.0.0").strip() or "0.0.0.0"
     try:
         backend_port = int(raw_port)
     except ValueError:
@@ -1962,7 +1963,7 @@ if __name__ == "__main__":
     print("Star Office UI - Backend State Service")
     print("=" * 50)
     print(f"State file: {STATE_FILE}")
-    print(f"Listening on: http://0.0.0.0:{backend_port}")
+    print(f"Listening on: http://{backend_host}:{backend_port}")
     mode = "production" if is_production_mode() else "development"
     print(f"Mode: {mode}")
     if is_production_mode():
@@ -1979,5 +1980,5 @@ if __name__ == "__main__":
             print("Security hardening: OK")
     print("=" * 50)
 
-    app.run(host="0.0.0.0", port=backend_port, debug=False)
+    app.run(host=backend_host, port=backend_port, debug=False)
 

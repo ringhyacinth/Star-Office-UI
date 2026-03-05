@@ -1,0 +1,50 @@
+{
+  "base_url": "http://127.0.0.1:18991",
+  "feature_flag": "ON",
+  "rollback_switch_state": "ARMED",
+  "ttfv": {
+    "code": 200,
+    "ttfb_ms": 6.8,
+    "ttfv_proxy_ms": 6.8,
+    "full_load_ms": 6.9,
+    "bytes": 243354,
+    "err": ""
+  },
+  "health_probe_stats": {
+    "count": 20,
+    "ok": 20,
+    "errors": 0,
+    "error_rate": 0.0,
+    "avg_ms": 0.66,
+    "p95_ms": 0.79
+  },
+  "status_probe_stats": {
+    "count": 20,
+    "ok": 20,
+    "errors": 0,
+    "error_rate": 0.0,
+    "avg_ms": 0.62,
+    "p95_ms": 0.77
+  },
+  "agents_probe_stats": {
+    "count": 20,
+    "ok": 20,
+    "errors": 0,
+    "error_rate": 0.0,
+    "avg_ms": 0.72,
+    "p95_ms": 0.97
+  },
+  "set_state_probe_stats": {
+    "count": 10,
+    "ok": 10,
+    "errors": 0,
+    "error_rate": 0.0,
+    "avg_ms": 0.72,
+    "p95_ms": 0.78
+  },
+  "endpoint_error_stats": {
+    "total_calls": 70,
+    "total_errors": 0,
+    "error_rate": 0.0
+  }
+}

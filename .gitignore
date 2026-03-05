@@ -15,6 +15,7 @@ venv/
 state.json
 agents-state.json
 runtime-config.json
+join-keys.json
 *.log
 *.out
 *.pid
@@ -36,3 +37,10 @@ desktop-pet/src-tauri/icons/*Logo.png
 # Electron local build artifacts
 electron-shell/node_modules/
 electron-shell/release/
+
+# Pilot runtime artifacts
+pilot/*.env
+pilot/*.pid
+pilot/*.log
+pilot/*.flag
+pilot/metrics-latest.json
