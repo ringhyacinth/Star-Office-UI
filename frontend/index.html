@@ -4599,13 +4599,6 @@ function toggleBrokerPanel() {
 
                             }
                         }
-                    } else {
-                        if (!typewriterTarget || typewriterTarget !== nextLine) {
-                            typewriterTarget = nextLine;
-                            typewriterText = '';
-                            typewriterIndex = 0;
-                        }
-                        }
                     } catch (err) {
                         console.error('fetchStatus apply error', err);
                         typewriterTarget = '状态更新异常，正在恢复...';
