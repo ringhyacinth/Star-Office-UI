@@ -4816,25 +4816,24 @@ function toggleBrokerPanel() {
         initGame();
     </script>
 
-<script></script>
 <script>
-    // ==================== 请求拦截器 ====================
-    // 自动为需要鉴权的请求添加 Token Header
+    // ==================== Token Storage ====================
+    let savedApiToken = localStorage.getItem('apiToken') || '';
 
+    // ==================== Request Interceptor ====================
     const originalFetch = window.fetch;
     window.fetch = async function(url, options = {}) {
         options = options || {};
         options.headers = options.headers || {};
         
-        // 如果有保存的 API Token，自动添加到请求头
-        if (savedApiToken && typeof savedApiToken === 'string' && savedApiToken.length > 0) {
+        if (savedApiToken) {
             options.headers['X-API-Token'] = savedApiToken;
         }
         
         return originalFetch(url, options);
     };
 
-    // 同样拦截 XMLHttpRequest
+    // ==================== XHR Interceptor ====================
     const originalXHROpen = XMLHttpRequest.prototype.open;
     XMLHttpRequest.prototype.open = function(method, url, ...rest) {
         this._token = savedApiToken;
@@ -4843,13 +4842,13 @@ function toggleBrokerPanel() {
 
     const originalXHRSend = XMLHttpRequest.prototype.send;
     XMLHttpRequest.prototype.send = function(body) {
-        if (this._token && typeof this._token === 'string' && this._token.length > 0) {
+        if (this._token) {
             this.setRequestHeader('X-API-Token', this._token);
         }
         return originalXHRSend.call(this, body);
     };
 
-    console.log('✅ Token 请求拦截器已启用');
+    console.log('✅ Token Request Interceptor 已加载');
 </script>
 
     <!-- Token Settings Button -->
@@ -4925,7 +4924,7 @@ function toggleBrokerPanel() {
 
 <script>
 // ==================== Token Settings ====================
-let savedApiToken = '';
+// Note: savedApiToken is already defined at the top of the file
 let savedAdminToken = '';
 let hasApiToken = false;
 let hasAdminToken = false;
@@ -4978,6 +4977,7 @@ async function saveApiToken() {
         
         if (data.success) {
             savedApiToken = token;
+            localStorage.setItem('apiToken', token);  // Persist to localStorage
             hasApiToken = true;
             document.getElementById('api-token-status').textContent = '✅ 已配置';
             document.getElementById('api-token-status').style.color = '#4ade80';
@@ -5033,6 +5033,7 @@ async function clearApiToken() {
         
         if (data.success) {
             savedApiToken = '';
+            localStorage.removeItem('apiToken');  // Remove from localStorage
             hasApiToken = false;
             document.getElementById('api-token-status').textContent = '❌ 未配置';
             document.getElementById('api-token-status').style.color = '#64748b';
@@ -5119,21 +5120,6 @@ async function generateNewToken() {
         alert('❌ ' + e.message);
     }
 }
-
-// ==================== Request Interceptor ====================
-const originalFetch = window.fetch;
-window.fetch = async function(url, options = {}) {
-    options = options || {};
-    options.headers = options.headers || {};
-    
-    if (savedApiToken) {
-        options.headers['X-API-Token'] = savedApiToken;
-    }
-    
-    return originalFetch(url, options);
-};
-
-console.log('✅ Token Settings 已加载');
 </script>
 
 </body>
