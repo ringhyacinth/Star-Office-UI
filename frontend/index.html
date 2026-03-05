@@ -1170,7 +1170,7 @@
             <div id="asset-auth-gate" class="asset-preview-box">
                 <div class="asset-preview-title">请输入装修验证码</div>
                 <div class="asset-toolbar">
-                    <input id="asset-pass-input" type="password" placeholder="输入验证码" />
+                    <input id="asset-pass-input" type="password" placeholder="输入验证码" onkeydown="if(event.key==='Enter')unlockAssetDrawer()" />
                     <button onclick="unlockAssetDrawer()">验证</button>
                 </div>
                 <div id="asset-auth-msg" class="asset-sub"></div>
@@ -3875,12 +3875,26 @@ function toggleBrokerPanel() {
             loadedAssets = 0;
             
             // 加载进度监听
+            let loadFailed = false;
             this.load.on('filecomplete', () => {
                 updateLoadingProgress();
             });
-            
+            this.load.on('loaderror', (fileObj) => {
+                loadFailed = true;
+                console.warn('资源加载失败:', fileObj.key, fileObj.src);
+            });
+
             this.load.on('complete', () => {
-                hideLoadingOverlay();
+                if (loadFailed) {
+                    const isFileProtocol = location.protocol === 'file:';
+                    const hint = isFileProtocol
+                        ? '请通过后端服务访问：先运行 python3 backend/app.py，然后打开 http://127.0.0.1:18791'
+                        : '部分资源加载失败，请检查后端服务是否正常运行';
+                    if (loadingText) loadingText.textContent = hint;
+                    if (loadingProgressContainer) loadingProgressContainer.style.display = 'none';
+                } else {
+                    hideLoadingOverlay();
+                }
             });
 
             // cache-busting to avoid stale background on client/CDN
@@ -4598,13 +4612,6 @@ function toggleBrokerPanel() {
                                 typewriterIndex = 0;
 
                             }
-                        }
-                    } else {
-                        if (!typewriterTarget || typewriterTarget !== nextLine) {
-                            typewriterTarget = nextLine;
-                            typewriterText = '';
-                            typewriterIndex = 0;
-                        }
                         }
                     } catch (err) {
                         console.error('fetchStatus apply error', err);
