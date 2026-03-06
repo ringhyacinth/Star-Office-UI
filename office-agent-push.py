@@ -262,6 +262,17 @@ def do_push(local, status_data):
 def main():
     local = load_local_state()
 
+    # Startup hint for state source and URL (helps with port/state issues, e.g. issue #31)
+    if LOCAL_STATE_FILE:
+        print(f"State file: {LOCAL_STATE_FILE}")
+    else:
+        first_existing = next((p for p in DEFAULT_STATE_CANDIDATES if p and os.path.exists(p)), None)
+        if first_existing:
+            print(f"State file (auto): {first_existing}")
+        else:
+            print("State file: auto-discover (set OFFICE_LOCAL_STATE_FILE if state not found)")
+    print(f"Local status URL: {LOCAL_STATUS_URL} (set OFFICE_LOCAL_STATUS_URL if backend uses another port)")
+
     # 先确认配置是否齐全
     if not JOIN_KEY or not AGENT_NAME:
         print("❌ 请先在脚本开头填入 JOIN_KEY 和 AGENT_NAME")

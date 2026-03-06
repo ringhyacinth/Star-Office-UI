@@ -2058,6 +2058,10 @@ if __name__ == "__main__":
     print("=" * 50)
     print(f"State file: {STATE_FILE}")
     print(f"Listening on: http://0.0.0.0:{backend_port}")
+    if backend_port != 18791:
+        print(f"(Port override: set STAR_BACKEND_PORT to change; current: {raw_port})")
+    else:
+        print("(Set STAR_BACKEND_PORT to use a different port, e.g. 3009)")
     mode = "production" if is_production_mode() else "development"
     print(f"Mode: {mode}")
     if is_production_mode():
