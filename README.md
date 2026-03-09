@@ -139,6 +139,57 @@ python3 scripts/smoke_test.py --base-url http://127.0.0.1:19000
 
 ---
 
+## 🐳 Docker 部署（可选）
+
+如果你希望用 Docker 运行，无需手动安装 Python 依赖，重启自动恢复。
+
+### 1) 准备配置文件
+
+```bash
+cp .env.example .env
+```
+
+编辑 `.env`，至少填写 `MEMORY_HOST_PATH`（你本机 memory 目录的绝对路径）：
+
+```bash
+FLASK_SECRET_KEY=replace_with_a_long_random_secret
+ASSET_DRAWER_PASS=replace_with_strong_drawer_password
+MEMORY_HOST_PATH=/absolute/path/to/your/memory
+```
+
+### 2) 启动
+
+```bash
+docker compose up -d --build
+```
+
+打开 `http://127.0.0.1:19000`
+
+首次启动会自动从 `state.sample.json` 和 `join-keys.sample.json` 初始化数据文件，持久化到 `./data/` 目录。
+
+### 3) 切换状态（API 方式）
+
+Docker 部署时，用 HTTP API 替代 `set_state.py`：
+
+```bash
+curl -X POST http://127.0.0.1:19000/set_state \
+  -H "Content-Type: application/json" \
+  -d '{"state": "writing", "detail": "正在整理文档"}'
+```
+
+可用状态：`idle` / `writing` / `researching` / `executing` / `syncing` / `error`
+
+### 4) 常用命令
+
+```bash
+docker compose up -d          # 启动（已构建过）
+docker compose up -d --build  # 重新构建并启动
+docker compose logs -f        # 查看日志
+docker compose down           # 停止
+```
+
+---
+
 ## 🦞 OpenClaw 深度集成
 
 > 以下内容面向 [OpenClaw](https://github.com/openclaw/openclaw) 用户。如果你不使用 OpenClaw，可以跳过这一节。

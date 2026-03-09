@@ -1,0 +1,14 @@
+services:
+  star-office:
+    build: .
+    ports:
+      - "19000:19000"
+    volumes:
+      - ./data:/data
+      - ${MEMORY_HOST_PATH:-../memory}:/memory:ro
+    environment:
+      STAR_OFFICE_DATA_DIR: /data
+      STAR_OFFICE_MEMORY_DIR: /memory
+      FLASK_SECRET_KEY: ${FLASK_SECRET_KEY:-star-office-dev-secret-change-me}
+      ASSET_DRAWER_PASS: ${ASSET_DRAWER_PASS:-1234}
+    restart: unless-stopped

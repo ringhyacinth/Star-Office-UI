@@ -35,13 +35,16 @@ except Exception:
 
 # Paths (project-relative, no hardcoded absolute paths)
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MEMORY_DIR = os.path.join(os.path.dirname(ROOT_DIR), "memory")
+# DATA_DIR: override with STAR_OFFICE_DATA_DIR for Docker volume mounts; falls back to ROOT_DIR
+DATA_DIR = os.getenv("STAR_OFFICE_DATA_DIR") or ROOT_DIR
+# MEMORY_DIR: override with STAR_OFFICE_MEMORY_DIR for Docker volume mounts
+MEMORY_DIR = os.getenv("STAR_OFFICE_MEMORY_DIR") or os.path.join(os.path.dirname(ROOT_DIR), "memory")
 FRONTEND_DIR = os.path.join(ROOT_DIR, "frontend")
 FRONTEND_INDEX_FILE = os.path.join(FRONTEND_DIR, "index.html")
 FRONTEND_ELECTRON_STANDALONE_FILE = os.path.join(FRONTEND_DIR, "electron-standalone.html")
-STATE_FILE = os.path.join(ROOT_DIR, "state.json")
-AGENTS_STATE_FILE = os.path.join(ROOT_DIR, "agents-state.json")
-JOIN_KEYS_FILE = os.path.join(ROOT_DIR, "join-keys.json")
+STATE_FILE = os.path.join(DATA_DIR, "state.json")
+AGENTS_STATE_FILE = os.path.join(DATA_DIR, "agents-state.json")
+JOIN_KEYS_FILE = os.path.join(DATA_DIR, "join-keys.json")
 FRONTEND_PATH = Path(FRONTEND_DIR)
 ASSET_ALLOWED_EXTS = {".png", ".webp", ".jpg", ".jpeg", ".gif", ".svg", ".avif"}
 ASSET_TEMPLATE_ZIP = os.path.join(ROOT_DIR, "assets-replace-template.zip")
@@ -57,14 +60,14 @@ BG_HISTORY_DIR = os.path.join(ROOT_DIR, "assets", "bg-history")
 HOME_FAVORITES_DIR = os.path.join(ROOT_DIR, "assets", "home-favorites")
 HOME_FAVORITES_INDEX_FILE = os.path.join(HOME_FAVORITES_DIR, "index.json")
 HOME_FAVORITES_MAX = 30
-ASSET_POSITIONS_FILE = os.path.join(ROOT_DIR, "asset-positions.json")
+ASSET_POSITIONS_FILE = os.path.join(DATA_DIR, "asset-positions.json")
 
-# 性能保护：默认关闭“每次打开页面随机换背景”，避免首页首屏被磁盘复制拖慢
+# 性能保护：默认关闭"每次打开页面随机换背景"，避免首页首屏被磁盘复制拖慢
 AUTO_ROTATE_HOME_ON_PAGE_OPEN = (os.getenv("AUTO_ROTATE_HOME_ON_PAGE_OPEN", "0").strip().lower() in {"1", "true", "yes", "on"})
 AUTO_ROTATE_MIN_INTERVAL_SECONDS = int(os.getenv("AUTO_ROTATE_MIN_INTERVAL_SECONDS", "60"))
 _last_home_rotate_at = 0
-ASSET_DEFAULTS_FILE = os.path.join(ROOT_DIR, "asset-defaults.json")
-RUNTIME_CONFIG_FILE = os.path.join(ROOT_DIR, "runtime-config.json")
+ASSET_DEFAULTS_FILE = os.path.join(DATA_DIR, "asset-defaults.json")
+RUNTIME_CONFIG_FILE = os.path.join(DATA_DIR, "runtime-config.json")
 
 # Canonical agent states: single source of truth for validation and mapping
 VALID_AGENT_STATES = frozenset({"idle", "writing", "researching", "executing", "syncing", "error"})
@@ -976,7 +979,7 @@ def join_agent():
 
             agents = load_agents_state()
 
-            # 并发上限：同一个 key “同时在线”最多 3 个。
+            # 并发上限：同一个 key "同时在线"最多 3 个。
             # 在线判定：lastPushAt/updated_at 在 5 分钟内；否则视为 offline，不计入并发。
             now = datetime.now()
             existing = next((a for a in agents if a.get("name") == name and not a.get("isMain")), None)
@@ -1923,7 +1926,7 @@ def assets_upload():
 
         target.parent.mkdir(parents=True, exist_ok=True)
 
-        # 首次上传前固化默认资产快照，供“重置为默认资产”使用
+        # 首次上传前固化默认资产快照，供"重置为默认资产"使用
         default_snap = Path(str(target) + ".default")
         if not default_snap.exists():
             try:

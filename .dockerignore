@@ -1,0 +1,9 @@
+data/
+desktop-pet/
+dist/
+docs/
+*.pyc
+__pycache__/
+.venv/
+uv.lock
+.env

@@ -37,3 +37,6 @@ desktop-pet/src-tauri/icons/*Logo.png
 electron-shell/node_modules/
 electron-shell/release/
 join-keys.json
+
+# Docker persistent data volume (local only)
+data/
