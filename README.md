@@ -7,7 +7,7 @@
 **一个像素风格的 AI 办公室看板** —— 把 AI 助手的工作状态实时可视化，让你直观看到"谁在做什么、昨天做了什么、现在是否在线"。
 
 支持多 Agent 协作、中英日三语、AI 生图装修、桌面宠物模式。
-与 [OpenClaw](https://github.com/openclaw/openclaw) 深度集成时体验最佳，也可以独立部署作为状态看板使用。
+与 [OpenClaw](https://openclaw.com) 深度集成时体验最佳，也可以独立部署作为状态看板使用。
 
 > 本项目由 **[Ring Hyacinth](https://x.com/ring_hyacinth)** 与 **[Simon Lee](https://x.com/simonxxoo)** 共同创建（co-created project），并与社区开发者（[@Zhaohan-Wang](https://github.com/Zhaohan-Wang)、[@Jah-yee](https://github.com/Jah-yee)、[@liaoandi](https://github.com/liaoandi)）一起持续维护和共建。
 > 欢迎提交 Issue 和 PR，也感谢每一位贡献者的支持。
@@ -18,7 +18,7 @@
 
 ### 方式一：让龙虾帮你部署（推荐给 OpenClaw 用户）
 
-如果你正在使用 [OpenClaw](https://github.com/openclaw/openclaw)，直接把下面这句话发给你的龙虾：
+如果你正在使用 [OpenClaw](https://openclaw.com)，直接把下面这句话发给你的龙虾：
 
 ```text
 请按照这个 SKILL.md 帮我完成 Star Office UI 的部署：
@@ -143,7 +143,7 @@ python3 scripts/smoke_test.py --base-url http://127.0.0.1:19000
 
 ## 🦞 OpenClaw 深度集成
 
-> 以下内容面向 [OpenClaw](https://github.com/openclaw/openclaw) 用户。如果你不使用 OpenClaw，可以跳过这一节。
+> 以下内容面向 [OpenClaw](https://openclaw.com) 用户。如果你不使用 OpenClaw，可以跳过这一节。
 
 ### 状态自动同步
 

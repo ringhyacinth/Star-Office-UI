@@ -7,7 +7,7 @@
 **ピクセルアート風 AI オフィスダッシュボード** —— AI アシスタントの作業状態をリアルタイムで可視化し、「誰が何をしているか」「昨日何をしたか」「今オンラインか」を直感的に把握できます。
 
 マルチ Agent 協調、中英日 3 言語、AI 画像生成による模様替え、デスクトップペットモードに対応。
-[OpenClaw](https://github.com/openclaw/openclaw) との統合で最高の体験が得られますが、単体でもステータスダッシュボードとして利用可能です。
+[OpenClaw](https://openclaw.com) との統合で最高の体験が得られますが、単体でもステータスダッシュボードとして利用可能です。
 
 > 本プロジェクトは **[Ring Hyacinth](https://x.com/ring_hyacinth)** と **[Simon Lee](https://x.com/simonxxoo)** の共同制作（co-created project）であり、コミュニティの開発者（[@Zhaohan-Wang](https://github.com/Zhaohan-Wang)、[@Jah-yee](https://github.com/Jah-yee)、[@liaoandi](https://github.com/liaoandi)）とともに継続的にメンテナンス・改善を行っています。
 > Issue や PR を歓迎します。貢献してくださるすべての方に感謝いたします。
@@ -18,7 +18,7 @@
 
 ### 方法 1：ロブスターにデプロイしてもらう（OpenClaw ユーザー向け）
 
-[OpenClaw](https://github.com/openclaw/openclaw) をご利用中なら、以下のメッセージをロブスターに送るだけ：
+[OpenClaw](https://openclaw.com) をご利用中なら、以下のメッセージをロブスターに送るだけ：
 
 ```text
 この SKILL.md に従って Star Office UI をデプロイしてください：
@@ -142,7 +142,7 @@ python3 scripts/smoke_test.py --base-url http://127.0.0.1:19000
 
 ## 🦞 OpenClaw 連携
 
-> 以下は [OpenClaw](https://github.com/openclaw/openclaw) ユーザー向けの内容です。OpenClaw を使用していない場合はスキップしてください。
+> 以下は [OpenClaw](https://openclaw.com) ユーザー向けの内容です。OpenClaw を使用していない場合はスキップしてください。
 
 ### ステータス自動同期
 
