@@ -2522,7 +2522,7 @@
             clearAssetThumbTimers();
 
             if (rows.length === 0) {
-                list.innerHTML = '<div class="asset-sub" style="padding:8px">${({ zh: '暂无资产（可点“刷新”重试）', en: 'No assets found (try refreshing)', ja: 'アセットがありません（更新をお試しください）' }[uiLang] || 'No assets found (try refreshing)'}</div>';
+                list.innerHTML = `<div class="asset-sub" style="padding:8px">${({ zh: '暂无资产（可点刷新重试）', en: 'No assets found (try refreshing)', ja: 'アセットがありません（更新をお試しください）' }[uiLang] || 'No assets found (try refreshing)')}</div>`;
                 return;
             }
 
@@ -2533,13 +2533,13 @@
                 const thumbId = `asset-thumb-canvas-${(it.path || '').replace(/[^a-zA-Z0-9]/g, '_')}`;
                 const hidden = isAssetHidden(it.path);
                 const visEmoji = hidden ? '🙈' : '👀';
-                return `<div class="asset-item ${isActive ? 'active' : '`}" data-path="${it.path}" onclick="selectAssetInDrawer(`${(it.path || '').replace(/'/g, "\\'")}')">
+                return `<div class="asset-item ${isActive ? 'active' : ''}" data-path="${it.path}" onclick="selectAssetInDrawer('${(it.path || '').replace(/'/g, "\\'")}')">
                     <canvas id="${thumbId}" class="asset-thumb" width="56" height="56"></canvas>
                     <div class="asset-meta">
                         <div class="asset-path">${it.path}</div>
-                        <div class="asset-sub">${displayName} ｜ ${reso}${hidden ? ' ｜ ${({ zh: '已隐藏', en: 'Hidden', ja: '非表示' })[uiLang] || 'Hidden'}' : ''}</div>
+                        <div class="asset-sub">${displayName} ｜ ${reso}${hidden ? ` ｜ ${({ zh: '已隐藏', en: 'Hidden', ja: '非表示' })[uiLang] || 'Hidden'}` : ''}</div>
                     </div>
-                    <button class="asset-vis-btn" onclick="toggleAssetVisibility(`${(it.path || '').replace(/'/g, "\\'")}`, event)">${visEmoji}</button>
+                    <button class="asset-vis-btn" onclick="toggleAssetVisibility('${(it.path || '').replace(/'/g, "\\'")}', event)">${visEmoji}</button>
                 </div>`;
             }).join('');
 
@@ -2586,7 +2586,7 @@
                 }
             } catch (e) {
                 console.error('加载资产列表失败', e);
-                if (out) out.textContent = '❌ ${({ zh: '资产加载失败，请点刷新重试', en: 'Failed to load assets, try refreshing', ja: 'アセットの読み込みに失敗、更新をお試しください' }[uiLang] || 'Failed to load assets, try refreshing'}';
+                if (out) out.textContent = `❌ ${({ zh: '资产加载失败，请点刷新重试', en: 'Failed to load assets, try refreshing', ja: 'アセットの読み込みに失敗、更新をお試しください' }[uiLang] || 'Failed to load assets, try refreshing')}`;
             }
         }
 
@@ -2706,7 +2706,7 @@
             const path = (selectedAssetInfo && selectedAssetInfo.path) ? selectedAssetInfo.path : '';
             const fi = document.getElementById('asset-upload-file');
             const out = document.getElementById('asset-upload-result');
-            if (!path) { out.textContent = '{ zh: '请先选中一个资产路径', en: 'Please select an asset path first', ja: 'まずアセットパスを選択してください' }[uiLang] || 'Please select an asset path first''; return false; }
+            if (!path) { out.textContent = `${({ zh: '请先选中一个资产路径', en: 'Please select an asset path first', ja: 'まずアセットパスを選択してください' }[uiLang] || 'Please select an asset path first')}`; return false; }
             if (!fi.files.length) { return true; } // 允许仅改坐标
             const file = fi.files[0];
             const fd = new FormData();
@@ -2732,7 +2732,7 @@
                 fd.append('pixel_art', '1');
             }
 
-            out.textContent = `${({ zh: '⏳ 正在上传并替换，请稍候...', en: '⏳ Uploading and replacing, please wait...', ja: '⏳ アップロード・置換中、お待ちください...' }[uiLang] || '⏳ Uploading and replacing, please wait...'}`;
+            out.textContent = `${({ zh: '⏳ 正在上传并替换，请稍候...', en: '⏳ Uploading and replacing, please wait...', ja: '⏳ アップロード・置換中、お待ちください...' }[uiLang] || '⏳ Uploading and replacing, please wait...')}`;
             const res = await fetch('/assets/upload', { method: 'POST', body: fd });
             const data = await res.json();
             if (!data.ok) {
@@ -2758,8 +2758,8 @@
             if (!okUpload) return;
 
             if (out) {
-                if (hasFile) out.textContent += ' ｜ ✅ ${({ zh: '已上传并刷新', en: 'Uploaded and refreshed', ja: 'アップロード・更新済み' })[uiLang] || 'Uploaded and refreshed'}';
-                else out.textContent = '✅ ${({ zh: '已确认并刷新', en: 'Confirmed and refreshed', ja: '確認・更新済み' })[uiLang] || 'Confirmed and refreshed'}';
+                if (hasFile) out.textContent += ` ｜ ✅ ${({ zh: '已上传并刷新', en: 'Uploaded and refreshed', ja: 'アップロード・更新済み' })[uiLang] || 'Uploaded and refreshed'}`;
+                else out.textContent = `✅ ${({ zh: '已确认并刷新', en: 'Confirmed and refreshed', ja: '確認・更新済み' })[uiLang] || 'Confirmed and refreshed'}`;
             }
 
             // 刷新前关闭侧边栏，行为与地图替换一致
@@ -2953,7 +2953,7 @@ function toggleBrokerPanel() {
             const msg = document.getElementById('gemini-config-msg');
             const key = (input?.value || '').trim();
             if (!key) {
-                if (msg) msg.textContent = '{ zh: '请输入有效 API Key', en: 'Please enter a valid API Key', ja: '有効な API Key を入力してください' }[uiLang] || 'Please enter a valid API Key'';
+                if (msg) msg.textContent = `${({ zh: '请输入有效 API Key', en: 'Please enter a valid API Key', ja: '有効な API Key を入力してください' }[uiLang] || 'Please enter a valid API Key')}`;
                 return;
             }
             try {
@@ -2967,7 +2967,7 @@ function toggleBrokerPanel() {
                     if (msg) msg.textContent = `${({ zh: '保存失败', en: 'Save failed', ja: '保存失敗' })[uiLang] || 'Save failed'}: ${data.msg || res.status}`;
                     return;
                 }
-                if (msg) msg.textContent = '{ zh: '✅ 已保存，可重新点击搬家/中介', en: '✅ Saved. You can now use New Home / Broker.', ja: '✅ 保存済み。引っ越し/仲介が利用可能です。' }[uiLang] || '✅ Saved. You can now use New Home / Broker.'';
+                if (msg) msg.textContent = `${({ zh: '✅ 已保存，可重新点击搬家/中介', en: '✅ Saved. You can now use New Home / Broker.', ja: '✅ 保存済み。引っ越し/仲介が利用可能です。' }[uiLang] || '✅ Saved. You can now use New Home / Broker.')}`;
                 const box = document.getElementById('asset-gemini-config');
                 if (box) box.style.display = 'none';
                 await ensureGeminiConfigLoaded();
@@ -3031,11 +3031,11 @@ function toggleBrokerPanel() {
                 const box = document.getElementById('asset-gemini-config');
                 if (box) box.style.display = 'block';
             } else if (data.code === 'API_KEY_REVOKED_OR_LEAKED') {
-                out.textContent = '❌ ${({ zh: '当前 API Key 已失效/疑似泄露，请更换新 Key 后重试', en: 'Current API Key is invalid/possibly leaked. Please replace and retry.', ja: '現在のAPI Keyが無効/漏洩の可能性があります。新しいKeyに更新してください。' }[uiLang] || 'Current API Key is invalid/possibly leaked. Please replace and retry.'}';
+                out.textContent = `❌ ${({ zh: '当前 API Key 已失效/疑似泄露，请更换新 Key 后重试', en: 'Current API Key is invalid/possibly leaked. Please replace and retry.', ja: '現在のAPI Keyが無効/漏洩の可能性があります。新しいKeyに更新してください。' }[uiLang] || 'Current API Key is invalid/possibly leaked. Please replace and retry.')}`;
                 const box = document.getElementById('asset-gemini-config');
                 if (box) box.style.display = 'block';
             } else if (data.code === 'MODEL_NOT_AVAILABLE') {
-                out.textContent = '❌ ${({ zh: '当前模型在此通道不可用，请切换可用模型后重试', en: 'Current model is not available on this channel. Switch to an available model.', ja: '現在のモデルはこのチャネルで使用できません。利用可能なモデルに切り替えてください。' }[uiLang] || 'Current model is not available on this channel. Switch to an available model.'}' + (data.detail ? ('\n\nDetails: ' + data.detail) : '');
+                out.textContent = `❌ ${({ zh: '当前模型在此通道不可用，请切换可用模型后重试', en: 'Current model is not available on this channel. Switch to an available model.', ja: '現在のモデルはこのチャネルで使用できません。利用可能なモデルに切り替えてください。' }[uiLang] || 'Current model is not available on this channel. Switch to an available model.')}` + (data.detail ? ('\nDetails: ' + data.detail) : '');
             } else {
                 out.textContent = `❌ ${({ zh: '生成失败', en: 'Generation failed', ja: '生成失敗' })[uiLang] || 'Generation failed'}: ${data.msg || 'unknown error'}`;
             }
@@ -3057,7 +3057,7 @@ function toggleBrokerPanel() {
                 const data = await _startAndPollGeneration(
                     { prompt, speed_mode: speedMode },
                     out,
-                    '${({ zh: '🏘️ 正在按中介方案生成底图', en: '🏘️ Generating background from broker plan', ja: '🏘️ 仲介プランで背景を生成中' }[uiLang] || '🏘️ Generating background from broker plan')'
+                    `${({ zh: '🏘️ 正在按中介方案生成底图', en: '🏘️ Generating background from broker plan', ja: '🏘️ 仲介プランで背景を生成中' }[uiLang] || '🏘️ Generating background from broker plan')}`
                 );
                 if (!data.ok) {
                     _handleGenError(data, out);
@@ -3068,7 +3068,7 @@ function toggleBrokerPanel() {
                 if (ok) {
                     markMoveSuccess(out, brokerBtn);
                 } else {
-                    out.textContent = '✅ ${({ zh: '已生成并替换底图（${({ zh: '局部刷新失败，可手动刷新页面', en: 'partial refresh failed, try manual page refresh', ja: '部分更新失敗、ページを手動更新してください' }[uiLang] || 'partial refresh failed, try manual page refresh'}）', en: 'Generated and replaced background (partial refresh failed, try manual page refresh)', ja: '生成・背景置換済み（部分更新失敗、ページを手動更新してください）' }[uiLang] || 'Generated and replaced background (partial refresh failed, try manual page refresh)'}';
+                    out.textContent = `✅ ${({ zh: '已生成并替换底图（局部刷新失败，可手动刷新页面）', en: 'Generated and replaced background (partial refresh failed, try manual page refresh)', ja: '生成・背景置換済み（部分更新失敗、ページを手動更新してください）' }[uiLang] || 'Generated and replaced background (partial refresh failed, try manual page refresh)')}`;
                 }
             } catch (e) {
                 out.textContent = `❌ ${({ zh: '生成失败', en: 'Generation failed', ja: '生成失敗' })[uiLang] || 'Generation failed'}: ${e}`;
@@ -3088,18 +3088,18 @@ function toggleBrokerPanel() {
                 const data = await _startAndPollGeneration(
                     { speed_mode: speedMode },
                     out,
-                    '${({ zh: '🧳 正在生成新房间', en: '🧳 Generating new room', ja: '🧳 新しい部屋を生成中' }[uiLang] || '🧳 Generating new room')'
+                    `${({ zh: '🧳 正在生成新房间', en: '🧳 Generating new room', ja: '🧳 新しい部屋を生成中' }[uiLang] || '🧳 Generating new room')}`
                 );
                 if (!data.ok) {
                     _handleGenError(data, out);
                     return;
                 }
-                out.textContent = '✅ ${({ zh: '已生成并替换底图，正在刷新房间...', en: 'Generated and replaced background, refreshing room...', ja: '生成・背景置換済み、部屋を更新中...' }[uiLang] || 'Generated and replaced background, refreshing room...'}';
+                out.textContent = `✅ ${({ zh: '已生成并替换底图，正在刷新房间...', en: 'Generated and replaced background, refreshing room...', ja: '生成・背景置換済み、部屋を更新中...' }[uiLang] || 'Generated and replaced background, refreshing room...')}`;
                 const ok = await refreshOfficeBackgroundOnly();
                 if (ok) {
                     markMoveSuccess(out, moveBtn);
                 } else {
-                    out.textContent = '✅ ${({ zh: '已生成并替换底图（${({ zh: '局部刷新失败，可手动刷新页面', en: 'partial refresh failed, try manual page refresh', ja: '部分更新失敗、ページを手動更新してください' }[uiLang] || 'partial refresh failed, try manual page refresh'}）', en: 'Generated and replaced background (partial refresh failed, try manual page refresh)', ja: '生成・背景置換済み（部分更新失敗、ページを手動更新してください）' }[uiLang] || 'Generated and replaced background (partial refresh failed, try manual page refresh)'}';
+                    out.textContent = `✅ ${({ zh: '已生成并替换底图（局部刷新失败，可手动刷新页面）', en: 'Generated and replaced background (partial refresh failed, try manual page refresh)', ja: '生成・背景置換済み（部分更新失敗、ページを手動更新してください）' }[uiLang] || 'Generated and replaced background (partial refresh failed, try manual page refresh)')}`;
                 }
             } catch (e) {
                 out.textContent = `❌ ${({ zh: '生成失败', en: 'Generation failed', ja: '生成失敗' })[uiLang] || 'Generation failed'}: ${e}`;
@@ -3113,9 +3113,9 @@ function toggleBrokerPanel() {
             flashButtonActive(homeBtn);
             const out = document.getElementById('asset-move-result') || document.getElementById('asset-upload-result');
 
-            const confirmMsg = '⚠️ ${({ zh: '回老家会覆盖当前自定义房间背景（可从 bg-history 恢复历史图）。\n确定继续吗？', en: 'Going home will overwrite the current custom background (recoverable from bg-history).\nContinue?', ja: '帰宅するとカスタム背景が上書きされます（bg-historyから復元可）。\n続行しますか？' }[uiLang] || 'Going home will overwrite the current custom background (recoverable from bg-history).\nContinue?'}';
+            const confirmMsg = `⚠️ ${({ zh: '回老家会覆盖当前自定义房间背景（可从 bg-history 恢复历史图）。\n确定继续吗？', en: 'Going home will overwrite the current custom background (recoverable from bg-history).\nContinue?', ja: '帰宅するとカスタム背景が上書きされます（bg-historyから復元可）。\n続行しますか？' }[uiLang] || 'Going home will overwrite the current custom background (recoverable from bg-history).\nContinue?')}`;
             if (!window.confirm(confirmMsg)) {
-                out.textContent = '{ zh: '已取消回老家', en: 'Go home cancelled', ja: '帰宅をキャンセルしました' }[uiLang] || 'Go home cancelled'';
+                out.textContent = `${({ zh: '已取消回老家', en: 'Go home cancelled', ja: '帰宅をキャンセルしました' }[uiLang] || 'Go home cancelled')}`;
                 return;
             }
 
@@ -3129,12 +3129,12 @@ function toggleBrokerPanel() {
                     out.textContent = `❌ ${({ zh: '恢复失败', en: 'Restore failed', ja: '復元失敗' })[uiLang] || 'Restore failed'}: ${data.msg || res.status}`;
                     return;
                 }
-                out.textContent = '✅ ${({ zh: '已恢复初始底图', en: 'Default background restored', ja: '初期背景を復元しました' }[uiLang] || 'Default background restored'}';
+                out.textContent = `✅ ${({ zh: '已恢复初始底图', en: 'Default background restored', ja: '初期背景を復元しました' }[uiLang] || 'Default background restored')}`;
                 const ok = await refreshOfficeBackgroundOnly();
                 if (ok) {
                     markMoveSuccess(out, homeBtn);
                 } else {
-                    out.textContent = '✅ ${({ zh: '已恢复初始底图', en: 'Default background restored', ja: '初期背景を復元しました' }[uiLang] || 'Default background restored'}（${({ zh: '局部刷新失败，可手动刷新页面', en: 'partial refresh failed, try manual page refresh', ja: '部分更新失敗、ページを手動更新してください' }[uiLang] || 'partial refresh failed, try manual page refresh'}）';
+                    out.textContent = `✅ ${({ zh: '已恢复初始底图（局部刷新失败，可手动刷新页面）', en: 'Default background restored (partial refresh failed, try manual page refresh)', ja: '初期背景を復元しました（部分更新失敗、ページを手動更新してください）' }[uiLang] || 'Default background restored (partial refresh failed, try manual page refresh)')}`;
                 }
             } catch (e) {
                 out.textContent = `❌ ${({ zh: '恢复失败', en: 'Restore failed', ja: '復元失敗' })[uiLang] || 'Restore failed'}: ${e}`;
@@ -3148,15 +3148,15 @@ function toggleBrokerPanel() {
             flashButtonActive(btn);
             const out = document.getElementById('asset-move-result') || document.getElementById('asset-upload-result');
 
-            const confirmMsg = `${({ zh: '⚠️ 将回退到最近一次生成的房间背景，确定继续吗？', en: '⚠️ Restore last generated background. Continue?', ja: '⚠️ 最後に生成した背景に戻します。続行しますか？' }[uiLang] || '⚠️ Restore last generated background. Continue?'}`;
+            const confirmMsg = `${({ zh: '⚠️ 将回退到最近一次生成的房间背景，确定继续吗？', en: '⚠️ Restore last generated background. Continue?', ja: '⚠️ 最後に生成した背景に戻します。続行しますか？' }[uiLang] || '⚠️ Restore last generated background. Continue?')}`;
             if (!window.confirm(confirmMsg)) {
-                out.textContent = '{ zh: '已取消回退', en: 'Restore cancelled', ja: '復元をキャンセルしました' }[uiLang] || 'Restore cancelled'';
+                out.textContent = `${({ zh: '已取消回退', en: 'Restore cancelled', ja: '復元をキャンセルしました' }[uiLang] || 'Restore cancelled')}`;
                 return;
             }
 
             setWorkingStatus(({ zh: '正在回退到上一次背景', en: 'Restoring last background', ja: '前の背景に復元中' })[uiLang] || 'Restoring last background');
             showRoomLoadingOverlay();
-            out.textContent = `${({ zh: '↩️ 正在回退到最近一次生成底图...', en: '↩️ Restoring last generated background...', ja: '↩️ 最後に生成した背景を復元中...' }[uiLang] || '↩️ Restoring last generated background...'}`;
+            out.textContent = `${({ zh: '↩️ 正在回退到最近一次生成底图...', en: '↩️ Restoring last generated background...', ja: '↩️ 最後に生成した背景を復元中...' }[uiLang] || '↩️ Restoring last generated background...')}`;
             try {
                 const res = await fetch('/assets/restore-last-generated-background', { method: 'POST' });
                 const data = await res.json();
@@ -3166,9 +3166,9 @@ function toggleBrokerPanel() {
                 }
                 const ok = await refreshOfficeBackgroundOnly();
                 if (ok) {
-                    out.textContent = '✅ ${({ zh: 'Restored last background', en: 'Restored last background', ja: '前の背景に復元済み' }[uiLang] || 'Restored last background'}';
+                    out.textContent = `✅ ${({ zh: '已恢复上次生成的背景', en: 'Restored last background', ja: '前の背景に復元済み' }[uiLang] || 'Restored last background')}`;
                 } else {
-                    out.textContent = '✅ ${({ zh: 'Restored last background（${({ zh: '局部刷新失败，可手动刷新页面', en: 'partial refresh failed, try manual page refresh', ja: '部分更新失敗、ページを手動更新してください' }[uiLang] || 'partial refresh failed, try manual page refresh'}）', en: 'Restored last background (partial refresh failed, try manual page refresh)', ja: '前の背景に復元済み（部分更新失敗、ページを手動更新してください）' }[uiLang] || 'Restored last background (partial refresh failed, try manual page refresh)'}';
+                    out.textContent = `✅ ${({ zh: '已恢复上次背景（局部刷新失败，可手动刷新页面）', en: 'Restored last background (partial refresh failed, try manual page refresh)', ja: '前の背景に復元済み（部分更新失敗、ページを手動更新してください）' }[uiLang] || 'Restored last background (partial refresh failed, try manual page refresh)')}`;
                 }
                 try { setState('idle', 'Restored last background'); } catch (e) {}
             } catch (e) {
@@ -3220,8 +3220,8 @@ function toggleBrokerPanel() {
                 return `<div class="home-fav-item">
                     <img src="${thumb}" loading="lazy" alt="favorite-home" />
                     <div class="home-fav-meta">${time}</div>
-                    <button onclick="applyHomeFavorite(`${id}`)">${t('homeFavApply')}</button>
-                    <button class="home-fav-del" onclick="deleteHomeFavorite(`${id}`)">${t('homeFavDelete')}</button>
+                    <button onclick="applyHomeFavorite('${id}')">${t('homeFavApply')}</button>
+                    <button class="home-fav-del" onclick="deleteHomeFavorite('${id}')">${t('homeFavDelete')}</button>
                 </div>`;
             }).join('');
         }
@@ -3259,7 +3259,7 @@ function toggleBrokerPanel() {
                     return;
                 }
                 const ok = await refreshOfficeBackgroundOnly();
-                out.textContent = ok ? t('homeFavApplied') : `${t('homeFavApplied')}（${({ zh: '局部刷新失败，可手动刷新页面', en: 'partial refresh failed, try manual page refresh', ja: '部分更新失敗、ページを手動更新してください' }[uiLang] || 'partial refresh failed, try manual page refresh'}）`;
+                out.textContent = ok ? t('homeFavApplied') : `${t('homeFavApplied')}（${({ zh: '局部刷新失败，可手动刷新页面', en: 'partial refresh failed, try manual page refresh', ja: '部分更新失敗、ページを手動更新してください' }[uiLang] || 'partial refresh failed, try manual page refresh')})）`;
                 try { setState('idle', 'Applied saved home'); } catch (e) {}
             } catch (e) {
                 out.textContent = `❌ ${({ zh: '替换失败', en: 'Replace failed', ja: '置換失敗' })[uiLang] || 'Replace failed'}: ${e.message || e}`;
@@ -3498,7 +3498,7 @@ function toggleBrokerPanel() {
 
             const visitors = getMergedVisitors();
             if (visitors.length === 0) {
-                list.innerHTML = '<div style="color:#9ca3af;font-size:12px;text-align:center;padding:20px 0;">${({ zh: '暂无访客', en: 'No visitors', ja: '訪問者なし' }[uiLang] || 'No visitors'}</div>';
+                list.innerHTML = `<div style="color:#9ca3af;font-size:12px;text-align:center;padding:20px 0;">${({ zh: '暂无访客', en: 'No visitors', ja: '訪問者なし' }[uiLang] || 'No visitors')}</div>`;
                 return;
             }
 
@@ -3526,7 +3526,7 @@ function toggleBrokerPanel() {
                 const swapLabel = { zh: '交换skill', en: 'Swap Skill', ja: 'スキル交換' }[uiLang] || 'Swap Skill';
                 const swapMsg = { zh: '交换 skill 功能开发中', en: 'Swap skill feature in development', ja: 'スキル交換機能は開発中' }[uiLang] || 'Swap skill feature in development';
                 const leaveLabel = { zh: '离开房间', en: 'Leave Room', ja: '部屋を出る' }[uiLang] || 'Leave Room';
-                const pendingActions = `<button onclick="alert(`${swapMsg}`)">${swapLabel}</button><button class="leave-btn" onclick="leaveGuestAgent(`${agent.agentId}`,`${name}`)">${leaveLabel}</button>`;
+                const pendingActions = `<button onclick="alert('${swapMsg}')">${swapLabel}</button><button class="leave-btn" onclick="leaveGuestAgent('${agent.agentId}','${name}')">${leaveLabel}</button>`;
 
                 return `
                   <div class="guest-agent-item" data-name="${name}">
